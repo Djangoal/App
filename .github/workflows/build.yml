@@ -3,7 +3,7 @@ name: Build Kivy APK
 on:
   push:
     branches:
-      - main
+      - master  # ou main selon ta branche
 
 jobs:
   build:
@@ -26,9 +26,10 @@ jobs:
     - name: Install Buildozer and Cython
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install cython buildozer
+        python3 -m pip install cython
+        python3 -m pip install buildozer
 
-    - name: Build APK
+    - name: Initialize Buildozer
       run: |
         buildozer android clean
         buildozer android debug
@@ -36,5 +37,5 @@ jobs:
     - name: Upload APK artifact
       uses: actions/upload-artifact@v3
       with:
-        name: kivy-apk
-        path: bin/*.apk
+        name: apk
+        path: .buildozer/android/platform/build/dists/monbudgetapp/bin/*.apk
