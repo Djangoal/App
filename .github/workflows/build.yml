@@ -3,7 +3,7 @@ name: Build Kivy APK
 on:
   push:
     branches:
-      - main  # ou main selon ta branche
+      - main  # ou main
 
 jobs:
   build:
