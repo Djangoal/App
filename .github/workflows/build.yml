@@ -9,11 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_HOME: /opt/android-sdk
-      ANDROID_SDK_ROOT: /opt/android-sdk
-      PATH: /opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/emulator:${{ env.PATH }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -26,34 +21,62 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-11-jdk wget unzip git python3-pip libffi-dev libssl-dev libsqlite3-dev zlib1g-dev
+          sudo apt-get install -y \
+            build-essential \
+            openjdk-11-jdk \
+            unzip \
+            zip \
+            git \
+            libffi-dev \
+            libssl-dev \
+            libsqlite3-dev \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libreadline-dev \
+            libgdbm-dev \
+            libbz2-dev \
+            liblzma-dev
 
       - name: Install Android SDK
         run: |
-          sudo mkdir -p /opt/android-sdk/cmdline-tools
+          mkdir -p /opt/android-sdk/cmdline-tools
           cd /opt/android-sdk/cmdline-tools
-          sudo wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O sdk-tools.zip
-          sudo unzip sdk-tools.zip -d latest
-          yes | sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/opt/android-sdk --licenses
-          sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/opt/android-sdk \
-            "platform-tools" \
-            "platforms;android-31" \
-            "build-tools;31.0.0" \
-            "ndk;23.1.7779620" \
-            "cmdline-tools;latest"
+          curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip sdk.zip
+          rm sdk.zip
+        env:
+          ANDROID_HOME: /opt/android-sdk
+          ANDROID_SDK_ROOT: /opt/android-sdk
+          PATH: /opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/emulator:${{ env.PATH }}
+
+      - name: Accept licenses & install build tools
+        run: |
+          yes | /opt/android-sdk/cmdline-tools/bin/sdkmanager --licenses
+          /opt/android-sdk/cmdline-tools/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+        env:
+          ANDROID_HOME: /opt/android-sdk
+          ANDROID_SDK_ROOT: /opt/android-sdk
+          PATH: /opt/android-sdk/cmdline-tools/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/emulator:${{ env.PATH }}
 
       - name: Install Buildozer and dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install Cython buildozer
+          python3 -m pip install cython buildozer
 
       - name: Build APK
         run: |
           buildozer android debug
+        env:
+          ANDROID_HOME: /opt/android-sdk
+          ANDROID_SDK_ROOT: /opt/android-sdk
+          PATH: /opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/emulator:${{ env.PATH }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         with:
-          name: "New APK Release"
-          tag_name: "v1.${{ github.run_number }}"
+          name: "New Kivy Build - ${{ github.run_number }}"
+          tag_name: "v${{ github.run_number }}"
           files: bin/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
