@@ -1,0 +1,130 @@
+{
+    "soldes": [
+        {
+            "nom": "edf",
+            "date": "27",
+            "montant": -175.0,
+            "type": "Frais"
+        },
+        {
+            "nom": "salaire",
+            "date": "01",
+            "montant": 1496.71,
+            "type": "Revenu"
+        },
+        {
+            "nom": "taxe f nimes",
+            "date": "16",
+            "montant": -118.0,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "taxe f garons",
+            "date": "16",
+            "montant": -103.0,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "eaux garons",
+            "date": "12",
+            "montant": -50.23,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "edf garons",
+            "date": "23",
+            "montant": -175.0,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "edf nimes",
+            "date": "30",
+            "montant": -17.14,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "ass maison nimes",
+            "date": "7",
+            "montant": -32.87,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "ass maison garons",
+            "date": "31",
+            "montant": -49.48,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "ass credit",
+            "date": "4",
+            "montant": -89.7,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "ass auto",
+            "date": "7",
+            "montant": -67.71,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "ass vie",
+            "date": "24",
+            "montant": -6.63,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "cotisation ca",
+            "date": "3",
+            "montant": -6.13,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "credit immo",
+            "date": "10",
+            "montant": -961.84,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "netflix",
+            "date": "2",
+            "montant": -13.49,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "disney +",
+            "date": "31",
+            "montant": -13.99,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "abonnement mobile",
+            "date": "31",
+            "montant": -31.99,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "abonnement internet",
+            "date": "31",
+            "montant": -73.99,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "garantie acc vie",
+            "date": "4",
+            "montant": -35.87,
+            "type": "charges_fixe"
+        },
+        {
+            "nom": "virement",
+            "date": "10",
+            "montant": 1000.0,
+            "type": "Revenu"
+        },
+        {
+            "nom": "1",
+            "date": "1",
+            "montant": -10.0,
+            "type": "depense"
+        }
+    ]
+}
