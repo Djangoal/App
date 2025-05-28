@@ -1,4 +1,4 @@
-name: Build Kivy APK release
+name: Build Kivy APK
 
 on:
   push:
@@ -8,6 +8,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      ANDROID_HOME: /opt/android-sdk
+      ANDROID_SDK_ROOT: /opt/android-sdk
+      PATH: /opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/emulator:${{ env.PATH }}
 
     steps:
       - name: Checkout repository
@@ -21,49 +26,34 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            openjdk-11-jdk \
-            unzip \
-            zip \
-            git \
-            libffi-dev \
-            libssl-dev \
-            libsqlite3-dev \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libreadline-dev \
-            libgdbm-dev \
-            libbz2-dev \
-            liblzma-dev
+          sudo apt-get install -y openjdk-11-jdk wget unzip git python3-pip libffi-dev libssl-dev libsqlite3-dev zlib1g-dev
+
+      - name: Install Android SDK
+        run: |
+          sudo mkdir -p /opt/android-sdk/cmdline-tools
+          cd /opt/android-sdk/cmdline-tools
+          sudo wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O sdk-tools.zip
+          sudo unzip sdk-tools.zip -d latest
+          yes | sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/opt/android-sdk --licenses
+          sudo /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/opt/android-sdk \
+            "platform-tools" \
+            "platforms;android-31" \
+            "build-tools;31.0.0" \
+            "ndk;23.1.7779620" \
+            "cmdline-tools;latest"
 
       - name: Install Buildozer and dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install cython buildozer
+          python3 -m pip install Cython buildozer
 
       - name: Build APK
         run: |
           buildozer android debug
 
       - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: "build-${{ github.run_number }}"
-          release_name: "Build #${{ github.run_number }}"
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload APK to Release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/*.apk
-          asset_name: myapp.apk
-          asset_content_type: application/vnd.android.package-archive
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: "New APK Release"
+          tag_name: "v1.${{ github.run_number }}"
+          files: bin/*.apk
