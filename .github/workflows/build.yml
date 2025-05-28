@@ -34,8 +34,8 @@ jobs:
         buildozer android clean
         buildozer android debug
 
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: apk
-        path: .buildozer/android/platform/build/dists/monbudgetapp/bin/*.apk
+    - name: Upload APK
+  uses: actions/upload-artifact@v3
+  with:
+    name: my-apk
+    path: app/build/outputs/apk/release/app-release.apk
