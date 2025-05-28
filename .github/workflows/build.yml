@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-  create:
     tags:
       - 'v*'
 
@@ -25,9 +24,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y libzip-dev openjdk-17-jdk unzip python3-pip git zip curl build-essential
+          sudo apt install -y zip unzip openjdk-17-jdk python3-pip git curl build-essential libzip-dev
           pip install --upgrade pip
-          pip install cython buildozer
+          pip install buildozer cython
 
       - name: Install Android SDK
         run: |
@@ -35,16 +34,22 @@ jobs:
           curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
           unzip sdk.zip -d $HOME/android-sdk/cmdline-tools
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platforms;android-33" "build-tools;33.0.2" "platform-tools"
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-33" \
+            "build-tools;33.0.2"
 
       - name: Build APK
         run: |
           export ANDROIDSDK=$HOME/android-sdk
+          export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROIDSDK/platform-tools:$ANDROIDSDK/cmdline-tools/latest/bin:$PATH
           buildozer android debug
 
-      - name: Upload APK on release
+      - name: Upload APK to GitHub Release (only on tag)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
