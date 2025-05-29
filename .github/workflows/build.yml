@@ -45,7 +45,7 @@ jobs:
       - name: Build APK with Buildozer
         env:
           ANDROIDSDK: $HOME/.buildozer/android/platform/android-sdk
-          run: buildozer android release
+        run: buildozer android release
 
       - name: Debug – Check bin/
         run: ls -la bin/
