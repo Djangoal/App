@@ -1,10 +1,12 @@
 name: Build APK
 
 on:
-  workflow_dispatch:
   push:
+    branches:
+      - main         # 👉 déclenchement automatique sur la branche main
     tags:
-      - 'v*'
+      - 'v*'         # 👉 déclenchement aussi sur les tags comme v1.0.0
+  workflow_dispatch:  # 👉 exécution manuelle depuis l'interface GitHub
 
 jobs:
   build:
