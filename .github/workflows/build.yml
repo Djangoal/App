@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'  # Ex: v1.0.0
+      - 'v*'
 
 jobs:
   build:
@@ -40,7 +40,10 @@ jobs:
 
       - name: Build APK with Buildozer
         run: |
-          buildozer android debug
+          buildozer android release
+
+      - name: Debug – Check bin/
+        run: ls -la bin/
 
       - name: Upload APK to GitHub Release (on tag only)
         if: startsWith(github.ref, 'refs/tags/')
