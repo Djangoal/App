@@ -3,10 +3,10 @@ name: Build APK
 on:
   push:
     branches:
-      - main         # 👉 déclenchement sur main
+      - main
     tags:
-      - 'v*'         # 👉 déclenchement sur tag vX.X.X
-  workflow_dispatch:  # 👉 exécution manuelle possible
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -30,22 +30,22 @@ jobs:
 
       - name: Install Android SDK in Buildozer expected path
         run: |
-         mkdir -p ~/.buildozer/android/platform
-         cd ~/.buildozer/android/platform
-         curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-         unzip sdk-tools.zip -d cmdline-temp
-         mkdir -p android-sdk/cmdline-tools/latest
-         mv cmdline-temp/cmdline-tools/* android-sdk/cmdline-tools/latest/
-         yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk --licenses
-         android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
-         "platform-tools" \
-         "platforms;android-33" \
-         "build-tools;33.0.2"     
-         
+          mkdir -p ~/.buildozer/android/platform
+          cd ~/.buildozer/android/platform
+          curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+          unzip sdk-tools.zip -d cmdline-temp
+          mkdir -p android-sdk/cmdline-tools/latest
+          mv cmdline-temp/cmdline-tools/* android-sdk/cmdline-tools/latest/
+          yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk --licenses
+          android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
+            "platform-tools" \
+            "platforms;android-33" \
+            "build-tools;33.0.2"
+
       - name: Build APK with Buildozer
-  env:
-    ANDROIDSDK: $HOME/.buildozer/android/platform/android-sdk
-  run: buildozer android release
+        env:
+          ANDROIDSDK: $HOME/.buildozer/android/platform/android-sdk
+        run: buildozer android release
 
       - name: Debug – Check bin/
         run: ls -la bin/
