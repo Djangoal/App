@@ -3,10 +3,10 @@ name: Build APK
 on:
   push:
     branches:
-      - main         # 👉 déclenchement automatique sur la branche main
+      - main         # 👉 déclenchement sur main
     tags:
-      - 'v*'         # 👉 déclenchement aussi sur les tags comme v1.0.0
-  workflow_dispatch:  # 👉 exécution manuelle depuis l'interface GitHub
+      - 'v*'         # 👉 déclenchement sur tag vX.X.X
+  workflow_dispatch:  # 👉 exécution manuelle possible
 
 jobs:
   build:
@@ -29,22 +29,19 @@ jobs:
           pip install cython buildozer
 
       - name: Install Android SDK in Buildozer expected path
-        run: 
-         mkdir -p ~/.buildozer/android/platform
-         cd ~/.buildozer/android/platform
-         curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-         unzip sdk-tools.zip -d android-sdk
-         mkdir -p android-sdk/cmdline-tools
-         mv android-sdk/cmdline-tools/cmdline-tools android-sdk/cmdline-tools/latest
-         yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${HOME}/.buildozer/android/platform/android-sdk --licenses
-         android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${HOME}/.buildozer/android/platform/android-sdk \
-         "platform-tools"
-         "platforms;android-33"
-         "build-tools;33.0.2"
-         
-      - name: Build APK with Buildozer
         run: |
-          buildozer android release
+          mkdir -p ~/.buildozer/android/platform
+          cd ~/.buildozer/android/platform
+          curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+          unzip sdk-tools.zip -d cmdline-tools-temp
+          mkdir -p android-sdk/cmdline-tools
+          mv cmdline-tools-temp/cmdline-tools android-sdk/cmdline-tools/latest
+          yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk --licenses
+          android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
+            "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+      - name: Build APK with Buildozer
+        run: buildozer android release
 
       - name: Debug – Check bin/
         run: ls -la bin/
