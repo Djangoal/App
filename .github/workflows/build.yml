@@ -41,6 +41,9 @@ jobs:
             "platform-tools" \
             "platforms;android-33" \
             "build-tools;33.0.2"
+      - name: Create SDK tools symlink
+        run: |
+          ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest $HOME/.buildozer/android/platform/android-sdk/tools
 
       - name: Build APK with Buildozer
         env:
