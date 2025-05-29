@@ -41,6 +41,8 @@ jobs:
             "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
       - name: Build APK with Buildozer
+        env:
+          ANDROIDSDK: $HOME/.buildozer/android/platform/android-sdk
         run: buildozer android release
 
       - name: Debug – Check bin/
