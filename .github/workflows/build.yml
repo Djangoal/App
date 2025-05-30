@@ -16,6 +16,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Clean previous buildozer cache
+        run: rm -rf .buildozer
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -26,10 +29,7 @@ jobs:
           sudo apt update
           sudo apt install -y libzip-dev openjdk-17-jdk unzip python3-pip git zip curl build-essential autoconf automake libtool pkg-config python3-dev
           pip install --upgrade pip
-          pip install cython buildozer
-
-      - name: Check autoconf version
-        run: autoreconf --version
+          pip install cython buildozer python-for-android
 
       - name: Install Android SDK in Buildozer expected path
         run: |
