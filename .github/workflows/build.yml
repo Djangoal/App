@@ -89,6 +89,11 @@ jobs:
           mv cmdline-tools/cmdline-tools/* $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/
           yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
             "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+      - name: Export environment variables
+        run: |
+          echo "export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
+          echo "export PATH=$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+          echo "export PATH=$HOME/.buildozer/android/platform/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
 
       - name: Build the app
         run: buildozer android debug
