@@ -27,19 +27,14 @@ jobs:
           sudo apt install -y \
             libzip-dev openjdk-17-jdk unzip python3-pip git zip curl \
             build-essential autoconf automake libtool pkg-config python3-dev \
-            zlib1g-dev libncurses5 libffi-dev libsqlite3-dev
+            zlib1g-dev libncurses5-dev libffi-dev libsqlite3-dev
 
-      - name: Install Python packages
+      - name: Install Python dependencies
         run: |
           pip install --upgrade pip
-          pip install cython buildozer appdirs packaging sh setuptools
+          pip install cython virtualenv buildozer packaging appdirs six
 
-      - name: Clone python-for-android manually
-        run: |
-          mkdir -p .buildozer/android/platform
-          git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
-
-      - name: Install Android SDK (cmdline tools)
+      - name: Install Android SDK in Buildozer expected path
         run: |
           mkdir -p ~/.buildozer/android/platform
           cd ~/.buildozer/android/platform
@@ -55,14 +50,14 @@ jobs:
 
       - name: Create SDK tools symlink
         run: |
-          ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest $HOME/.buildozer/android/platform/android-sdk/tools || true
+          ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest $HOME/.buildozer/android/platform/android-sdk/tools
 
       - name: Build APK with Buildozer
         env:
           ANDROIDSDK: $HOME/.buildozer/android/platform/android-sdk
         run: buildozer android release
 
-      - name: Show output APKs
+      - name: Debug – Check bin/
         run: ls -la bin/
 
       - name: Upload APK to GitHub Release (on tag only)
