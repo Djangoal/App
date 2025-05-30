@@ -23,10 +23,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-         sudo apt update
-         sudo apt install -y libzip-dev openjdk-17-jdk unzip python3-pip git zip curl build-essential autoconf automake libtool pkg-config python3-dev
-         pip install --upgrade pip
-         pip install cython buildozer
+          sudo apt update
+          sudo apt install -y libzip-dev openjdk-17-jdk unzip python3-pip git zip curl build-essential autoconf automake libtool pkg-config python3-dev
+          pip install --upgrade pip
+          pip install cython buildozer
+
+      - name: Check autoconf version
+        run: autoreconf --version
 
       - name: Install Android SDK in Buildozer expected path
         run: |
@@ -41,9 +44,13 @@ jobs:
             "platform-tools" \
             "platforms;android-33" \
             "build-tools;33.0.2"
+
       - name: Create SDK tools symlink
         run: |
           ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest $HOME/.buildozer/android/platform/android-sdk/tools
+
+      - name: Clean previous builds
+        run: buildozer android clean
 
       - name: Build APK with Buildozer
         env:
