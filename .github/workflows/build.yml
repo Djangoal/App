@@ -25,11 +25,14 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies and python-for-android manually
+      - name: Install dependencies and python-for-android manually
         run: |
           sudo apt update
           sudo apt install -y libzip-dev openjdk-17-jdk unzip python3-pip git zip curl build-essential autoconf automake libtool pkg-config python3-dev
           pip install --upgrade pip
           pip install cython buildozer
+
+          cd $GITHUB_WORKSPACE
           mkdir -p .buildozer/android/platform
           git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
       - name: Install Android SDK in Buildozer expected path
