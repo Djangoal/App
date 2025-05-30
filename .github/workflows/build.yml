@@ -16,27 +16,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Clean previous buildozer cache
-        run: rm -rf .buildozer
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      
-      - name: Install dependencies and python-for-android manually
+      - name: Install system dependencies
         run: |
-         sudo apt update
-         sudo apt install -y libzip-dev openjdk-17-jdk unzip python3-pip git zip curl build-essential autoconf automake libtool pkg-config python3-dev
-         pip install --upgrade pip
-         pip install cython buildozer appdirs sh setuptools
-         cd $GITHUB_WORKSPACE
-         mkdir -p .buildozer/android/platform
-         git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
+          sudo apt update
+          sudo apt install -y \
+            libzip-dev openjdk-17-jdk unzip python3-pip git zip curl \
+            build-essential autoconf automake libtool pkg-config python3-dev \
+            zlib1g-dev libncurses5 libffi-dev libsqlite3-dev
 
-          
-      - name: Install Android SDK in Buildozer expected path
+      - name: Install Python packages
+        run: |
+          pip install --upgrade pip
+          pip install cython buildozer appdirs packaging sh setuptools
+
+      - name: Clone python-for-android manually
+        run: |
+          mkdir -p .buildozer/android/platform
+          git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
+
+      - name: Install Android SDK (cmdline tools)
         run: |
           mkdir -p ~/.buildozer/android/platform
           cd ~/.buildozer/android/platform
@@ -52,17 +55,14 @@ jobs:
 
       - name: Create SDK tools symlink
         run: |
-          ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest $HOME/.buildozer/android/platform/android-sdk/tools
-
-      - name: Clean previous builds
-        run: buildozer android clean
+          ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest $HOME/.buildozer/android/platform/android-sdk/tools || true
 
       - name: Build APK with Buildozer
         env:
           ANDROIDSDK: $HOME/.buildozer/android/platform/android-sdk
         run: buildozer android release
 
-      - name: Debug – Check bin/
+      - name: Show output APKs
         run: ls -la bin/
 
       - name: Upload APK to GitHub Release (on tag only)
