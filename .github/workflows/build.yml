@@ -1,12 +1,10 @@
-name: Build APK
+name: Build Kivy Android App
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*'
-  workflow_dispatch:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -17,51 +15,70 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: 3.10
 
-      - name: Install system dependencies
+      - name: Install OS dependencies
         run: |
-          sudo apt update
-          sudo apt install -y \
-            libzip-dev openjdk-17-jdk unzip python3-pip git zip curl \
-            build-essential autoconf automake libtool pkg-config python3-dev \
-            zlib1g-dev libncurses5-dev libffi-dev libsqlite3-dev
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            libtool \
+            libffi-dev \
+            libssl-dev \
+            build-essential \
+            zip unzip \
+            openjdk-11-jdk \
+            python3-pip \
+            libncurses5 \
+            libncurses5-dev \
+            libstdc++6 \
+            zlib1g-dev \
+            libsqlite3-dev \
+            libjpeg-dev \
+            libfreetype6-dev \
+            pkg-config \
+            libgl1-mesa-dev \
+            libgles2-mesa-dev \
+            libgstreamer1.0 \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-ugly \
+            gstreamer1.0-libav \
+            libmtdev-dev \
+            libffi-dev \
+            libssl-dev \
+            libtiff5-dev \
+            libjpeg8-dev \
+            libsdl2-dev \
+            libsdl2-image-dev \
+            libsdl2-mixer-dev \
+            libsdl2-ttf-dev \
+            libportmidi-dev \
+            libswscale-dev \
+            libavformat-dev \
+            libavcodec-dev \
+            libfreetype6-dev \
+            libgl1-mesa-dev \
+            libgles2-mesa-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libgstreamer1.0-dev \
+            git-core \
+            build-essential \
+            cmake
 
-      - name: Install Python dependencies
+      - name: Install buildozer and Cython
         run: |
           pip install --upgrade pip
-          pip install cython virtualenv buildozer packaging appdirs six
+          pip install buildozer Cython
 
-      - name: Install Android SDK in Buildozer expected path
+      - name: Clean previous builds
         run: |
-          mkdir -p ~/.buildozer/android/platform
-          cd ~/.buildozer/android/platform
-          curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-          unzip sdk-tools.zip -d cmdline-temp
-          mkdir -p android-sdk/cmdline-tools/latest
-          mv cmdline-temp/cmdline-tools/* android-sdk/cmdline-tools/latest/
-          yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk --licenses
-          android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
-            "platform-tools" \
-            "platforms;android-33" \
-            "build-tools;33.0.2"
+          rm -rf .buildozer
+          rm -rf bin
 
-      - name: Create SDK tools symlink
-        run: |
-          ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest $HOME/.buildozer/android/platform/android-sdk/tools
-
-      - name: Build APK with Buildozer
-        env:
-          ANDROIDSDK: $HOME/.buildozer/android/platform/android-sdk
-        run: buildozer android release
-
-      - name: Debug – Check bin/
-        run: ls -la bin/
-
-      - name: Upload APK to GitHub Release (on tag only)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: bin/*.apk
+      - name: Build the app
+        run: buildozer android debug
