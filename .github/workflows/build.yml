@@ -68,6 +68,15 @@ jobs:
         run: |
           sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
+      - name: Verify aidl binary exists
+        run: |
+          echo "Listing build-tools..."
+          ls -la $ANDROID_SDK_ROOT/build-tools/31.0.0
+          if [ ! -f "$ANDROID_SDK_ROOT/build-tools/31.0.0/aidl" ]; then
+            echo "ERROR: aidl not found!"
+            exit 1
+          fi
+
       - name: Clean previous builds
         run: |
           rm -rf .buildozer
