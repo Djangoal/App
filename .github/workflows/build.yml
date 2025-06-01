@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
@@ -38,8 +38,7 @@ jobs:
             libmtdev-dev libtiff5-dev libjpeg8-dev \
             libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
             libsdl2-ttf-dev libportmidi-dev libswscale-dev \
-            libavformat-dev libavcodec-dev cmake git-core \
-            wget unzip
+            libavformat-dev libavcodec-dev cmake git-core
 
       - name: Install Buildozer and dependencies
         run: |
@@ -52,31 +51,32 @@ jobs:
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
-          unzip -o tools.zip
-          rm tools.zip
-          mv cmdline-tools latest
+          unzip tools.zip -d temp
+          mv temp/cmdline-tools latest
+          rm -rf temp tools.zip
 
-      - name: Set PATH for sdkmanager and adb
+      - name: Set PATH for sdkmanager and tools
         run: |
           echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/build-tools/31.0.0" >> $GITHUB_PATH
+          echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> $GITHUB_PATH
 
-      - name: Clean previous builds and SDK caches
-        run: |
-          buildozer android clean || true
-          rm -rf ~/.buildozer || true
-          rm -rf ~/.android || true
-          rm -rf $ANDROID_SDK_ROOT/build-tools/*
+      - name: Accept all Android SDK licenses before install
+        run: yes | sdkmanager --licenses
 
-      - name: Update SDK manager and accept licenses
+      - name: Install required Android SDK packages (API 36, build-tools 36.0.0)
         run: |
-          sdkmanager --update
-          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Install required Android packages
+      - name: Accept all Android SDK licenses after install
+        run: yes | sdkmanager --licenses
+
+      - name: Clean previous builds
         run: |
-          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          buildozer android clean
+          rm -rf ~/.buildozer
+          rm -rf ~/.android
+          rm -rf bin
 
       - name: Build the APK
         run: buildozer android debug
