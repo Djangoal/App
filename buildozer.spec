@@ -38,8 +38,6 @@ osx.kivy_version = 2.2.1
 
 [buildozer]
 
-# (str) Android SDK directory - path corrigé pour le workflow GitHub
-android.sdk_path = $ANDROIDSDK
 
 # (str) Android NDK directory (will be downloaded if empty)
 # android.ndk_path =
@@ -51,13 +49,13 @@ android.sdk_path = $ANDROIDSDK
 android.arch = armeabi-v7a
 
 # (str) Android NDK API to use
-android.ndk_api = 25b
+android.ndk = 23b
 
 # (int) Target API for Android
 android.api = 31
 
 # (str) Build tool version
-android.build_tools_version = 30.0.3
+android.build_tools = 31.0.0
 
 # (bool) Copy library instead of making a libpymodules.so
 copy_libs = 1
