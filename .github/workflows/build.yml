@@ -1,60 +1,74 @@
-name: Build Kivy Android APK
+name: Build Kivy Android App
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y zip unzip openjdk-17-jdk wget libncurses5 libstdc++6
+      - name: Install OS dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf automake libtool \
+            libffi-dev libssl-dev build-essential zip unzip \
+            openjdk-11-jdk python3-pip \
+            libncurses-dev libstdc++6 zlib1g-dev \
+            libsqlite3-dev libjpeg-dev libfreetype6-dev \
+            pkg-config libgl1-mesa-dev libgles2-mesa-dev \
+            libgstreamer1.0-0 gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-ugly gstreamer1.0-libav \
+            libmtdev-dev libtiff5-dev libjpeg8-dev \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
+            libsdl2-ttf-dev libportmidi-dev libswscale-dev \
+            libavformat-dev libavcodec-dev cmake git-core
 
-    - name: Install Buildozer
-      run: |
-        pip install --upgrade pip
-        pip install buildozer cython
+      - name: Install Buildozer and dependencies
+        run: |
+          pip install --upgrade pip
+          pip install Cython virtualenv
+          pip install buildozer
 
-    - name: Install Android SDK & NDK
-      run: |
-        mkdir -p ~/.buildozer/android/platform
-        cd ~/.buildozer/android/platform
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
-        unzip -q cmdline-tools.zip
-        mkdir -p android-sdk/cmdline-tools/latest
-        mv cmdline-tools/* android-sdk/cmdline-tools/latest/
-        wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O ndk.zip
-        unzip -q ndk.zip
-        mv android-ndk-r25b android-ndk
+      - name: Download and install Android SDK cmdline-tools
+        run: |
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
+          unzip tools.zip -d temp
+          mv temp/cmdline-tools latest
+          rm -rf temp tools.zip
 
-    - name: Configure environment
-      run: |
-        echo "ANDROIDSDK=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-        echo "ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk" >> $GITHUB_ENV
-        echo "ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-        echo "$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        echo "$HOME/.buildozer/android/platform/android-sdk/platform-tools" >> $GITHUB_PATH
-        echo "$HOME/.buildozer/android/platform/android-sdk/build-tools/30.0.3" >> $GITHUB_PATH
+      - name: Set PATH for sdkmanager
+        run: echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
-    - name: Accept licenses and install SDK components
-      run: |
-        yes | sdkmanager --licenses || true
-        sdkmanager "platform-tools" "platforms;android-31" "build-tools;30.0.3"
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
 
-    - name: Build APK
-      run: |
-        buildozer android debug
+      - name: Install required Android packages
+        run: |
+          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+
+      - name: Clean previous builds
+        run: |
+          rm -rf .buildozer
+          rm -rf bin
+
+      - name: Build the APK
+        run: buildozer android debug
