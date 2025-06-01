@@ -1,4 +1,4 @@
-name: Build Kivy Android App
+name: Build Kivy Android App with Debug SDK Setup
 
 on:
   push:
@@ -13,70 +13,54 @@ jobs:
     env:
       ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
       ANDROID_HOME: ${{ github.workspace }}/android-sdk
+      PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/android-sdk/platform-tools:${{ env.PATH }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
       - name: Install OS dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            autoconf automake libtool \
-            libffi-dev libssl-dev build-essential zip unzip \
-            openjdk-11-jdk python3-pip \
-            libncurses-dev libstdc++6 zlib1g-dev \
-            libsqlite3-dev libjpeg-dev libfreetype6-dev \
-            pkg-config libgl1-mesa-dev libgles2-mesa-dev \
-            libgstreamer1.0-0 gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
-            gstreamer1.0-plugins-ugly gstreamer1.0-libav \
-            libmtdev-dev libtiff5-dev libjpeg8-dev \
-            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
-            libsdl2-ttf-dev libportmidi-dev libswscale-dev \
-            libavformat-dev libavcodec-dev cmake git-core
-
-      - name: Install Buildozer and dependencies
-        run: |
-          pip install --upgrade pip
-          pip install Cython virtualenv
-          pip install buildozer
+          sudo apt-get install -y unzip wget openjdk-11-jdk python3-pip
 
       - name: Download and install Android SDK cmdline-tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
-          unzip tools.zip -d temp
-          mv temp/cmdline-tools latest
-          rm -rf temp tools.zip
+          unzip tools.zip
+          mkdir -p latest
+          mv cmdline-tools/* latest/
+          rm -rf cmdline-tools tools.zip
 
-      - name: Add Android SDK tools to PATH
-        run: |
-          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> $GITHUB_PATH
-
-      - name: Update sdkmanager to latest version
-        run: sdkmanager --update
-
-      - name: Pre-accept Android licenses (manual trick)
+      - name: Accept Android SDK licenses manually
         run: |
           mkdir -p $ANDROID_SDK_ROOT/licenses
           echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
           echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
 
-      - name: Install required SDK packages including build-tools 36
+      - name: Update sdkmanager and install required packages
         run: |
+          sdkmanager --update
           sdkmanager --install "platform-tools" "platforms;android-31" "build-tools;36.0.0"
 
-      - name: Verify installed build-tools
-        run: ls -l $ANDROID_SDK_ROOT/build-tools
+      - name: Verify aidl presence and version
+        run: |
+          if [ -f "$ANDROID_SDK_ROOT/build-tools/36.0.0/aidl" ]; then
+            echo "Aidl found:"
+            $ANDROID_SDK_ROOT/build-tools/36.0.0/aidl --version
+          else
+            echo "Aidl NOT found!"
+            exit 1
+          fi
 
-      - name: Build the APK
-        run: buildozer android debug
+      - name: Install Python dependencies and Buildozer
+        run: |
+          pip install --upgrade pip
+          pip install Cython virtualenv buildozer
+
+      - name: Run Buildozer to build APK
+        run: |
+          buildozer android debug
