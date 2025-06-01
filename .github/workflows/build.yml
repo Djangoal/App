@@ -55,21 +55,18 @@ jobs:
           mv temp/cmdline-tools latest
           rm -rf temp tools.zip
 
-      - name: Set PATH for sdkmanager and tools
+      - name: Set PATH for sdkmanager
         run: |
           echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
           echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> $GITHUB_PATH
 
-      - name: Accept all Android SDK licenses before install
+      - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
-      - name: Install required Android SDK packages (API 36, build-tools 36.0.0)
+      - name: Install required Android packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-
-      - name: Accept all Android SDK licenses after install
-        run: yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-31" "build-tools;36.0.0"
 
       - name: Clean previous builds
         run: |
@@ -77,6 +74,9 @@ jobs:
           rm -rf ~/.buildozer
           rm -rf ~/.android
           rm -rf bin
+
+      - name: Prepare python-for-android
+        run: buildozer android debug --no-build
 
       - name: Build the APK
         run: buildozer android debug
