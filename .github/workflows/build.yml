@@ -62,16 +62,20 @@ jobs:
           echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> $GITHUB_PATH
 
       - name: Update sdkmanager
-        run: |
-          sdkmanager --update
-
-      - name: Install required Android packages (including build-tools 36)
-        run: |
-          yes | sdkmanager "platform-tools" "platforms;android-31" "build-tools;36.0.0"
+        run: sdkmanager --update
 
       - name: Accept all Android SDK licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Install required Android packages including build-tools 36
         run: |
-          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-31" "build-tools;36.0.0"
+
+      # Ne pas nettoyer les builds précédents pour éviter les erreurs liées à python-for-android
+      # - name: Clean previous builds
+      #   run: |
+      #     rm -rf .buildozer
+      #     rm -rf bin
 
       - name: Build the APK
         run: buildozer android debug
