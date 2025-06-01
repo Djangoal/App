@@ -51,13 +51,13 @@ android.sdk_path = $ANDROIDSDK
 android.arch = armeabi-v7a
 
 # (str) Android NDK API to use
-android.ndk_api = 33
+android.ndk_api = 25b
 
 # (int) Target API for Android
-android.api = 33
+android.api = 31
 
 # (str) Build tool version
-android.build_tools_version = 33.0.2
+android.build_tools_version = 30.0.3
 
 # (bool) Copy library instead of making a libpymodules.so
 copy_libs = 1
