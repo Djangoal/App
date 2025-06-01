@@ -68,13 +68,6 @@ jobs:
         run: |
           sdkmanager "platform-tools" "platforms;android-31" "build-tools;36.0.0"
 
-      - name: Clean previous builds
-        run: |
-          buildozer android clean
-          rm -rf ~/.buildozer
-          rm -rf ~/.android
-          rm -rf bin
-
       - name: Prepare python-for-android
         run: buildozer android debug --no-build
 
