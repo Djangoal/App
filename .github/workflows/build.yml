@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_SDK_ROOT: $HOME/.buildozer/android/platform/android-sdk
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
 
     steps:
       - name: Checkout repository
@@ -26,40 +26,49 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential zip unzip openjdk-11-jdk \
-            python3-pip libffi-dev libssl-dev \
-            libgl1-mesa-dev libgles2-mesa-dev \
-            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
-            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
-            libfreetype6-dev libjpeg-dev libtiff5-dev pkg-config cmake wget
+            autoconf automake libtool \
+            libffi-dev libssl-dev build-essential zip unzip \
+            openjdk-11-jdk python3-pip \
+            libncurses-dev libstdc++6 zlib1g-dev \
+            libsqlite3-dev libjpeg-dev libfreetype6-dev \
+            pkg-config libgl1-mesa-dev libgles2-mesa-dev \
+            libgstreamer1.0-0 gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-ugly gstreamer1.0-libav \
+            libmtdev-dev libtiff5-dev libjpeg8-dev \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
+            libsdl2-ttf-dev libportmidi-dev libswscale-dev \
+            libavformat-dev libavcodec-dev cmake git-core
 
-      - name: Install buildozer and Cython
+      - name: Install Buildozer and dependencies
         run: |
           pip install --upgrade pip
-          pip install buildozer Cython
+          pip install Cython virtualenv
+          pip install buildozer
 
-      - name: Download and extract Android SDK Command-line tools
+      - name: Download and install Android SDK cmdline-tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d tmp
-          mv tmp/cmdline-tools latest
-          rm -rf tmp
+          wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
+          unzip tools.zip -d temp
+          mv temp/cmdline-tools latest
+          rm -rf temp tools.zip
 
-      - name: Set PATH to access sdkmanager
-        run: |
-          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
+      - name: Set PATH for sdkmanager
+        run: echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
-      - name: Accept licenses and install SDK packages
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Install required Android packages
         run: |
-          sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
       - name: Clean previous builds
         run: |
           rm -rf .buildozer
           rm -rf bin
 
-      - name: Build the app
+      - name: Build the APK
         run: buildozer android debug
