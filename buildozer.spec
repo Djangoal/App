@@ -55,7 +55,7 @@ android.ndk = 23b
 android.api = 31
 
 # (str) Build tool version
-android.build_tools = 31.0.0
+android.build_tools = 36.0.0
 
 # (bool) Copy library instead of making a libpymodules.so
 copy_libs = 1
