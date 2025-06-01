@@ -17,58 +17,23 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-         python-version: 3.11
+          python-version: 3.11
 
       - name: Install OS dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            autoconf \
-            automake \
-            libtool \
-            libffi-dev \
-            libssl-dev \
-            build-essential \
-            zip unzip \
-            openjdk-11-jdk \
-            python3-pip \
-            libncurses6 \
-            libncurses5-dev \
-            libstdc++6 \
-            zlib1g-dev \
-            libsqlite3-dev \
-            libjpeg-dev \
-            libfreetype6-dev \
-            pkg-config \
-            libgl1-mesa-dev \
-            libgles2-mesa-dev \
-            libgstreamer1.0 \
-            gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good \
-            gstreamer1.0-plugins-bad \
-            gstreamer1.0-plugins-ugly \
-            gstreamer1.0-libav \
-            libmtdev-dev \
-            libffi-dev \
-            libssl-dev \
-            libtiff5-dev \
-            libjpeg8-dev \
-            libsdl2-dev \
-            libsdl2-image-dev \
-            libsdl2-mixer-dev \
-            libsdl2-ttf-dev \
-            libportmidi-dev \
-            libswscale-dev \
-            libavformat-dev \
-            libavcodec-dev \
-            libfreetype6-dev \
-            libgl1-mesa-dev \
-            libgles2-mesa-dev \
-            libgstreamer-plugins-base1.0-dev \
-            libgstreamer1.0-dev \
-            git-core \
-            build-essential \
-            cmake
+            autoconf automake libtool libffi-dev libssl-dev \
+            build-essential zip unzip openjdk-11-jdk python3-pip \
+            libstdc++6 zlib1g-dev libsqlite3-dev libjpeg-dev libfreetype6-dev \
+            pkg-config libgl1-mesa-dev libgles2-mesa-dev \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
+            libtiff5-dev libjpeg8-dev libmtdev-dev \
+            libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+            gstreamer1.0-libav cmake git-core
 
       - name: Install buildozer and Cython
         run: |
@@ -79,31 +44,23 @@ jobs:
         run: |
           rm -rf .buildozer
           rm -rf bin
-      - name: Install Android SDK & dependencies
-        run: |
-          sudo apt-get install -y wget unzip
-          mkdir -p ~/.android/ && touch ~/.android/repositories.cfg
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip -d cmdline-tools
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-          mv cmdline-tools/cmdline-tools/* $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/
-          yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
-            "platform-tools" "platforms;android-31" "build-tools;31.0.0"
-      - name: Export environment variables
-        run: |
-          echo "export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "export PATH=$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
-          echo "export PATH=$HOME/.buildozer/android/platform/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
 
-      - name: Install Android Command Line Tools
+      - name: Install Android Command Line Tools and SDK
         run: |
           mkdir -p $HOME/.buildozer/android/platform
           cd $HOME/.buildozer/android/platform
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip
-          mkdir -p android-sdk/cmdline-tools
-          mv cmdline-tools android-sdk/cmdline-tools/latest
-          yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=android-sdk "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.1.8937393"
+          unzip cmdline-tools.zip -d cmdline-tools
+          mkdir -p android-sdk/cmdline-tools/latest
+          mv cmdline-tools/cmdline-tools/* android-sdk/cmdline-tools/latest/
+          
+          export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.1.8937393"
 
       - name: Build the app
-        run: buildozer android debug
+        run: |
+          export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          buildozer android debug
