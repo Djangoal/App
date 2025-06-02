@@ -54,5 +54,5 @@ jobs:
       - name: Build the APK with Buildozer
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-          buildozer android clean
+          
           buildozer android debug
