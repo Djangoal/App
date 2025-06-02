@@ -2,9 +2,9 @@ name: Build Kivy Android App
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -18,33 +18,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: Install OS dependencies
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            autoconf automake libtool \
-            libffi-dev libssl-dev build-essential zip unzip \
-            openjdk-11-jdk python3-pip \
-            libncurses-dev libstdc++6 zlib1g-dev \
-            libsqlite3-dev libjpeg-dev libfreetype6-dev \
-            pkg-config libgl1-mesa-dev libgles2-mesa-dev \
-            libgstreamer1.0-0 gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
-            gstreamer1.0-plugins-ugly gstreamer1.0-libav \
-            libmtdev-dev libtiff5-dev libjpeg8-dev \
-            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
-            libsdl2-ttf-dev libportmidi-dev libswscale-dev \
-            libavformat-dev libavcodec-dev cmake git-core
-
-      - name: Install Buildozer and dependencies
-        run: |
+          sudo apt update
+          sudo apt install -y python3-pip zip unzip openjdk-17-jdk
           pip install --upgrade pip
-          pip install Cython virtualenv
           pip install buildozer
 
       - name: Download and install Android SDK cmdline-tools
@@ -56,13 +34,20 @@ jobs:
           mv temp/cmdline-tools latest
           rm -rf temp tools.zip
 
-      - name: Accept Android SDK licenses and install packages
+      - name: Inject Android SDK licenses
         run: |
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          mkdir -p $ANDROID_SDK_ROOT/licenses
+          cat << EOF > $ANDROID_SDK_ROOT/licenses/android-sdk-license
+          8933bad161af4178b1185d1a37fbf41ea5269c55
+          d56f5187479451eabf01fb78af6dfcb131a6481e
+          24333f8a63b6825ea9c5514f83c2829b004d1fee
+          EOF
 
-      - name: Build the APK
+      - name: Install Android SDK packages
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          yes | sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+
+      - name: Build the APK with Buildozer
+        run: |
           buildozer android debug
