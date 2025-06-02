@@ -2,9 +2,9 @@ name: Build Kivy Android App
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -18,35 +18,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y zip unzip openjdk-17-jdk python3-pip libncurses5
-
-      - name: Install Python dependencies
-        run: |
+          sudo apt install -y python3-pip zip unzip openjdk-17-jdk
           pip install --upgrade pip
-          pip install cython buildozer
+          pip install buildozer
 
-      - name: Setup Android SDK (licenses workaround)
+      - name: Download and install Android SDK cmdline-tools
         run: |
-          mkdir -p $ANDROID_HOME/licenses
-          cat <<EOF > $ANDROID_HOME/licenses/android-sdk-license
-          8933bad161af4178b1185d1a37fbf41ea5269c55
-          d56f5187479451eabf01fb78af6dfcb131a6481e
-          24333f8a63b6825ea9c5514f83c2829b004d1fee
-          EOF
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O tools.zip
+          unzip tools.zip -d temp
+          mv temp/cmdline-tools latest
+          rm -rf temp tools.zip
 
-      - name: Initialize Buildozer (if needed)
+      - name: Inject Android SDK licenses
         run: |
-          if [ ! -f buildozer.spec ]; then
-            buildozer init
-          fi
+          mkdir -p $ANDROID_SDK_ROOT/licenses
+          cat << EOF > $ANDROID_SDK_ROOT/licenses/android-sdk-license
+8933bad161af4178b1185d1a37fbf41ea5269c55
+d56f5187479451eabf01fb78af6dfcb131a6481e
+24333f8a63b6825ea9c5514f83c2829b004d1fee
+EOF
 
-      - name: Build Android APK
-        run: buildozer android debug
+      - name: Install Android SDK packages
+        run: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          yes | sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+
+      - name: Build the APK with Buildozer
+        run: |
+          buildozer android debug
