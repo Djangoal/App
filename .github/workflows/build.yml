@@ -23,7 +23,7 @@ jobs:
           sudo apt update
           sudo apt install -y python3-pip zip unzip openjdk-17-jdk
           pip install --upgrade pip
-          pip install buildozer
+          pip install buildozer Cython
 
       - name: Download and install Android SDK cmdline-tools
         run: |
@@ -38,10 +38,10 @@ jobs:
         run: |
           mkdir -p $ANDROID_SDK_ROOT/licenses
           cat << EOF > $ANDROID_SDK_ROOT/licenses/android-sdk-license
-          8933bad161af4178b1185d1a37fbf41ea5269c55
-          d56f5187479451eabf01fb78af6dfcb131a6481e
-          24333f8a63b6825ea9c5514f83c2829b004d1fee
-          EOF
+8933bad161af4178b1185d1a37fbf41ea5269c55
+d56f5187479451eabf01fb78af6dfcb131a6481e
+24333f8a63b6825ea9c5514f83c2829b004d1fee
+EOF
 
       - name: Install Android SDK packages
         run: |
@@ -51,3 +51,15 @@ jobs:
       - name: Build the APK with Buildozer
         run: |
           buildozer android debug
+
+      - name: Vérifier les fichiers générés
+        run: ls -lh bin/
+
+      - name: Créer une release GitHub et publier l’APK
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "Mon Budget Perso - Build automatique"
+          tag_name: v${{ github.run_number }}
+          files: bin/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
