@@ -18,12 +18,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt update
           sudo apt install -y python3-pip zip unzip openjdk-17-jdk
           pip install --upgrade pip
-          pip install buildozer
           pip install buildozer cython
 
       - name: Download and install Android SDK cmdline-tools
@@ -35,7 +34,7 @@ jobs:
           mv temp/cmdline-tools latest
           rm -rf temp tools.zip
 
-      - name: Inject Android SDK licenses
+      - name: Accept Android SDK licenses
         run: |
           mkdir -p $ANDROID_SDK_ROOT/licenses
           cat << EOF > $ANDROID_SDK_ROOT/licenses/android-sdk-license
@@ -48,8 +47,12 @@ jobs:
       - name: Install Android SDK packages
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-          yes | sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          sdkmanager --sdk_root=${ANDROID_SDK_ROOT} \
+            "platform-tools" \
+            "platforms;android-31" \
+            "build-tools;36.0.0"
 
       - name: Build the APK with Buildozer
         run: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
           buildozer android debug
