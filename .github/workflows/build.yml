@@ -12,7 +12,6 @@ jobs:
     env:
       ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
       ANDROID_HOME: ${{ github.workspace }}/android-sdk
-      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
     steps:
       - name: Checkout repository
@@ -25,7 +24,7 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
-      - name: Download and install Android SDK cmdline-tools
+      - name: Download Android SDK Command-line tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
@@ -34,27 +33,24 @@ jobs:
           mv temp/cmdline-tools latest
           rm -rf temp tools.zip
 
-      - name: Set PATH for sdkmanager
-        run: |
-          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
+      - name: Add SDK manager to PATH
+        run: echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
-      - name: Accept Android SDK licenses
+      - name: Accept Android SDK Licenses
         run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
+          yes | sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
 
-      - name: Install specific Android SDK packages
+      - name: Install Android SDK Build-Tools 36.0.0
         run: |
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} \
+          sdkmanager \
+            --sdk_root=${ANDROID_SDK_ROOT} \
             "platform-tools" \
             "platforms;android-31" \
             "build-tools;36.0.0"
 
-      - name: Create buildozer.spec if not exists
-        run: |
-          if [ ! -f buildozer.spec ]; then
-            buildozer init
-          fi
+      - name: Initialize Buildozer
+        run: buildozer init
 
       - name: Build APK
-        run: buildozer android debug
+        run: |
+          buildozer android debug
