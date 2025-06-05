@@ -46,12 +46,11 @@ jobs:
         sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;36.0.0"
         yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
 
-    - name: Download and copy Android SDK licenses
+    - name: Create Android SDK licenses
       run: |
         mkdir -p $HOME/android-sdk/licenses
-        wget https://raw.githubusercontent.com/machine-learning-apps/android-sdk-licenses/master/licenses/android-sdk-license -O $HOME/android-sdk/licenses/android-sdk-license
-        wget https://raw.githubusercontent.com/machine-learning-apps/android-sdk-licenses/master/licenses/android-sdk-preview-license -O $HOME/android-sdk/licenses/android-sdk-preview-license
-        wget https://raw.githubusercontent.com/machine-learning-apps/android-sdk-licenses/master/licenses/google-gdk-license -O $HOME/android-sdk/licenses/google-gdk-license
+        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/android-sdk/licenses/android-sdk-license
+        echo "84831b9409646a918e30573bab4c9c91346d8abd" > $HOME/android-sdk/licenses/android-sdk-preview-license
 
     - name: Build APK with Buildozer
       run: |
