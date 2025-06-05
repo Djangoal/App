@@ -55,10 +55,12 @@ jobs:
 
     - name: Enforce Android 34 only (fail if other versions are installed)
       run: |
-        if sdkmanager --list | grep -q "platforms;android-[^34]"; then
-          echo "❌ Une version autre que 34 est installée. Abandon."
-          exit 1
-        fi
+       OTHER_VERSIONS=$(sdkmanager --list | grep -o "platforms;android-[0-9]*" | grep -v "platforms;android-34" || true)
+       if [ -n "$OTHER_VERSIONS" ]; then
+       echo "❌ D'autres versions Android sont installées :"
+       echo "$OTHER_VERSIONS"
+       exit 1
+       fi
 
     - name: Build APK
       run: buildozer android debug
