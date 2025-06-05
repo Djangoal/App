@@ -43,6 +43,24 @@ jobs:
         sdkmanager --sdk_root=$HOME/android-sdk \
           "platforms;android-36" \
           "build-tools;36.0.0"
+    - name: Forcer acceptation des licences avec expect
+      run: |
+        sudo apt-get install -y expect
+        expect <<EOF
+        set timeout -1
+        spawn sdkmanager --sdk_root=$HOME/android-sdk --licenses
+        expect {
+          "Review licenses that have not been accepted (y/N)?" {
+            send "y\r"
+            exp_continue
+          }
+          "Accept?" {
+            send "y\r"
+            exp_continue
+          }
+          eof
+        }
+        EOF
 
     - name: Configure buildozer to use API 36
       run: |
