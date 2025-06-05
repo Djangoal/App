@@ -55,3 +55,8 @@ jobs:
     - name: Install SDK packages
       run: |
         sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;36.0.0"
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: my-android-apk
+        path: bin/*.apk
