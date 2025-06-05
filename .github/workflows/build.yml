@@ -50,13 +50,13 @@ jobs:
       run: |
         sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" \
-          "platforms;android-34" \
-          "build-tools;34.0.0"
+          "platforms;android-36" \
+          "build-tools;36.0.0"
 
     - name: Uninstall all Android platforms except 34
       run: |
         if [ -d "$HOME/android-sdk/platforms" ]; then
-          INSTALLED=$(ls $HOME/android-sdk/platforms | grep -v "android-34" || true)
+          INSTALLED=$(ls $HOME/android-sdk/platforms | grep -v "android-36" || true)
           for platform in $INSTALLED; do
             echo "❌ Désinstallation : $platform"
             sdkmanager --sdk_root=$HOME/android-sdk --uninstall "platforms;$platform"
