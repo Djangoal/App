@@ -19,9 +19,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip 
-        libncurses-devpip 
-        install --upgrade pip
+        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses-dev
+        pip install --upgrade pip
         pip install cython virtualenv
         pip install git+https://github.com/kivy/python-for-android.git
 
@@ -51,7 +50,7 @@ jobs:
         python3 -m venv venv
         source venv/bin/activate
         pip install cython
-        p4a apk --private . \
+        python3 -m pythonforandroid.toolchain apk --private . \
           --package=org.example.monapp \
           --name="MonApp" \
           --version=0.1 \
