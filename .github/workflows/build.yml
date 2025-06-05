@@ -37,6 +37,9 @@ jobs:
         unzip cmdline-tools.zip
         mv cmdline-tools latest
         rm cmdline-tools.zip
+    - name: Accept Android SDK licenses
+      run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+  
 
     - name: Set ANDROID_SDK_ROOT and add tools to PATH
       run: |
