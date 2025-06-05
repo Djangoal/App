@@ -1,7 +1,7 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Exécution manuelle via GitHub interface
 
 jobs:
   build:
@@ -46,22 +46,24 @@ jobs:
     - name: Accept Android SDK licenses
       run: yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
 
-    - name: Install ONLY Android 34 SDK packages
+    - name: Install SDK packages
       run: |
         sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" \
           "platforms;android-34" \
           "build-tools;34.0.0"
 
-    - name: Enforce Android 34 only (fail if other versions are installed)
+    - name: Uninstall all Android platforms except 34
       run: |
-       INSTALLED_PLATFORMS_DIR="$HOME/android-sdk/platforms"
-       OTHER_VERSIONS=$(ls "$INSTALLED_PLATFORMS_DIR" | grep -v "android-34" || true)
-       if [ -n "$OTHER_VERSIONS" ]; then
-       echo "❌ D'autres versions Android sont installées :"
-       echo "$OTHER_VERSIONS"
-       exit 1
-       fi
+        if [ -d "$HOME/android-sdk/platforms" ]; then
+          INSTALLED=$(ls $HOME/android-sdk/platforms | grep -v "android-34" || true)
+          for platform in $INSTALLED; do
+            echo "❌ Désinstallation : $platform"
+            sdkmanager --sdk_root=$HOME/android-sdk --uninstall "platforms;$platform"
+          done
+        else
+          echo "Répertoire platforms inexistant, rien à désinstaller."
+        fi
 
     - name: Build APK
       run: buildozer android debug
