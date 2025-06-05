@@ -61,7 +61,8 @@ jobs:
       run: buildozer android debug
 
     - name: Upload APK artifact
-    - uses: actions/upload-artifact@v4
+      uses: 
+       actions/upload-artifact@v4
       with:
         name: myapp-debug-apk
         path: ./bin/android/debug/myapp-0.1-debug.apk  # adapte le chemin selon ton APK généré
