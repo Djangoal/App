@@ -44,13 +44,17 @@ jobs:
     - name: Install SDK packages
       run: |
         yes | sdkmanager --sdk_root=$HOME/android-sdk --channel=3 \
-          "platform-tools" "platforms;android-34" "build-tools;36.0.0"
+          "platform-tools" "platforms;android-33" "build-tools;36.0.0"
 
-    - name: Manually accept Android SDK licenses
+    - name: Download and copy Android SDK licenses
       run: |
         mkdir -p $HOME/android-sdk/licenses
-        echo -n "8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/android-sdk/licenses/android-sdk-license
-        echo -n "d56f5187479451eabf01fb78af6dfcb131a6481e" > $HOME/android-sdk/licenses/android-sdk-preview-license
+        wget https://raw.githubusercontent.com/react-native-community/react-native-google-signin/master/android/licenses/android-sdk-license -O $HOME/android-sdk/licenses/android-sdk-license
+        wget https://raw.githubusercontent.com/react-native-community/react-native-google-signin/master/android/licenses/android-sdk-preview-license -O $HOME/android-sdk/licenses/android-sdk-preview-license
+        wget https://raw.githubusercontent.com/react-native-community/react-native-google-signin/master/android/licenses/google-gdk-license -O $HOME/android-sdk/licenses/google-gdk-license
+
+    - name: Verify licenses
+      run: ls -l $HOME/android-sdk/licenses
 
     - name: Build APK with Buildozer
       run: |
