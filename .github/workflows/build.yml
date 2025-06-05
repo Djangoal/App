@@ -49,7 +49,9 @@ jobs:
       run: |
         python3 -m venv venv
         source venv/bin/activate
+        pip install --upgrade pip
         pip install cython
+        pip install git+https://github.com/kivy/python-for-android.git
         python3 -m pythonforandroid.toolchain apk --private . \
           --package=org.example.monapp \
           --name="MonApp" \
