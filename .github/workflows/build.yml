@@ -8,9 +8,9 @@ before_cache:
 
 cache:
  directories:
- -$HOME/.gradle/caches/
- -$HOME/.gradle/wrapper/
-
+  -$HOME/.gradle/caches/
+  -$HOME/.gradle/wrapper/
+  
 env:
  global:
  - ANDROID_API=28
