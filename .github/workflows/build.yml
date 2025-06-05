@@ -55,7 +55,8 @@ jobs:
 
     - name: Enforce Android 34 only (fail if other versions are installed)
       run: |
-       OTHER_VERSIONS=$(sdkmanager --list | grep -o "platforms;android-[0-9]*" | grep -v "platforms;android-34" || true)
+       INSTALLED_PLATFORMS_DIR="$HOME/android-sdk/platforms"
+       OTHER_VERSIONS=$(ls "$INSTALLED_PLATFORMS_DIR" | grep -v "android-34" || true)
        if [ -n "$OTHER_VERSIONS" ]; then
        echo "❌ D'autres versions Android sont installées :"
        echo "$OTHER_VERSIONS"
