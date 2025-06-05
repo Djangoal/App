@@ -1,46 +1,88 @@
 [app]
-
-# (autres paramètres de ton app à compléter ci-dessous)
-
+# (str) Title of your application
 title = MonApp
+
+# (str) Package name
 package.name = monapp
-package.domain = org.monorganisation
+
+# (str) Package domain (unique, usually your own domain)
+package.domain = org.example
+
+# (str) Source code where the main.py lives
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas
-version = 0.1
-requirements = python3,kivy
-orientation = portrait
-fullscreen = 1
 
-[buildozer]
+# (str) Main .py file to use as the main entry point for your app
+source.main = main.py
 
-log_level = 2
-warn_on_root = 1
-
-[app]
-
-# --- APIs Android strictement fixées à 34 ---
-android.api = 34
-android.minapi = 34
-android.ndk_api = 34
-
-# --- NDK recommandé compatible ---
-android.ndk = 23b
-
-# --- Architecture ---
-android.archs = armeabi-v7a, arm64-v8a
-
-# --- Permissions (exemple à adapter) ---
+# (list) Permissions
 android.permissions = INTERNET
 
-# --- SDK dir personnalisé si besoin ---
-# android.sdk_path = /chemin/vers/android-sdk
+# (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
+orientation = portrait
 
-# --- NDK dir personnalisé si besoin ---
-# android.ndk_path = /chemin/vers/android-ndk
+# (list) Application requirements
+requirements = python3,kivy
 
-# --- Enlever les splash screens si non nécessaires ---
-# android.presplash_color = #FFFFFF
+# (str) Custom source folders for requirements
+# (Separate multiple paths with commas)
+# requirements.source =
 
-# --- Supprimer si non utilisé ---
-# android.enable_androidx = 1
+# (str) Android NDK API to use (must be set to 34)
+android.api = 34
+
+# (str) Android NDK version to use
+android.ndk = 25b
+
+# (str) Android SDK version to use (optional, match api)
+android.sdk = 34
+
+# (str) Android entry point
+android.entrypoint = org.kivy.android.PythonActivity
+
+# (str) Android app theme, supported themes: 'light', 'dark'
+android.theme = light
+
+# (bool) Indicate if the application should be fullscreen or not
+fullscreen = 0
+
+# (str) Presplash of the application
+# presplash.filename = %(source.dir)s/data/presplash.png
+
+# (str) Icon of the application
+# icon.filename = %(source.dir)s/data/icon.png
+
+# (str) Supported Android architectures
+android.archs = armeabi-v7a, arm64-v8a
+
+# (bool) Copy library instead of making a libpymodules.so
+copy_libs = 1
+
+# (bool) Enable AndroidX support. Enable when using native android dependencies
+android.enable_androidx = True
+
+# (str) Bootstrap to use for android builds (python3, sdl2 or webview)
+android.bootstrap = sdl2
+
+# (str) Directory to store the APK
+bin.dir = bin
+
+# (str) Directory to store the buildozer spec file
+buildozer.dir = .
+
+# (str) Path to buildozer requirements (e.g. for shared modules)
+# buildozer.requirements.path =
+
+# (str) Package version
+version = 1.0
+
+# (str) Application version code (used in Android)
+android.version_code = 1
+
+# (str) Application version (used in Android)
+android.version_name = 1.0
+
+# (str) Command to run before packaging (e.g. clean up, generate assets)
+# before_build =
+
+# (str) Command to run after packaging
+# after_build =
