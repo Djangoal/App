@@ -1,4 +1,4 @@
-name: Build Android APK with SDK 36
+name: Build APK with python-for-android
 
 on:
   workflow_dispatch:
@@ -11,68 +11,58 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Install system dependencies
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip python3-setuptools python3-wheel expect
+        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses5
+        pip install --upgrade pip
+        pip install cython virtualenv
+        pip install git+https://github.com/kivy/python-for-android.git
 
-    - name: Install Buildozer
-      run: pip install --upgrade cython buildozer
+    - name: Set environment paths
+      run: |
+        echo "SDK_DIR=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "NDK_DIR=$HOME/android-ndk" >> $GITHUB_ENV
 
-    - name: Setup Android SDK
+    - name: Download Android SDK and NDK
       run: |
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        cd $HOME/android-sdk/cmdline-tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-        unzip tools.zip
-        mv cmdline-tools latest
-        rm tools.zip
+        mkdir -p $SDK_DIR $NDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+        unzip cmdline-tools.zip -d $SDK_DIR
+        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
+        mkdir -p $SDK_DIR/cmdline-tools/latest
+        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
 
-    - name: Set environment variables
-      run: |
-        echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-
-    - name: Accept Android SDK Licenses
-      run: |
-        yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
-    
-    - name: Forcer acceptation des licences avec expect
-      run: |
-        sudo apt-get install -y expect
-        expect <<EOF
-        set timeout -1
-        spawn sdkmanager --sdk_root=$HOME/android-sdk --licenses
-        expect {
-          "Review licenses that have not been accepted (y/N)?" {
-            send "y\r"
-            exp_continue
-          }
-          "Accept?" {
-            send "y\r"
-            exp_continue
-          }
-          eof
-        }
-        EOF
-    - name: Install only Android SDK 36
-      run: |
-        sdkmanager --sdk_root=$HOME/android-sdk \
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+          "platform-tools" \
           "platforms;android-36" \
-          "build-tools;36.0.0"
-    
-
-    - name: Configure buildozer to use API 36
-      run: |
-        sed -i 's/^android.api =.*/android.api = 36/' buildozer.spec
-        sed -i 's/^android.build_tools_version =.*/android.build_tools_version = 36.0.0/' buildozer.spec
+          "build-tools;36.0.0" \
+          "ndk;25.2.9519653"
 
     - name: Build APK
-      run: buildozer android debug
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install cython
+        p4a apk --private . \
+          --package=org.example.monapp \
+          --name="MonApp" \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --requirements=python3,kivy \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$SDK_DIR/ndk/25.2.9519653 \
+          --android_api=36 \
+          --build_dir=./build
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: apk
-        path: bin/*.apk
+        name: monapp-apk
+        path: build/*.apk
