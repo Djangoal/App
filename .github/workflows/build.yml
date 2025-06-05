@@ -37,12 +37,7 @@ jobs:
     - name: Accept Android SDK Licenses
       run: |
         yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
-
-    - name: Install only Android SDK 36
-      run: |
-        sdkmanager --sdk_root=$HOME/android-sdk \
-          "platforms;android-36" \
-          "build-tools;36.0.0"
+    
     - name: Forcer acceptation des licences avec expect
       run: |
         sudo apt-get install -y expect
@@ -61,6 +56,12 @@ jobs:
           eof
         }
         EOF
+    - name: Install only Android SDK 36
+      run: |
+        sdkmanager --sdk_root=$HOME/android-sdk \
+          "platforms;android-36" \
+          "build-tools;36.0.0"
+    
 
     - name: Configure buildozer to use API 36
       run: |
