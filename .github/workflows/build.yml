@@ -1,8 +1,7 @@
 name: Build Android APK
 
-# Lancement manuel uniquement (tu peux l'enlever si tu veux lancer automatiquement sur chaque push)
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Exécution manuelle via GitHub interface
 
 jobs:
   build:
@@ -21,9 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          python3-pip python3-setuptools python3-wheel \
-          unzip openjdk-17-jdk wget zip expect git
+        sudo apt-get install -y python3-pip python3-setuptools python3-wheel unzip openjdk-17-jdk wget zip expect
         pip3 install --upgrade cython buildozer
 
     - name: Download Android SDK cmdline-tools
@@ -41,7 +38,26 @@ jobs:
         echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
         echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-    - name: Create empty repositories.cfg
-      run: mkdir -p $HOME/.android && touch $HOME/.android/repositories.cfg
+    - name: Create repositories.cfg
+      run: |
+        mkdir -p $HOME/.android
+        touch $HOME/.android/repositories.cfg
 
-    - name: Accept Android SDK
+    - name: Accept Android SDK licenses
+      run: yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
+
+    - name: Install SDK packages
+      run: |
+        sdkmanager --sdk_root=$HOME/android-sdk \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;34.0.0"
+
+    - name: Build APK
+      run: buildozer android debug
+
+    - name: Upload APK to GitHub Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: bin/*.apk
