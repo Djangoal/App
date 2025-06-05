@@ -1,7 +1,7 @@
-name: Build Android APK
+name: Build Android APK with SDK 36
 
 on:
-  workflow_dispatch:  # Exécution manuelle via l’interface GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -38,28 +38,19 @@ jobs:
         echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
         echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-    - name: Créer repositories.cfg
-      run: |
-        mkdir -p $HOME/.android
-        touch $HOME/.android/repositories.cfg
+    - name: Accept all SDK licenses
+      run: yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
 
-    - name: Forcer acceptation manuelle des licences (build-tools 36)
+    - name: Install only SDK 36 (platform + build-tools)
       run: |
-        mkdir -p $HOME/.android/licenses
-        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/.android/licenses/android-sdk-license
-        echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $HOME/.android/licenses/android-sdk-license
-        echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> $HOME/.android/licenses/android-sdk-license
-        echo "e9acab5b5fbb560a03500a0a19c8d6bba236b4b1" >> $HOME/.android/licenses/android-sdk-license
-
-    - name: Installer Android SDK platform et build-tools 36
-      run: |
-        yes | sdkmanager --sdk_root=$HOME/android-sdk \
-          "platform-tools" \
+        sdkmanager --sdk_root=$HOME/android-sdk \
           "platforms;android-36" \
           "build-tools;36.0.0"
 
-    - name: Ré-accepter les licences SDK (sécurité)
-      run: yes | sdkmanager --licenses
+    - name: Uninstall all other Android platforms and build-tools
+      run: |
+        sdkmanager --list | grep -o "platforms;android-[0-9]*" | grep -v "platforms;android-36" | xargs -r sdkmanager --uninstall || true
+        sdkmanager --list | grep -o "build-tools;[0-9.]*" | grep -v "build-tools;36.0.0" | xargs -r sdkmanager --uninstall || true
 
     - name: Build APK
       run: buildozer android debug
