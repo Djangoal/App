@@ -1,10 +1,7 @@
 name: Build Android APK
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -44,25 +41,25 @@ jobs:
       run: mkdir -p $HOME/.android && touch $HOME/.android/repositories.cfg
 
     - name: Accept Android SDK licenses
-      run: |
-        expect -c '
-        spawn sdkmanager --sdk_root=$HOME/android-sdk --licenses
-        set timeout -1
-        expect {
-          "Accept?" { send "y\r"; exp_continue }
-          eof
-        }'
+      run: yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
 
     - name: Install SDK packages
       run: |
-        sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;36.0.0"
+        sdkmanager --sdk_root=$HOME/android-sdk \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;34.0.0"
 
-    - name: Build APK with Buildozer
+    - name: Initialize buildozer
+      run: |
+        buildozer init
+        sed -i 's/^# *android.sdk_path.*/android.sdk_path = \$HOME\/android-sdk/' buildozer.spec
+
+    - name: Build the APK
       run: buildozer android debug
 
-    - name: Upload APK artifact
-      uses: 
-       actions/upload-artifact@v4
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
       with:
-        name: myapp-debug-apk
-        path: ./bin/android/debug/myapp-0.1-debug.apk  # adapte le chemin selon ton APK généré
+        name: app-debug-apk
+        path: ./bin/*.apk
