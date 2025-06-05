@@ -1,7 +1,7 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Exécution manuelle via l’interface GitHub
 
 jobs:
   build:
@@ -20,8 +20,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3-pip python3-setuptools python3-wheel unzip zip wget
-        pip install --upgrade cython buildozer
+        sudo apt-get install -y python3-pip python3-setuptools python3-wheel unzip openjdk-17-jdk wget zip expect
+        pip3 install --upgrade cython buildozer
 
     - name: Download Android SDK cmdline-tools
       run: |
@@ -38,28 +38,28 @@ jobs:
         echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
         echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-    - name: Create repositories.cfg
+    - name: Créer repositories.cfg
       run: |
         mkdir -p $HOME/.android
         touch $HOME/.android/repositories.cfg
 
-    - name: Install Android SDK packages (API 36)
+    - name: Forcer acceptation manuelle des licences (build-tools 36)
+      run: |
+        mkdir -p $HOME/.android/licenses
+        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/.android/licenses/android-sdk-license
+        echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $HOME/.android/licenses/android-sdk-license
+        echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> $HOME/.android/licenses/android-sdk-license
+        echo "e9acab5b5fbb560a03500a0a19c8d6bba236b4b1" >> $HOME/.android/licenses/android-sdk-license
+
+    - name: Installer Android SDK platform et build-tools 36
       run: |
         yes | sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" \
           "platforms;android-36" \
           "build-tools;36.0.0"
 
-    - name: Force accept licenses
-      run: |
-        mkdir -p $HOME/.android/licenses
-        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/.android/licenses/android-sdk-license
-        echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > $HOME/.android/licenses/android-sdk-preview-license
-
-    - name: Confirm SDK installed
-      run: |
-        sdkmanager --list | grep "platforms;android-36"
-        sdkmanager --list | grep "build-tools;36.0.0"
+    - name: Ré-accepter les licences SDK (sécurité)
+      run: yes | sdkmanager --licenses
 
     - name: Build APK
       run: buildozer android debug
