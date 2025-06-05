@@ -1,6 +1,6 @@
 [app]
 # (str) Title of your application
-title = MonApp
+title = Mon budget perso
 
 # (str) Package name
 package.name = monapp
@@ -28,7 +28,9 @@ requirements = python3,kivy
 # requirements.source =
 
 # (str) Android NDK API to use (must be set to 34)
-android.api = 34
+android.api = 36
+android.minapi = 21
+android.build_tools_version = 36.0.0
 
 # (str) Android NDK version to use
 android.ndk = 25b
