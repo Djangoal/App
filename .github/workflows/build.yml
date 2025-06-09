@@ -20,7 +20,6 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
         sudo apt-get update -y -qqq --fix-missing && apt-get install -y -qqq autoconf libtool > /dev/null
           build-essential \
           zip unzip openjdk-17-jdk python3-pip \
