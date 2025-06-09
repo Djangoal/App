@@ -67,6 +67,7 @@ jobs:
           --version=0.1 \
           --bootstrap=sdl2 \
           --requirements=python3,kivy \
+          --arch=armeabi-v7a,arm64-v8a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$SDK_DIR/ndk/25.2.9519653 \
           --android_api=36 \
