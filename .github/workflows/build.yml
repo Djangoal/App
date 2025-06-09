@@ -7,36 +7,40 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      SDK_DIR: ${{ github.workspace }}/android-sdk
+      NDK_DIR: ${{ github.workspace }}/android-ndk
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+        sudo apt-get install -y \
+          zip unzip openjdk-17-jdk python3-pip \
+          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+
+    - name: Setup Python and install python-for-android
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
         python3 -m pip install --upgrade pip
-        pip install cython virtualenv
+        pip install cython
         pip install git+https://github.com/kivy/python-for-android.git
 
     - name: Download Android SDK and NDK
       run: |
-        export SDK_DIR=$HOME/android-sdk
-        export NDK_DIR=$HOME/android-ndk
-        mkdir -p "$SDK_DIR" "$NDK_DIR"
+        mkdir -p $SDK_DIR $NDK_DIR
         curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-        unzip cmdline-tools.zip -d "$SDK_DIR"
-        mv "$SDK_DIR/cmdline-tools" "$SDK_DIR/cmdline-tools-temp"
-        mkdir -p "$SDK_DIR/cmdline-tools/latest"
-        mv "$SDK_DIR/cmdline-tools-temp"/* "$SDK_DIR/cmdline-tools/latest"
+        unzip cmdline-tools.zip -d $SDK_DIR
+        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
+        mkdir -p $SDK_DIR/cmdline-tools/latest
+        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
 
-        yes | "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses
-        "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_DIR" \
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" \
           "platforms;android-36" \
           "build-tools;36.0.0" \
@@ -44,19 +48,13 @@ jobs:
 
     - name: Prepare build environment
       run: |
-        export SDK_DIR=$HOME/android-sdk
-        export NDK_DIR=$HOME/android-ndk
-        python3 -m venv venv
         source venv/bin/activate
-        pip install cython
-
+        # Nettoyage cache autoreconf si besoin
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
 
     - name: Build APK
       run: |
-        export SDK_DIR=$HOME/android-sdk
-        export NDK_DIR=$HOME/android-ndk
         source venv/bin/activate
         p4a apk --private . \
           --package=org.example.monapp \
@@ -65,8 +63,8 @@ jobs:
           --bootstrap=sdl2 \
           --requirements=python3,kivy \
           --arch=armeabi-v7a,arm64-v8a \
-          --sdk_dir="$SDK_DIR" \
-          --ndk_dir="$NDK_DIR/ndk/25.2.9519653" \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$NDK_DIR/ndk/25.2.9519653 \
           --android_api=36 \
           --build_dir=./build
 
