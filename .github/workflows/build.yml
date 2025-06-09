@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
        sudo apt-get update
-       sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool automake
+       sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake
        pip install --upgrade pip
        pip install cython virtualenv
        pip install git+https://github.com/kivy/python-for-android.git
