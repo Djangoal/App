@@ -54,16 +54,16 @@ jobs:
     - name: Build APK
       run: |
         ./venv/bin/p4a apk --private . \
-          --package=org.example.monapp \
-          --name="MonApp" \
-          --version=0.1 \
-          --bootstrap=sdl2 \
-          --requirements=python3,kivy \
-          --arch=armeabi-v7a,arm64-v8a \
-          --sdk_dir=$SDK_DIR \
-          --ndk_dir=$NDK_DIR \
-          --android_api=36 \
-          --build_dir=./build
+        --package=org.example.monapp \
+        --name="MonApp" \
+        --version=0.1 \
+        --bootstrap=sdl2 \
+        --requirements=python3,kivy \
+        --arch=armeabi-v7a,arm64-v8a \
+        --sdk_dir=$SDK_DIR \
+        --ndk_dir=$NDK_DIR \
+        --android_api=36 \
+        --build_dir=./build
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
