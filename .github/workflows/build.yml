@@ -9,7 +9,7 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      # Pointage vers le dossier parent contenant les versions NDK, pas la version elle-même
+      # Doit pointer vers le dossier parent contenant les versions NDK, pas vers la version spécifique
       NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
@@ -21,6 +21,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
+          build-essential \
           zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
@@ -52,6 +53,9 @@ jobs:
         # Nettoyage cache autoreconf si besoin
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
+        find . -name "configure" -delete
+        find . -name "Makefile.in" -delete
+        find . -name "config.h.in" -delete
 
     - name: Debug NDK and SDK dirs
       run: |
@@ -59,8 +63,12 @@ jobs:
         ls -l $SDK_DIR
         echo "NDK_DIR contents:"
         ls -l $NDK_DIR
-        echo "ANDROID_NDK_HOME:"
-        echo $ANDROID_NDK_HOME
+        echo "ANDROID_NDK_HOME contents:"
+        ls -l $ANDROID_NDK_HOME
+        echo "Environment variables:"
+        echo "SDK_DIR=$SDK_DIR"
+        echo "NDK_DIR=$NDK_DIR"
+        echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
 
     - name: Build APK
       run: |
