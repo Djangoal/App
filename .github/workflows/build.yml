@@ -16,11 +16,11 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses-dev
-        pip install --upgrade pip
+        python3 -m pip install --upgrade pip
         pip install cython virtualenv
         pip install git+https://github.com/kivy/python-for-android.git
 
@@ -56,6 +56,7 @@ jobs:
           --version=0.1 \
           --bootstrap=sdl2 \
           --requirements=python3,kivy \
+          --arch=armeabi-v7a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$SDK_DIR/ndk/25.2.9519653 \
           --android_api=36 \
