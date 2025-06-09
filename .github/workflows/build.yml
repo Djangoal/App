@@ -19,8 +19,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses-dev
-        pip install --upgrade pip
+        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses5 libncurses5-dev
+        python3 -m pip install --upgrade pip
         pip install cython virtualenv
         pip install git+https://github.com/kivy/python-for-android.git
 
@@ -33,7 +33,7 @@ jobs:
       run: |
         mkdir -p $SDK_DIR $NDK_DIR
         curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-        unzip cmdline-tools.zip -d $SDK_DIR
+        unzip -q cmdline-tools.zip -d $SDK_DIR
         mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
         mkdir -p $SDK_DIR/cmdline-tools/latest
         mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
@@ -49,15 +49,14 @@ jobs:
       run: |
         python3 -m venv venv
         source venv/bin/activate
-        pip install --upgrade pip
         pip install cython
-        pip install git+https://github.com/kivy/python-for-android.git
         python3 -m pythonforandroid.toolchain apk --private . \
           --package=org.example.monapp \
           --name="MonApp" \
           --version=0.1 \
           --bootstrap=sdl2 \
           --requirements=python3,kivy \
+          --arch=armeabi-v7a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$SDK_DIR/ndk/25.2.9519653 \
           --android_api=36 \
