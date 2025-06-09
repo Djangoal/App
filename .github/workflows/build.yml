@@ -7,10 +7,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      SDK_DIR: ${{ env.HOME }}/android-sdk
-      NDK_DIR: ${{ env.HOME }}/android-ndk
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -30,6 +26,8 @@ jobs:
 
     - name: Download Android SDK and NDK
       run: |
+        export SDK_DIR=$HOME/android-sdk
+        export NDK_DIR=$HOME/android-ndk
         mkdir -p "$SDK_DIR" "$NDK_DIR"
         curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
         unzip cmdline-tools.zip -d "$SDK_DIR"
@@ -46,6 +44,8 @@ jobs:
 
     - name: Prepare build environment
       run: |
+        export SDK_DIR=$HOME/android-sdk
+        export NDK_DIR=$HOME/android-ndk
         python3 -m venv venv
         source venv/bin/activate
         pip install cython
@@ -55,6 +55,8 @@ jobs:
 
     - name: Build APK
       run: |
+        export SDK_DIR=$HOME/android-sdk
+        export NDK_DIR=$HOME/android-ndk
         source venv/bin/activate
         p4a apk --private . \
           --package=org.example.monapp \
