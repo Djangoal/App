@@ -16,13 +16,11 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
-       sudo apt-get update
-       sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses-dev
-       python3 -m pip install --upgrade pip
-       pip install cython virtualenv
-       pip install git+https://github.com/kivy/python-for-android.git
+        sudo apt-get update
+        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses-dev
+
     - name: Set environment paths
       run: |
         echo "SDK_DIR=$HOME/android-sdk" >> $GITHUB_ENV
@@ -32,7 +30,7 @@ jobs:
       run: |
         mkdir -p $SDK_DIR $NDK_DIR
         curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d $SDK_DIR
+        unzip cmdline-tools.zip -d $SDK_DIR
         mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
         mkdir -p $SDK_DIR/cmdline-tools/latest
         mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
@@ -44,18 +42,23 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: Build APK
+    - name: Set up Python virtual environment and install p4a
       run: |
         python3 -m venv venv
         source venv/bin/activate
+        pip install --upgrade pip
         pip install cython
-        python3 -m pythonforandroid.toolchain apk --private . \
+        pip install git+https://github.com/kivy/python-for-android.git
+
+    - name: Build APK
+      run: |
+        source venv/bin/activate
+        p4a apk --private . \
           --package=org.example.monapp \
           --name="MonApp" \
           --version=0.1 \
           --bootstrap=sdl2 \
           --requirements=python3,kivy \
-          --arch=armeabi-v7a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$SDK_DIR/ndk/25.2.9519653 \
           --android_api=36 \
