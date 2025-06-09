@@ -19,7 +19,9 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses-dev
+        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip libncurses5 libncurses-dev
+        pip install --upgrade pip
+        pip install cython virtualenv
 
     - name: Set environment paths
       run: |
@@ -42,11 +44,10 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: Set up Python virtual environment and install p4a
+    - name: Create virtual environment and install python-for-android
       run: |
         python3 -m venv venv
         source venv/bin/activate
-        pip install --upgrade pip
         pip install cython
         pip install git+https://github.com/kivy/python-for-android.git
 
@@ -59,6 +60,7 @@ jobs:
           --version=0.1 \
           --bootstrap=sdl2 \
           --requirements=python3,kivy \
+          --arch=armeabi-v7a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$SDK_DIR/ndk/25.2.9519653 \
           --android_api=36 \
