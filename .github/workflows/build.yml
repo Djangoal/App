@@ -9,7 +9,7 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      NDK_DIR: ${{ github.workspace }}/android-ndk
+      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
     - name: Checkout code
@@ -22,17 +22,16 @@ jobs:
           zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-    - name: Setup Python and install python-for-android
+    - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
-        source venv/bin/activate
-        python3 -m pip install --upgrade pip
-        pip install cython
-        pip install git+https://github.com/kivy/python-for-android.git
+        ./venv/bin/pip install --upgrade pip
+        ./venv/bin/pip install cython
+        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
 
     - name: Download Android SDK and NDK
       run: |
-        mkdir -p $SDK_DIR $NDK_DIR
+        mkdir -p $SDK_DIR
         curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
         unzip cmdline-tools.zip -d $SDK_DIR
         mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
@@ -48,15 +47,13 @@ jobs:
 
     - name: Prepare build environment
       run: |
-        source venv/bin/activate
         # Nettoyage cache autoreconf si besoin
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
 
     - name: Build APK
       run: |
-        source venv/bin/activate
-        p4a apk --private . \
+        ./venv/bin/p4a apk --private . \
           --package=org.example.monapp \
           --name="MonApp" \
           --version=0.1 \
@@ -64,7 +61,7 @@ jobs:
           --requirements=python3,kivy \
           --arch=armeabi-v7a,arm64-v8a \
           --sdk_dir=$SDK_DIR \
-          --ndk_dir=$NDK_DIR/ndk/25.2.9519653 \
+          --ndk_dir=$NDK_DIR \
           --android_api=36 \
           --build_dir=./build
 
