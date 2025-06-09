@@ -9,7 +9,9 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
+      # Pointage vers le dossier parent contenant les versions NDK, pas la version elle-même
+      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
     - name: Checkout code
@@ -51,20 +53,29 @@ jobs:
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
 
+    - name: Debug NDK and SDK dirs
+      run: |
+        echo "SDK_DIR contents:"
+        ls -l $SDK_DIR
+        echo "NDK_DIR contents:"
+        ls -l $NDK_DIR
+        echo "ANDROID_NDK_HOME:"
+        echo $ANDROID_NDK_HOME
+
     - name: Build APK
       run: |
-       source venv/bin/activate
-       ./venv/bin/p4a apk --private . \
-       --package=org.example.monapp \
-       --name="MonApp" \
-       --version=0.1 \
-       --bootstrap=sdl2 \
-       --requirements=python3,kivy \
-       --arch=armeabi-v7a,arm64-v8a \
-       --sdk_dir=$SDK_DIR \
-       --ndk_dir=$NDK_DIR \
-       --android_api=36 \
-       --build_dir=./build
+        source venv/bin/activate
+        ./venv/bin/p4a apk --private . \
+          --package=org.example.monapp \
+          --name="MonApp" \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --requirements=python3,kivy \
+          --arch=armeabi-v7a \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=36 \
+          --build_dir=./build
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
