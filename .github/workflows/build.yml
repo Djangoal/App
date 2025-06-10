@@ -74,7 +74,16 @@ jobs:
         --sdk_dir=$SDK_DIR \
         --ndk_dir=$ANDROID_NDK_HOME \
         --android_api=36
-
+    - name: Lister les fichiers générés
+      run: |
+        echo "Contenu de ./"
+        ls -l ./
+        echo "Contenu de ./bin/"
+        ls -l ./bin/
+        echo "Contenu de ./dist/"
+        ls -l ./dist/
+        echo "Contenu global"
+        find . -name "*.apk"
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
