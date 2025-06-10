@@ -19,11 +19,10 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-        build-essential \
-        zip unzip openjdk-17-jdk python3-pip \
-        libncurses-dev libtool libtool-bin libltdl-dev \
-        automake autoconf pkg-config m4
+        - sudo apt-get install -y \
+        -   build-essential libltdl-dev \
+        -   zip unzip openjdk-17-jdk python3-pip \
+        -   libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
     - name: Setup Python, virtualenv and install python-for-android
       run: |
@@ -75,10 +74,10 @@ jobs:
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=36 \
-          --build_dir=./build
+          
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: monapp-apk
-        path: build/*.apk
+        path: dist/*.apk
