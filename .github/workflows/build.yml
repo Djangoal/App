@@ -66,9 +66,9 @@ jobs:
         source venv/bin/activate
         ./venv/bin/p4a apk --private ./app \
         --package=org.example.monapp \
-        --name="MonApp" \
+        --name="Monbudgetperso" \
         --version=0.1 \
-        --bootstrap=sdl2 \
+        --bootstrap=sdl2 --icon=logo.png\
         --requirements=python3,kivy \
         --arch=armeabi-v7a \
         --sdk_dir=$SDK_DIR \
