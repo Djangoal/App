@@ -79,4 +79,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: monapp-apk
-        path: dist/*.apk
+        path: ./bin/*.apk
