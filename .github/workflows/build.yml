@@ -87,5 +87,5 @@ jobs:
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: monapp-apk
-        path: ./bin/*.apk
+        name: app-debug-apk
+        path: ./*.apk
