@@ -20,9 +20,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-        -   build-essential libltdl-dev \
-        -   zip unzip openjdk-17-jdk python3-pip \
-        -   libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+          build-essential libltdl-dev \
+          zip unzip openjdk-17-jdk python3-pip \
+          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
     - name: Setup Python, virtualenv and install python-for-android
       run: |
@@ -64,7 +64,7 @@ jobs:
     - name: Build APK
       run: |
         source venv/bin/activate
-          ./venv/bin/p4a apk --private ./app \
+        ./venv/bin/p4a apk --private ./app \
           --package=org.example.monapp \
           --name="MonApp" \
           --version=0.1 \
@@ -73,8 +73,8 @@ jobs:
           --arch=armeabi-v7a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=36
-          
+          --android_api=36 \
+          --dist_dir=dist
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
