@@ -64,7 +64,7 @@ jobs:
     - name: Build APK
       run: |
         source venv/bin/activate
-        ./venv/bin/p4a apk --private ./app \
+        ./venv/bin/p4a apk --private . \
           --package=org.example.monapp \
           --name="MonApp" \
           --version=0.1 \
@@ -73,7 +73,7 @@ jobs:
           --arch=armeabi-v7a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=36 \
+          --android_api=36
           
 
     - name: Upload APK
