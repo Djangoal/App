@@ -66,7 +66,7 @@ jobs:
         source venv/bin/activate
         ./venv/bin/p4a apk --private ./app \
           --package=org.example.monapp \
-          --name="MonApp" \
+          --name="Mon budget perso" \
           --version=0.1 \
           --bootstrap=sdl2 \
           --requirements=python3,kivy \
