@@ -20,9 +20,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          build-essential libltdl-dev \
-          zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+        -   build-essential libltdl-dev \
+        -   zip unzip openjdk-17-jdk python3-pip \
+        -   libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
     - name: Setup Python, virtualenv and install python-for-android
       run: |
@@ -63,25 +63,21 @@ jobs:
 
     - name: Build APK
       run: |
-       source venv/bin/activate
-       ./venv/bin/p4a apk --private ./app \
-       --package=org.example.monapp \
-       --name="Monbudgetperso" \
-       --version=0.1 \
-       --bootstrap=sdl2 --icon=logo.png \
-       --requirements=python3==3.11,kivy \
-       --arch=armeabi-v7a \
-       --sdk_dir=$SDK_DIR \
-       --ndk_dir=$ANDROID_NDK_HOME \
-       --android_api=36
-    - name: Lister les fichiers générés
-      run: |
-        echo "Contenu de ./"
-        ls -l ./
-        echo "Contenu global"
-        find . -name "*.apk"
+        source venv/bin/activate
+        ./venv/bin/p4a apk --private ./app \
+          --package=org.example.monapp \
+          --name="MonApp" \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --requirements=python3,kivy \
+          --arch=armeabi-v7a \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=36 \
+          
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug-apk
-        path: ./*.apk
+        name: monapp-apk
+        path: dist/*.apk
