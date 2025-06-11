@@ -1,6 +1,3 @@
-from kivy.logger import Logger
-
-
 from views.log_screen import LogScreen
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
