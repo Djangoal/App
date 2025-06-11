@@ -1,3 +1,4 @@
+from views.log_screen import LogScreen
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
 from kivy.properties import BooleanProperty
@@ -13,7 +14,8 @@ from views.configuration_screen import ConfigurationScreen
 
 class MonApp(App):
     def build(self):
-        sm = ScreenManager()
+        # Dans ta fonction de création des écrans :
+        sm.add_widget(Screen(name='log', content=LogScreen()))
         sm.add_widget(pageprincipalScreen(name="principal"))
         sm.add_widget(ChargesFixesScreen(name="charges_fixe"))
         sm.add_widget(RevenusScreen(name="revenus"))
