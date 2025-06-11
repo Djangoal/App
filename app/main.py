@@ -1,4 +1,4 @@
-from views.log_screen import LogScreen
+
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
 from kivy.properties import BooleanProperty
