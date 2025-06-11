@@ -14,10 +14,6 @@ from views.configuration_screen import ConfigurationScreen
 
 class MonApp(App):
     def build(self):
-        Logger.info("MonApp: Un log important")
-        print("Un message dans stdout")
-        # Dans ta fonction de création des écrans :
-        sm.add_widget(Screen(name='log', content=LogScreen()))
         sm.add_widget(pageprincipalScreen(name="principal"))
         sm.add_widget(ChargesFixesScreen(name="charges_fixe"))
         sm.add_widget(RevenusScreen(name="revenus"))
