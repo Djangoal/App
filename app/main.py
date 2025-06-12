@@ -16,7 +16,7 @@ def global_exception_handler(exctype, value, tb):
 
 sys.excepthook = global_exception_handler
 
-    
+    1 / 0  # Déclenche une ZeroDivisionError
 
 class MonApp(App):
     def build(self):
