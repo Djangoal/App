@@ -7,7 +7,14 @@ from views.revenus_screen import RevenusScreen
 from views.charges_fixes_screen import ChargesFixesScreen
 from views.depenses_screen import DepenseScreen
 from views.configuration_screen import ConfigurationScreen
+import sys
+import traceback
 
+def global_exception_handler(exctype, value, tb):
+    with open("/sdcard/rapport_erreur.txt", "w") as f:
+        f.write("".join(traceback.format_exception(exctype, value, tb)))
+
+sys.excepthook = global_exception_handler
 
     
 
