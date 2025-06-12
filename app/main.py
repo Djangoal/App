@@ -11,7 +11,7 @@ import sys
 import traceback
 
 def global_exception_handler(exctype, value, tb):
-    with open("/sdcard/rapport_erreur.txt", "w") as f:
+    with open("/storage/emulated/0/appl/rapport_erreur.txt", "w") as f:
         f.write("".join(traceback.format_exception(exctype, value, tb)))
 
 sys.excepthook = global_exception_handler
