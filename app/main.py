@@ -28,9 +28,16 @@ class MonApp(App):
         except Exception as e:
             log_crash_info(f"Erreur dans build() de MonApp : {e}")
             raise e  # Pour que l'erreur reste visible pendant le développement
+            from utils.logger import log_error
 
 if __name__ == "__main__":
     try:
+        from android.permissions import request_permissions, Permission
+        request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
+    except:
+        pass  # Pas grave si permissions non disponibles
+
+    try:
         MonApp().run()
     except Exception as e:
-        log_crash_info(f"Erreur dans MonApp : {e}")
+        log_error(f"Erreur au lancement de l'app : {str(e)}")
