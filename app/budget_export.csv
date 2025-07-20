@@ -1,0 +1,53 @@
+Revenus
+Date,Nom,Montant
+01/07/2025,solde juin,92.07
+01/07/2025,salaire,1487.17
+01/07/2025,virement,1000.0
+07/07/2025,virement contrex,29.4
+07/07/2025,virement gan,46.92
+08/07/2025,virement lbp,21.34
+09/07/2025,virement edf,73.53
+
+Charges Fixes
+Date,Nom,Montant
+16/07/2025,taxe nimes,-118.0
+16/07/2025,taxe garons,-103.0
+12/07/2025,eau,-50.23
+23/07/2025,elec garons,-248.53
+30/07/2025,electricite nimes,-17.14
+07/07/2025,assurance nimes,-35.42
+31/07/2025,assurance garons,-49.48
+04/07/2025,assurance credit,-89.7
+07/07/2025,assurance auto,-71.37
+07/07/2025,ass acc vie,-22.95
+24/07/2025,ass vie,-6.63
+03/07/2025,cotisation ca,-6.13
+10/07/2025,credit immo,-961.84
+02/07/2025,netflix,-14.99
+31/07/2025,disney plus,-13.99
+31/07/2025,abonnement tel,-31.99
+01/07/2025,carburant,-100.0
+01/07/2025,croquette,-120.0
+04/07/2025,internet,-73.99
+07/07/2025,gan,-46.92
+01/07/2025,epargne,-148.72
+
+Dépenses
+Date,Nom,Montant
+09/07/2025,assurance nimes,-35.42
+02/07/2025,assurance credit,-89.7
+09/07/2025,assurance auto,-71.37
+03/07/2025,cotisation ca,-6.13
+02/07/2025,netflix,-14.99
+01/07/2025,epargne,-148.72
+07/07/2025,carburant,-63.06
+04/07/2025,internet,-73.99
+07/07/2025,gan,-46.92
+02/07/2025,stockomani,-22.18
+02/07/2025,electrodepot,-23.96
+02/07/2025,leroy merlin,-39.89
+03/07/2025,oscaro,-21.07
+03/07/2025,cotisa lbp,-21.05
+07/07/2025,contrex crist,-29.4
+07/07/2025,leroy merlin,-8.99
+10/07/2025,amazon,-22.99
