@@ -20,9 +20,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-        -   build-essential libltdl-dev \
-        -   zip unzip openjdk-17-jdk python3-pip \
-        -   libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+          build-essential libltdl-dev \
+          zip unzip openjdk-17-jdk python3-pip \
+          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
     - name: Setup Python, virtualenv and install python-for-android
       run: |
@@ -52,6 +52,10 @@ jobs:
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
 
+    - name: Clean previous builds
+      run: |
+        rm -rf ./app/.buildozer ./app/.python-for-android ./*.apk
+
     - name: Debug NDK and SDK dirs
       run: |
         echo "SDK_DIR contents:"
@@ -74,8 +78,7 @@ jobs:
           --arch=armeabi-v7a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=36 \
-          
+          --android_api=36
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
