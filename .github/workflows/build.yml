@@ -47,7 +47,7 @@ jobs:
     - name: Clean build cache
       run: |
         . venv/bin/activate
-        p4a clean
+        p4a clean all
 
     - name: Build APK
       run: |
