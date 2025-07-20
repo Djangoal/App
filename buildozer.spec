@@ -17,6 +17,7 @@ source.main = main.py
 # (list) Permissions
 android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE
 android.extra_manifest_kv = <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait
 
