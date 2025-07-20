@@ -47,7 +47,7 @@ android.theme = light
 fullscreen = 0
 
 # ✅ Supprimer l'écran de lancement Kivy
-android.presplash_path = 
+#android.presplash_path = 
 android.presplash_color = #FFFFFF
 
 # (str) Supported Android architectures
