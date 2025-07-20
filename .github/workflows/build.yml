@@ -16,59 +16,39 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          build-essential libltdl-dev \
-          zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool automake autoconf pkg-config m4
 
-    - name: Setup Python, virtualenv and install python-for-android
+    - name: Setup p4a
       run: |
         python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip
-        ./venv/bin/pip install cython
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+        . venv/bin/activate
+        pip install --upgrade pip
+        pip install cython
+        pip install git+https://github.com/kivy/python-for-android.git
 
-    - name: Download Android SDK and NDK
+    - name: Download SDK/NDK
       run: |
         mkdir -p $SDK_DIR
-        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-        unzip cmdline-tools.zip -d $SDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o tools.zip
+        unzip tools.zip -d $SDK_DIR
         mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
         mkdir -p $SDK_DIR/cmdline-tools/latest
         mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
-
         yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
-        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
-          "platform-tools" \
-          "platforms;android-36" \
-          "build-tools;36.0.0" \
-          "ndk;25.2.9519653"
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;25.2.9519653"
 
-    - name: Prepare build environment
+    - name: Clean build environment
       run: |
-        find . -name "aclocal.m4" -delete
-        find . -name "autom4te.cache" -type d -exec rm -rf {} +
-
-    - name: Clean previous builds
-      run: |
-        rm -rf ./app/.buildozer ./app/.python-for-android ./*.apk
-
-    - name: Debug NDK and SDK dirs
-      run: |
-        echo "SDK_DIR contents:"
-        ls -l $SDK_DIR
-        echo "NDK_DIR contents:"
-        ls -l $NDK_DIR
-        echo "ANDROID_NDK_HOME:"
-        echo $ANDROID_NDK_HOME
+        . venv/bin/activate
+        p4a clean --private ./app
 
     - name: Build APK
       run: |
-        source venv/bin/activate
-        ./venv/bin/p4a apk --private ./app \
+        . venv/bin/activate
+        p4a apk --private ./app \
           --package=org.example.monapp \
           --name="Mon budget perso" \
           --version=0.1 \
