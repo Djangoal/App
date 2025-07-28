@@ -1,0 +1,435 @@
+{
+    "soldes": [],
+    "a_payer": [],
+    "revenu": [
+        {
+            "nom": "solde juin",
+            "date": "01/07/2025",
+            "montant": 92.07
+        },
+        {
+            "nom": "salaire",
+            "date": "01/07/2025",
+            "montant": 1487.17
+        },
+        {
+            "nom": "virement",
+            "date": "01/07/2025",
+            "montant": 1000.0
+        },
+        {
+            "nom": "virement contrex",
+            "date": "07/07/2025",
+            "montant": 29.4
+        },
+        {
+            "nom": "virement gan",
+            "date": "07/07/2025",
+            "montant": 46.92
+        },
+        {
+            "nom": "virement lbp",
+            "date": "08/07/2025",
+            "montant": 21.34
+        },
+        {
+            "nom": "virement edf",
+            "date": "09/07/2025",
+            "montant": 73.53
+        },
+        {
+            "nom": "amazon",
+            "date": "15/07/2025",
+            "montant": 8.99
+        },
+        {
+            "nom": "remb controle",
+            "date": "21/07/2025",
+            "montant": 55.0
+        },
+        {
+            "nom": "remb kinepolis",
+            "date": "21/07/2025",
+            "montant": 50.8
+        },
+        {
+            "nom": "remb amazon",
+            "date": "23/07/2025",
+            "montant": 16.14
+        }
+    ],
+    "charges_fixe": [
+        {
+            "nom": "taxe nimes",
+            "date": "16/07/2025",
+            "montant": -118.0
+        },
+        {
+            "nom": "taxe garons",
+            "date": "16/07/2025",
+            "montant": -103.0
+        },
+        {
+            "nom": "eau",
+            "date": "12/07/2025",
+            "montant": -50.23
+        },
+        {
+            "nom": "elec garons",
+            "date": "23/07/2025",
+            "montant": -248.53
+        },
+        {
+            "nom": "electricite nimes",
+            "date": "30/07/2025",
+            "montant": -17.14
+        },
+        {
+            "nom": "assurance nimes",
+            "date": "07/07/2025",
+            "montant": -35.42
+        },
+        {
+            "nom": "assurance garons",
+            "date": "31/07/2025",
+            "montant": -49.48
+        },
+        {
+            "nom": "assurance credit",
+            "date": "04/07/2025",
+            "montant": -89.7
+        },
+        {
+            "nom": "assurance auto",
+            "date": "07/07/2025",
+            "montant": -71.37
+        },
+        {
+            "nom": "ass acc vie",
+            "date": "07/07/2025",
+            "montant": -22.95
+        },
+        {
+            "nom": "ass vie",
+            "date": "24/07/2025",
+            "montant": -6.63
+        },
+        {
+            "nom": "cotisation ca",
+            "date": "03/07/2025",
+            "montant": -6.13
+        },
+        {
+            "nom": "credit immo",
+            "date": "10/07/2025",
+            "montant": -961.84
+        },
+        {
+            "nom": "netflix",
+            "date": "02/07/2025",
+            "montant": -14.99
+        },
+        {
+            "nom": "disney plus",
+            "date": "31/07/2025",
+            "montant": -13.99
+        },
+        {
+            "nom": "abonnement tel",
+            "date": "31/07/2025",
+            "montant": -31.99
+        },
+        {
+            "nom": "carburant",
+            "date": "01/07/2025",
+            "montant": -100.0
+        },
+        {
+            "nom": "croquette",
+            "date": "01/07/2025",
+            "montant": -120.0
+        },
+        {
+            "nom": "internet",
+            "date": "04/07/2025",
+            "montant": -73.99
+        },
+        {
+            "nom": "gan",
+            "date": "07/07/2025",
+            "montant": -46.92
+        },
+        {
+            "nom": "epargne",
+            "date": "01/07/2025",
+            "montant": -148.72
+        }
+    ],
+    "depense": [
+        {
+            "nom": "assurance nimes",
+            "date": "09/07/2025",
+            "montant": -35.42
+        },
+        {
+            "nom": "assurance credit",
+            "date": "02/07/2025",
+            "montant": -89.7
+        },
+        {
+            "nom": "assurance auto",
+            "date": "09/07/2025",
+            "montant": -71.37
+        },
+        {
+            "nom": "cotisation ca",
+            "date": "03/07/2025",
+            "montant": -6.13
+        },
+        {
+            "nom": "netflix",
+            "date": "02/07/2025",
+            "montant": -14.99
+        },
+        {
+            "nom": "epargne",
+            "date": "01/07/2025",
+            "montant": -148.72
+        },
+        {
+            "nom": "carburant",
+            "date": "07/07/2025",
+            "montant": -63.06
+        },
+        {
+            "nom": "internet",
+            "date": "04/07/2025",
+            "montant": -73.99
+        },
+        {
+            "nom": "gan",
+            "date": "07/07/2025",
+            "montant": -46.92
+        },
+        {
+            "nom": "stockomani",
+            "date": "02/07/2025",
+            "montant": -22.18
+        },
+        {
+            "nom": "electrodepot",
+            "date": "02/07/2025",
+            "montant": -23.96
+        },
+        {
+            "nom": "leroy merlin",
+            "date": "02/07/2025",
+            "montant": -39.89
+        },
+        {
+            "nom": "oscaro",
+            "date": "03/07/2025",
+            "montant": -21.07
+        },
+        {
+            "nom": "cotisa lbp",
+            "date": "03/07/2025",
+            "montant": -21.05
+        },
+        {
+            "nom": "contrex crist",
+            "date": "07/07/2025",
+            "montant": -29.4
+        },
+        {
+            "nom": "leroy merlin",
+            "date": "07/07/2025",
+            "montant": -8.99
+        },
+        {
+            "nom": "amazon",
+            "date": "10/07/2025",
+            "montant": -22.99
+        },
+        {
+            "nom": "inter",
+            "date": "15/07/2025",
+            "montant": -23.09
+        },
+        {
+            "nom": "brico",
+            "date": "15/07/2025",
+            "montant": -7.45
+        },
+        {
+            "nom": "inter",
+            "date": "15/07/2025",
+            "montant": -27.01
+        },
+        {
+            "nom": "carrefour",
+            "date": "15/07/2025",
+            "montant": -4.99
+        },
+        {
+            "nom": "carrefour",
+            "date": "15/07/2025",
+            "montant": -44.62
+        },
+        {
+            "nom": "burger king",
+            "date": "21/07/2025",
+            "montant": -35.8
+        },
+        {
+            "nom": "controle technique",
+            "date": "22/07",
+            "montant": -55.0
+        },
+        {
+            "nom": "kinepolis",
+            "date": "21/07/2025",
+            "montant": -50.8
+        },
+        {
+            "nom": "coinbase",
+            "date": "21/07/2025",
+            "montant": -5.3
+        },
+        {
+            "nom": "aliexpress",
+            "date": "23/07/2025",
+            "montant": -9.84
+        },
+        {
+            "nom": "pizza",
+            "date": "23/07/2025",
+            "montant": -27.5
+        },
+        {
+            "nom": "amazon",
+            "date": "24/07/2025",
+            "montant": -16.14
+        },
+        {
+            "nom": "taxe nimes",
+            "date": "16/07/2025",
+            "montant": -118.0
+        },
+        {
+            "nom": "taxe garons",
+            "date": "16/07/2025",
+            "montant": -103.0
+        },
+        {
+            "nom": "eau",
+            "date": "15/07/2025",
+            "montant": -50.23
+        },
+        {
+            "nom": "elec garons",
+            "date": "23/07/2025",
+            "montant": -248.53
+        },
+        {
+            "nom": "ass acc vie",
+            "date": "23/07/2025",
+            "montant": -22.95
+        },
+        {
+            "nom": "ass vie",
+            "date": "24/07/2025",
+            "montant": -6.63
+        },
+        {
+            "nom": "credit immo",
+            "date": "10/07/2025",
+            "montant": -961.84
+        }
+    ],
+    "epargne": [
+        {
+            "nom": "taxe",
+            "montant": 1000.0
+        },
+        {
+            "nom": "edf",
+            "montant": 126.47
+        },
+        {
+            "nom": "spanc",
+            "montant": 20.0
+        },
+        {
+            "nom": "veterinaire",
+            "montant": 64.7
+        },
+        {
+            "nom": "controle tech",
+            "montant": 5.0
+        },
+        {
+            "nom": "coiffeur",
+            "montant": 73.5
+        },
+        {
+            "nom": "eau garons",
+            "montant": 120.0
+        },
+        {
+            "nom": "cristaline",
+            "montant": 32.6
+        },
+        {
+            "nom": "contrex",
+            "montant": 110.62
+        },
+        {
+            "nom": "oscaro",
+            "montant": 63.22
+        },
+        {
+            "nom": "sonde vci",
+            "montant": 29.52
+        }
+    ],
+    "solde_livret": 2157.49,
+    "charges_a_payer": [
+        {
+            "nom": "electricite nimes",
+            "date": "30/07/2025",
+            "montant": -17.14,
+            "reste_a_payer": -17.14
+        },
+        {
+            "nom": "assurance garons",
+            "date": "31/07/2025",
+            "montant": -49.48,
+            "reste_a_payer": -49.48
+        },
+        {
+            "nom": "disney plus",
+            "date": "31/07/2025",
+            "montant": -13.99,
+            "reste_a_payer": -13.99
+        },
+        {
+            "nom": "abonnement tel",
+            "date": "31/07/2025",
+            "montant": -31.99,
+            "reste_a_payer": -31.99
+        },
+        {
+            "nom": "carburant",
+            "date": "01/07/2025",
+            "montant": -100.0,
+            "reste_a_payer": -36.94
+        },
+        {
+            "nom": "croquette",
+            "date": "01/07/2025",
+            "montant": -120.0,
+            "reste_a_payer": -120.0
+        }
+    ]
+}
