@@ -1,0 +1,151 @@
+<pageprincipalScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+
+        # --- Titre + bouton fermer ---
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.1
+            canvas.before:
+                Color:
+                    rgba: 1, 0, 0, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            Label:
+                text: "[b]Mon Budget Perso[/b]"
+                markup: True
+                font_size: 74
+                color: 0.2, 0.4, 0.86, 1
+                halign: "center"
+                valign: "middle"
+                text_size: self.size
+            Button:
+                text: 'X'
+                size_hint_x: 0.2
+                font_size: 84
+                background_color: 0.2, 0.4, 0.86, 1
+                color: 1, 0, 0, 1
+                on_release: app.stop()
+
+        # --- Formulaire de saisie ---
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: 280
+            padding: 10
+            spacing: 10
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            TextInput:
+                id: nom_input
+                hint_text: "Nom"
+                font_size: 32
+                size_hint_y: None
+                height: 80
+            TextInput:
+                id: date_input
+                hint_text: "Date (jj/mm/aaaa)"
+                font_size: 32
+                size_hint_y: None
+                height: 80
+            TextInput:
+                id: montant_input
+                hint_text: "Montant"
+                font_size: 32
+                size_hint_y: None
+                height: 80
+
+        # --- Catégories ---
+        BoxLayout:
+            size_hint_y: None
+            height: 100
+            spacing: 40
+            padding: 10
+            CheckBox:
+                id: revenu_cbox
+            Label:
+                text: "Revenu"
+            CheckBox:
+                id: charges_fixe_cbox
+            Label:
+                text: "Charges Fixes"
+            CheckBox:
+                id: depense_cbox
+            Label:
+                text: "Dépense"
+
+        # --- Totaux ---
+        Label:
+            id: restant_label
+            text: "Total restant à payer : 0.00 €"
+            font_size: 32
+            size_hint_y: None
+            height: 50
+
+        Label:
+            id: revenus_label
+            text: "Total Revenus : 0.00 €"
+            font_size: 32
+            size_hint_y: None
+            height: 50
+
+        Label:
+            id: charges_label
+            text: "Total Charges Fixes : 0.00 €"
+            font_size: 32
+            size_hint_y: None
+            height: 50
+
+        Label:
+            id: depenses_label
+            text: "Total Dépenses : 0.00 €"
+            font_size: 32
+            size_hint_y: None
+            height: 50
+
+        Label:
+            id: solde_label
+            text: "Solde actuel : 0.00 €"
+            font_size: 40
+            size_hint_y: None
+            height: 80
+            color: 1, 0, 0, 1
+
+        # --- Valider ---
+        Button:
+            text: "Valider"
+            size_hint_y: None
+            height: 100
+            background_color: 0.2, 0.6, 0.86, 1
+            on_press: root.ajouter_valeur()
+
+        # --- Navigation ---
+        BoxLayout:
+            size_hint_y: None
+            height: 100
+            spacing: 10
+            Button:
+                text: "Charges"
+                on_press: root.changer_ecran("charges_fixe")
+            Button:
+                text: "Revenus"
+                on_press: root.changer_ecran("revenus")
+            Button:
+                text: "Dépenses"
+                on_press: root.changer_ecran("depense")
+            Button:
+                text: "Epargne"
+                on_press: root.changer_ecran("epargne")
+            Button:
+                background_normal: 'config.png'
+                background_down: 'config.png'
+                size_hint: None, None
+                size: 100, 100
+                on_press: root.changer_ecran("config")
