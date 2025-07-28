@@ -14,6 +14,7 @@ source.dir = .
 # (str) Main .py file to use as the main entry point for your app
 source.main = main.py
 
+source.include_exts = py,kv,json,png,jpg,ttf
 # (list) Permissions
 android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
 
@@ -24,7 +25,7 @@ android.extra_manifest_kv = <uses-permission android:name="android.permission.MA
 orientation = portrait
 
 # (list) Application requirements
-requirements = python3,kivy
+requirements = python3,kivy,pyjnius
 
 # (str) Android NDK API to use
 android.api = 36
