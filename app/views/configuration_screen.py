@@ -22,10 +22,10 @@ from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.graphics import Color, RoundedRectangle
 from kivy.uix.scrollview import ScrollView
-from openpyxl import Workbook
 
 
-def afficher_popup_global(message):
+
+def afficher_popup(message):
     layout = BoxLayout(orientation='vertical', padding=20, spacing=20)
 
     label = Label(
@@ -56,77 +56,57 @@ def afficher_popup_global(message):
 
     popup.open()
 
-def exporter_vers_excel():
-        json_file = "donnees_budget.json"
-        dossier_export = "/storage/emulated/0/Download"
-    
-        try:
-            locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8')
-        except:
-            locale.setlocale(locale.LC_TIME, '')
-    
-        maintenant = datetime.now()
-        nom_du_mois = maintenant.strftime("%B")
-        annee = maintenant.year
-    
-        nom_fichier = f"compte_{nom_du_mois}_{annee}.xlsx"
-        fichier_excel = os.path.join(dossier_export, nom_fichier)
-    
-        if not os.path.exists(json_file):
-            afficher_popup_global("Fichier JSON introuvable.")
-            return
-    
-        try:
-            with open(json_file, "r", encoding="utf-8") as f:
-                donnees = json.load(f)
-        except json.JSONDecodeError:
-            afficher_popup_global("Erreur de lecture du fichier JSON.")
-            return
-    
-        wb = Workbook()
-        ws_revenus = wb.active
-        ws_revenus.title = "Revenus"
-        ws_revenus.append(["Date", "Nom", "Montant"])
-    
-        for revenu in donnees.get("revenu", []):
-            ws_revenus.append([
-                revenu.get("date", ""),
-                revenu.get("nom", ""),
-                revenu.get("montant", 0)
-            ])
-    
-        ws_charges = wb.create_sheet(title="Charges Fixes")
-        ws_charges.append(["Date", "Nom", "Montant"])
-        for charge in donnees.get("charges_fixe", []):
-            ws_charges.append([
-                charge.get("date", ""),
-                charge.get("nom", ""),
-                charge.get("montant", 0)
-            ])
-    
-        ws_depenses = wb.create_sheet(title="Dépenses")
-        ws_depenses.append(["Date", "Nom", "Montant"])
-        for dep in donnees.get("depense", []):
-            ws_depenses.append([
-                dep.get("date", ""),
-                dep.get("nom", ""),
-                dep.get("montant", 0)
-            ])
-    
-        ws_epargne = wb.create_sheet(title="Épargnes")
-        ws_epargne.append(["Date", "Nom", "Montant"])
-        for epargne in donnees.get("epargne", []):
-            ws_epargne.append([
-                epargne.get("date", ""),
-                epargne.get("nom", ""),
-                epargne.get("montant", 0)
-            ])
-    
-        wb.save(fichier_excel)
-        afficher_popup_global(f"Exportation réussie vers :\n{fichier_excel}")
-        
-        
+def exporter_vers_csv():
+    json_file = "donnees_budget.json"
+    dossier_export = "/storage/emulated/0/Download"
 
+    try:
+        locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8')
+    except:
+        locale.setlocale(locale.LC_TIME, '')
+
+    maintenant = datetime.now()
+    nom_du_mois = maintenant.strftime("%B")
+    annee = maintenant.year
+
+    nom_fichier = f"compte_{nom_du_mois}_{annee}.csv"
+    fichier_csv = os.path.join(dossier_export, nom_fichier)
+
+    if not os.path.exists(json_file):
+        afficher_popup("Fichier JSON introuvable.")
+        return
+
+    try:
+        with open(json_file, "r", encoding="utf-8") as f:
+            donnees = json.load(f)
+    except json.JSONDecodeError:
+        afficher_popup("Erreur de lecture du fichier JSON.")
+        return
+
+    try:
+        with open(fichier_csv, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+
+            writer.writerow(["Revenus"])
+            writer.writerow(["Date", "Nom", "Montant"])
+            for revenu in donnees.get("revenu", []):
+                writer.writerow([revenu.get("date", ""), revenu.get("nom", ""), revenu.get("montant", 0)])
+            writer.writerow([])
+
+            writer.writerow(["Charges Fixes"])
+            writer.writerow(["Date", "Nom", "Montant"])
+            for charge in donnees.get("charges_fixe", []):
+                writer.writerow([charge.get("date", ""), charge.get("nom", ""), charge.get("montant", 0)])
+            writer.writerow([])
+
+            writer.writerow(["Dépenses"])
+            writer.writerow(["Date", "Nom", "Montant"])
+            for dep in donnees.get("depense", []):
+                writer.writerow([dep.get("date", ""), dep.get("nom", ""), dep.get("montant", 0)])
+
+        afficher_popup(f"Export dans :\n{fichier_csv}")
+    except Exception as e:
+        afficher_popup(f"Erreur lors de l'enregistrement :\n{e}")
 
 
 
@@ -244,16 +224,16 @@ class ConfigurationScreen(Screen):
         
         
         
-        btn_export_excel = Button(text="Exporter en Excel", size_hint=(1, None), height=100)
-        btn_export_excel.bind(on_press=lambda x: exporter_vers_excel())
-        self.layout.add_widget(btn_export_excel)
-        
+        btn_export_csv = Button(text="Exporter en CSV", size_hint=(1, None), height=100)
+        btn_export_csv.bind(on_press=lambda x: exporter_vers_csv())
+        self.layout.add_widget(btn_export_csv)
+
         btn_logs = Button(text="Voir les logs", size_hint=(1, None), height=100, background_color=(1, 0, 0, 1))
         btn_logs.bind(on_press=self.voir_logs)
-       # self.layout.add_widget(btn_logs)
+        self.layout.add_widget(btn_logs)
 
         bouton_reset = Button(
-            text="Réinitialiser revenus et depenses",
+            text="Réinitialiser les données",
             size_hint=(1, None),
             height=100,
             background_color=(1, 0.4, 0.9, 1)
@@ -264,6 +244,18 @@ class ConfigurationScreen(Screen):
         bouton_retour = Button(text="Retour", size_hint=(1, None), height=100, background_color=(0.2, 0.6, 0.86, 1))
         bouton_retour.bind(on_press=self.retour_page_principale)
         self.layout.add_widget(bouton_retour)
+        
+    def reinitialiser_donnees(self, popup):
+        # Fermer le popup
+        popup.dismiss()
+    
+        # Logique de suppression réelle ici :
+        app = App.get_running_app()
+        app.data = {"revenu": [], "charges_fixe": [], "depense": []}
+        app.save_data()
+        
+    
+        self.afficher_popup("Succès", "Toutes les données ont été réinitialisées.")
         
     
 
@@ -418,46 +410,67 @@ class ConfigurationScreen(Screen):
 
     def reinitialiser_donnees(self, instance):
         if os.path.exists("donnees_budget.json"):
-            with open("donnees_budget.json", "r", encoding="utf-8") as f:
-                try:
-                    donnees = json.load(f)
-                except json.JSONDecodeError:
-                    donnees = {}
-    
-            # Assurer une structure de base
-            if not isinstance(donnees, dict):
-                donnees = {}
-    
-            # Extraire les charges fixes existantes (ou vide)
-            charges_fixe = donnees.get("charges_fixe", [])
-    
-            # Réécrire le fichier avec soldes réinitialisées et charges fixes conservées
-            nouvelles_donnees = {
-                "soldes": [],  # suppression des revenus et dépenses
-                "charges_fixe": charges_fixe,
-            }
-    
-            with open("donnees_budget.json", "w", encoding="utf-8") as f:
-                json.dump(nouvelles_donnees, f, indent=4, ensure_ascii=False)
-    
-        # Mise à jour de l'affichage
+            os.remove("donnees_budget.json")
         principal = self.manager.get_screen("principal")
         principal.total = 0
         principal.soldes = []
         principal.solde_label.text = "Solde: 0.00 €"
         principal.label_revenus.text = "Total revenus: 0.00 €"
         principal.label_depenses.text = "Total depenses: 0.00 €"
-        # Ne pas toucher à label_charges
+        principal.label_charges.text = "Total charges fixes: 0.00 €"
+        logger.warning("Les données ont été réinitialisées.")
     
-        logger.warning("Les données de revenus et dépenses ont été réinitialisées.")
+    def exporter_vers_excel():
+        json_file = "donnees_budget.json"
+        fichier_excel = "budget_export.xlsx"
     
+        if not os.path.exists(json_file):
+            print("Fichier JSON introuvable.")
+            return
     
+        try:
+            with open(json_file, "r", encoding="utf-8") as f:
+                donnees = json.load(f)
+        except json.JSONDecodeError:
+            print("Erreur de lecture du fichier JSON.")
+            return
+    
+        wb = Workbook()
+        ws_revenus = wb.active
+        ws_revenus.title = "Revenus"
+        ws_revenus.append(["Date", "Nom", "Montant"])
+    
+        for revenu in donnees.get("revenu", []):
+            ws_revenus.append([
+                revenu.get("date", ""),
+                revenu.get("nom", ""),
+                revenu.get("montant", 0)
+            ])
+    
+        ws_charges = wb.create_sheet(title="Charges Fixes")
+        ws_charges.append(["Date", "Nom", "Montant"])
+        for charge in donnees.get("charges_fixe", []):
+            ws_charges.append([
+                charge.get("date", ""),
+                charge.get("nom", ""),
+                charge.get("montant", 0)
+            ])
+    
+        ws_depenses = wb.create_sheet(title="Dépenses")
+        ws_depenses.append(["Date", "Nom", "Montant"])
+        for dep in donnees.get("depense", []):
+            ws_depenses.append([
+                dep.get("date", ""),
+                dep.get("nom", ""),
+                dep.get("montant", 0)
+            ])
+    
+        wb.save(fichier_excel)
+        print(f"Exportation réussie vers {fichier_excel}")
         
     def afficher_popup(self, titre, message):
         popup = Popup(title=titre, content=Label(text=message), size_hint=(0.6, 0.4))
         popup.open()
-        
-    
 
     def retour_page_principale(self, instance):
         
