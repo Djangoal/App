@@ -71,7 +71,7 @@ jobs:
           --bootstrap=sdl2 \
           --icon=logo.png \
           --presplash=app/logo1.png \
-          --requirements=python3,kivy,android \
+          --requirements=python3,kivy,android,openpyxl \
           --arch=armeabi-v7a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
