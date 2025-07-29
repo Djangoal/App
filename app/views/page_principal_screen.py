@@ -158,99 +158,6 @@ class pageprincipalScreen(Screen):
         checkbox_wrapper.add_widget(checkbox_container)
         
         main_layout.add_widget(checkbox_wrapper)
-        main_layout.add_widget(BoxLayout())
-
-        # Labels des totaux par catégorie
-        
-        
-        
-        self.total_charges_restantes_label = Label(
-            text="Total restant a payer : 0.00 €",
-            font_size=32,
-            size_hint=(1, None),
-            height=50,
-            halign='left',
-            valign='middle',
-            padding=(0, 10),  # (horizontal, vertical)
-            color=(0, 0, 0, 1)
-        )
-        self.total_charges_restantes_label.bind(size=self.total_charges_restantes_label.setter('text_size'))
-        main_layout.add_widget(self.total_charges_restantes_label)
-        
-        self.label_economie = Label(
-            text="Économie par arrondi : 0.00 €",
-             font_size=32,
-            size_hint=(1, None),
-            height=50,
-            halign='left',
-            valign='middle',
-            padding=(0, 10),  # (horizontal, vertical)
-            color=(0, 0, 0, 1)
-        )
-        layout.add_widget(self.label_economie)
-        self.mise_a_jour_economie()
-        
-        
-        self.label_revenus = Label(
-            text="Total Revenus : 0.00 €",
-            font_size=32,
-            size_hint=(1, None),
-            height=50,
-            halign='left',
-            valign='middle',
-            color=(0, 0, 0, 1)
-        )
-        self.label_revenus.bind(size=self.label_revenus.setter('text_size'))
-        main_layout.add_widget(self.label_revenus)
-
-        self.label_charges = Label(
-            text="Total Charges Fixes : 0.00 €",
-            font_size=32,
-            size_hint=(1, None),
-            height=50,
-            halign='left',
-            valign='middle',
-            color=(0, 0, 0, 1)
-        )
-        self.label_charges.bind(size=self.label_charges.setter('text_size'))
-        main_layout.add_widget(self.label_charges)
-
-        self.label_depenses = Label(
-            text="Total Dépenses : 0.00 €",
-            font_size=32,
-            size_hint=(1, None),
-            height=50,
-            halign='left',
-            valign='middle',
-            color=(0, 0, 0, 1)
-        )
-        self.label_depenses.bind(size=self.label_depenses.setter('text_size'))
-        main_layout.add_widget(self.label_depenses)
-
-        self.solde_label = Label(
-            text="Solde actuel : 0.00 €",
-            font_size=40,
-            size_hint=(1, None),
-            height=80,
-            halign='left',
-            valign='middle',
-            color=(1, 0, 0, 1)
-        )
-        self.solde_label.bind(size=self.solde_label.setter('text_size'))
-        main_layout.add_widget(self.solde_label)
-        
-        self.fin_label = Label(
-            text="fin_de_mois : 0.00 €",
-            font_size=40,
-            size_hint=(1, None),
-            height=80,
-            halign='left',
-            valign='middle',
-            color=(1, 0, 0, 1)
-        )
-        self.fin_label.bind(size=self.fin_label.setter('text_size'))
-        main_layout.add_widget(self.fin_label)
-        
         
         
         # Bouton valider
@@ -262,6 +169,113 @@ class pageprincipalScreen(Screen):
         )
         self.valider_btn.bind(on_press=self.ajouter_valeur)
         main_layout.add_widget(self.valider_btn)
+        
+        main_layout.add_widget(BoxLayout())
+
+        # Labels des totaux par catégorie
+        
+        
+        
+        self.total_charges_restantes_label = Label(
+            text="restant a payer : 0.00 €",
+            font_size=32,
+            size_hint=(1, None),
+            height=50,
+            halign='center',
+            valign='middle',
+            padding=(0, 10),  # (horizontal, vertical)
+            color=(0, 0, 0, 1)
+        )
+        self.total_charges_restantes_label.bind(size=self.total_charges_restantes_label.setter('text_size'))
+        main_layout.add_widget(self.total_charges_restantes_label)
+        
+        
+        
+        
+        self.label_revenus = Label(
+            text="Revenus : 0.00 €",
+            font_size=32,
+            size_hint=(1, None),
+            height=50,
+            halign='center',
+            valign='middle',
+            color=(0, 0, 0, 1)
+        )
+        self.label_revenus.bind(size=self.label_revenus.setter('text_size'))
+        main_layout.add_widget(self.label_revenus)
+
+        self.label_charges = Label(
+            text="Charges Fixes : 0.00 €",
+            font_size=32,
+            size_hint=(1, None),
+            height=50,
+            halign='center',
+            valign='middle',
+            color=(0, 0, 0, 1)
+        )
+        self.label_charges.bind(size=self.label_charges.setter('text_size'))
+        main_layout.add_widget(self.label_charges)
+
+        self.label_depenses = Label(
+            text="Dépenses : 0.00 €",
+            font_size=32,
+            size_hint=(1, None),
+            height=50,
+            halign='center',
+            valign='middle',
+            color=(0, 0, 0, 1)
+        )
+        self.label_depenses.bind(size=self.label_depenses.setter('text_size'))
+        main_layout.add_widget(self.label_depenses)
+        
+        self.label_economie = Label(
+            text="Économie depense arrondi : 0.00 €",
+             font_size=32,
+            size_hint=(1, None),
+            height=50,
+            halign='center',
+            valign='middle',
+            padding=(0, 10),  # (horizontal, vertical)
+            color=(0, 0, 0, 1)
+        )
+        main_layout.add_widget(self.label_economie)
+        self.mise_a_jour_economie()
+
+        # Conteneur horizontal pour les deux labels
+        labels_row = BoxLayout(orientation='horizontal', size_hint=(1, None), height=80)
+        
+        # Label de gauche (Solde)
+        self.solde_label = Label(
+            text="Solde actuel : 0.00 €",
+            font_size=40,
+            size_hint=(0.5, 1),
+            halign='left',
+            valign='middle',
+            color=(1, 0, 0, 1)
+        )
+        self.solde_label.bind(size=self.solde_label.setter('text_size'))
+        
+        # Label de droite (Fin de mois)
+        self.fin_label = Label(
+            text="fin_de_mois : 0.00 €",
+            font_size=40,
+            size_hint=(0.5, 1),
+            halign='right',
+            valign='middle',
+            color=(1, 0, 0, 1)
+        )
+        self.fin_label.bind(size=self.fin_label.setter('text_size'))
+        
+        # Ajout des deux labels au même conteneur
+        labels_row.add_widget(self.solde_label)
+        labels_row.add_widget(self.fin_label)
+        
+        # Ajout du conteneur au layout principal
+        main_layout.add_widget(labels_row)
+        
+        
+        
+        
         self.calculer_restant_a_payer()
 
         # Navigation
@@ -534,7 +548,7 @@ class pageprincipalScreen(Screen):
 
     def mise_a_jour_economie(self):
         total = self.calculer_total_economie_arrondi()  # ✅ avec self maintenant
-        self.label_economie.text = f"Économie par arrondi : {total:.2f} €"
+        self.label_economie.text = f"Économie depense arrondi : {total:.2f} €"
             
     
     def close_app(self, instance):
