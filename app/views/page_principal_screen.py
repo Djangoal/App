@@ -23,6 +23,8 @@ from cercled_checkbox import CercledCheckbox
 from kivy.graphics import Color, Line
 from date_input import DateInput
 from utils import calculer_total_charges_restantes
+import math
+
 
 
 
@@ -93,7 +95,7 @@ class pageprincipalScreen(Screen):
 
         inner_layout = BoxLayout(orientation='vertical', spacing=5, padding=10, size_hint=(1, 1))
         with inner_layout.canvas.before:
-            Color(0.95, 0.95, 0.95, 1)
+            Color(1, 0.6, 0.6, 1)
             self.bg_rect = Rectangle(size=inner_layout.size, pos=inner_layout.pos)
         inner_layout.bind(size=lambda w, s: setattr(self.bg_rect, 'size', s),
                           pos=lambda w, p: setattr(self.bg_rect, 'pos', p))
@@ -109,26 +111,58 @@ class pageprincipalScreen(Screen):
 
         main_layout.add_widget(input_wrapper)
         
-        # Catégories
-        checkbox_wrapper = BoxLayout(size_hint=(1, None), height=110, padding=10, spacing=40)
+                # Catégories
+        checkbox_wrapper = BoxLayout(size_hint=(1, None), height=110, padding=10)
+        
         with checkbox_wrapper.canvas.before:
-            Color(1, 1, 1, 1)
+            # Encadrement noir
+            Color(0, 0, 0, 1)
+            self.checkbox_border = Rectangle(size=(checkbox_wrapper.width + 4, checkbox_wrapper.height + 4),
+                                             pos=(checkbox_wrapper.x - 2, checkbox_wrapper.y - 2))
+        
+            # Fond orange
+            Color(1, 0.6, 0.3, 1)
             self.checkbox_bg = Rectangle(size=checkbox_wrapper.size, pos=checkbox_wrapper.pos)
-        checkbox_wrapper.bind(size=lambda w, s: setattr(self.checkbox_bg, 'size', s),
-                              pos=lambda w, p: setattr(self.checkbox_bg, 'pos', p))
-
+        
+        # Fonction de mise à jour des positions et tailles
+        def update_checkbox_canvas(instance, value):
+            self.checkbox_bg.size = instance.size
+            self.checkbox_bg.pos = instance.pos
+            self.checkbox_border.size = (instance.width + 4, instance.height + 4)
+            self.checkbox_border.pos = (instance.x - 2, instance.y - 2)
+        
+        # Lier les changements de taille/position à la mise à jour du fond + bordure
+        checkbox_wrapper.bind(size=update_checkbox_canvas, pos=update_checkbox_canvas)
+        
+        # ✅ Conteneur centré pour les checkbox
+        checkbox_container = BoxLayout(
+            orientation='horizontal',
+            spacing=40,
+            size_hint=(None, None),
+            width=600,  # Ajuste si nécessaire
+            height=80,
+            pos_hint={'center_x': 2, 'center_y': 0.7}
+        )
+        
+        # Création des cases
         self.revenu_cbox = CercledCheckbox("Revenu")
         self.charges_fixe_cbox = CercledCheckbox("Charges Fixes")
         self.depense_cbox = CercledCheckbox("depense")
-
-        checkbox_wrapper.add_widget(self.revenu_cbox)
-        checkbox_wrapper.add_widget(self.charges_fixe_cbox)
-        checkbox_wrapper.add_widget(self.depense_cbox)
+        
+        # Ajout dans le conteneur centré
+        checkbox_container.add_widget(self.revenu_cbox)
+        checkbox_container.add_widget(self.charges_fixe_cbox)
+        checkbox_container.add_widget(self.depense_cbox)
+        
+        # Ajout du conteneur dans le fond encadré
+        checkbox_wrapper.add_widget(checkbox_container)
+        
         main_layout.add_widget(checkbox_wrapper)
-
         main_layout.add_widget(BoxLayout())
 
         # Labels des totaux par catégorie
+        
+        
         
         self.total_charges_restantes_label = Label(
             text="Total restant a payer : 0.00 €",
@@ -142,6 +176,19 @@ class pageprincipalScreen(Screen):
         )
         self.total_charges_restantes_label.bind(size=self.total_charges_restantes_label.setter('text_size'))
         main_layout.add_widget(self.total_charges_restantes_label)
+        
+        self.label_economie = Label(
+            text="Économie par arrondi : 0.00 €",
+             font_size=32,
+            size_hint=(1, None),
+            height=50,
+            halign='left',
+            valign='middle',
+            padding=(0, 10),  # (horizontal, vertical)
+            color=(0, 0, 0, 1)
+        )
+        layout.add_widget(self.label_economie)
+        self.mise_a_jour_economie()
         
         
         self.label_revenus = Label(
@@ -204,6 +251,8 @@ class pageprincipalScreen(Screen):
         self.fin_label.bind(size=self.fin_label.setter('text_size'))
         main_layout.add_widget(self.fin_label)
         
+        
+        
         # Bouton valider
         self.valider_btn = Button(
             text="Valider",
@@ -252,6 +301,7 @@ class pageprincipalScreen(Screen):
     def on_pre_enter(self):
         self.charger_donnees()        
         self.mettre_a_jour_labels()
+        self.mise_a_jour_economie()
         self.appliquer_config()
         
     def ajouter_valeur(self, instance):
@@ -334,6 +384,7 @@ class pageprincipalScreen(Screen):
             self.mettre_a_jour_labels()
             self.calculer_restant_a_payer()
             self.maj_total_charges_restantes()
+            self.mise_a_jour_economie()
     
         except ValueError:
             print("Montant invalide")
@@ -461,6 +512,31 @@ class pageprincipalScreen(Screen):
         self.manager.current = nom_ecran
         self.mettre_a_jour_labels()
         
+    def calculer_total_economie_arrondi(self):
+        chemin_fichier = "donnees_budget.json"
+        total = 0
+
+        if not os.path.exists(chemin_fichier):
+            return 0.0
+
+        try:
+            with open(chemin_fichier, "r", encoding="utf-8") as f:
+                donnees = json.load(f)
+                for dep in donnees.get("depense", []):
+                    montant = abs(float(dep["montant"]))
+                    economie = math.ceil(montant) - montant
+                    total += economie
+        except Exception as e:
+            print(f"Erreur lors du calcul : {e}")
+            return 0.0
+
+        return round(total, 2)
+
+    def mise_a_jour_economie(self):
+        total = self.calculer_total_economie_arrondi()  # ✅ avec self maintenant
+        self.label_economie.text = f"Économie par arrondi : {total:.2f} €"
+            
+    
     def close_app(self, instance):
         App.get_running_app().stop()
         
