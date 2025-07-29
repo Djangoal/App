@@ -76,10 +76,17 @@ jobs:
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=36 \
+
+    - name: Rename APK
+      run: |
+        # Trouve le nom du fichier APK généré automatiquement
+        APK_FILE=$(ls *.apk | head -n 1)
+        # Renomme-le comme tu veux
+        mv "$APK_FILE" "mon_budget_perso.apk"
           
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug-apk
-        path: ./*.apk
+        name: mon-budget-apk
+        path: ./mon_budget_perso.apk
