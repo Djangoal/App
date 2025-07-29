@@ -1,10 +1,8 @@
-# cercled_checkbox.py
-
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
+from kivy.graphics import Color, Line, Ellipse
 from kivy.properties import StringProperty, BooleanProperty
-from kivy.graphics import Color, Line
 
 
 class CercledCheckbox(BoxLayout):
@@ -26,12 +24,24 @@ class CercledCheckbox(BoxLayout):
         self.add_widget(self.checkbox)
         self.add_widget(self.label)
 
+        with self.checkbox.canvas.before:
+            # Fond blanc centré
+            self.bg_color = Color(1, 1, 1, 1)
+            self.bg_circle = Ellipse(pos=self.checkbox.pos, size=self.checkbox.size)
+
         with self.checkbox.canvas.after:
+            # Cercle noir autour
             Color(0, 0, 0, 1)
             self.circle = Line(circle=(self.checkbox.center_x, self.checkbox.center_y, 25), width=1.8)
+
         self.checkbox.bind(pos=self.update_circle, size=self.update_circle)
 
     def update_circle(self, *args):
+        # Mettre à jour la position/size du fond blanc
+        self.bg_circle.pos = self.checkbox.pos
+        self.bg_circle.size = self.checkbox.size
+
+        # Mettre à jour le cercle noir
         c_x = self.checkbox.center_x
         c_y = self.checkbox.center_y
         self.circle.circle = (c_x, c_y, 25)
