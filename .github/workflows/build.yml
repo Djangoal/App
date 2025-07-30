@@ -47,32 +47,24 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: Préparation du projet
-      run: |
-        find . -name "aclocal.m4" -delete
-        find . -name "autom4te.cache" -type d -exec rm -rf {} +
-
-    - name: Créer le fichier pythonforandroid.spec
+    - name: Préparer le fichier .spec
       run: |
         mkdir -p app
-        cat > app/pythonforandroid.spec <<EOF
-[app]
-
-title = Mon budget perso
-package.name = monapp
-package.domain = org.example
-source.dir = .
-version = 0.1
-icon.filename = logo.png
-presplash.filename = app/logo1.png
-requirements = python3,kivy,kivmob,android
-orientation = portrait
-archs = armeabi-v7a
-android.api = 36
-android.ndk = 25b
-android.gradle_dependencies = com.google.android.gms:play-services-ads:22.6.0
-permissions = INTERNET, ACCESS_NETWORK_STATE
-EOF
+        echo "[app]" > app/pythonforandroid.spec
+        echo "title = Mon budget perso" >> app/pythonforandroid.spec
+        echo "package.name = monapp" >> app/pythonforandroid.spec
+        echo "package.domain = org.example" >> app/pythonforandroid.spec
+        echo "source.dir = ." >> app/pythonforandroid.spec
+        echo "version = 0.1" >> app/pythonforandroid.spec
+        echo "icon.filename = logo.png" >> app/pythonforandroid.spec
+        echo "presplash.filename = app/logo1.png" >> app/pythonforandroid.spec
+        echo "requirements = python3,kivy,kivmob,android" >> app/pythonforandroid.spec
+        echo "orientation = portrait" >> app/pythonforandroid.spec
+        echo "archs = armeabi-v7a" >> app/pythonforandroid.spec
+        echo "android.api = 36" >> app/pythonforandroid.spec
+        echo "android.ndk = 25b" >> app/pythonforandroid.spec
+        echo "android.gradle_dependencies = com.google.android.gms:play-services-ads:22.6.0" >> app/pythonforandroid.spec
+        echo "permissions = INTERNET, ACCESS_NETWORK_STATE" >> app/pythonforandroid.spec
 
     - name: Build APK
       run: |
