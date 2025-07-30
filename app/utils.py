@@ -28,7 +28,7 @@ def calculer_total_charges_restantes():
             total_restant += reste_a_payer  # Valeur négative
     return total_restant
    
-
+############################################################
 def recalculer_charges_a_payer(chemin="donnees_budget.json"):
     if os.path.exists(chemin):
         with open(chemin, "r", encoding="utf-8") as f:
@@ -56,4 +56,54 @@ def recalculer_charges_a_payer(chemin="donnees_budget.json"):
     donnees["charges_a_payer"] = charges_a_payer
 
     with open(chemin, "w", encoding="utf-8") as f:
+        json.dump(donnees, f, indent=4, ensure_ascii=False)
+        
+############################################################
+def lire_et_calculer_charges_a_payer(json_path='donnees_budget.json'):
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            donnees = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        donnees = {}
+
+    charges_fixes = donnees.get('charges_fixe', [])
+    depenses = donnees.get('depense', [])
+
+    # Calcul des dépenses par nom
+    depenses_par_nom = {}
+    for d in depenses:
+        nom = d['nom']
+        montant = d.get('montant', 0)
+        depenses_par_nom[nom] = depenses_par_nom.get(nom, 0) + montant
+
+    # Calcul des charges à payer
+    charges_a_payer = []
+    for charge in charges_fixes:
+        nom = charge['nom']
+        montant_charge = charge.get('montant', 0)
+        total_depense = depenses_par_nom.get(nom, 0)
+        reste_a_payer = montant_charge - total_depense
+
+        if abs(reste_a_payer) > 0.001:
+            charge_copie = charge.copy()
+            charge_copie['reste_a_payer'] = reste_a_payer
+            charges_a_payer.append(charge_copie)
+
+    total_a_payer = sum(item['reste_a_payer'] for item in charges_a_payer if item['reste_a_payer'] < 0)
+
+    # Sauvegarder dans le JSON
+    sauvegarder_charges_a_payer(charges_a_payer, json_path)
+
+    return charges_fixes, charges_a_payer, abs(total_a_payer)
+
+
+def sauvegarder_charges_a_payer(charges_a_payer, json_path='donnees_budget.json'):
+    if os.path.exists(json_path):
+        with open(json_path, 'r', encoding='utf-8') as f:
+            donnees = json.load(f)
+    else:
+        donnees = {}
+
+    donnees["charges_a_payer"] = charges_a_payer
+    with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(donnees, f, indent=4, ensure_ascii=False)
