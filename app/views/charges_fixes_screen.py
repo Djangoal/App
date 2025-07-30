@@ -11,6 +11,7 @@ import json
 import os
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
+from utils import lire_et_calculer_charges_a_payer
 
 
 class ChargesFixesScreen(Screen):
@@ -118,93 +119,44 @@ class ChargesFixesScreen(Screen):
 
     # === Mise à jour de l’écran lors de l’affichage ===
     def on_pre_enter(self):
-        app = App.get_running_app()
-
-        # Lecture des données JSON
-        try:
-            with open('donnees_budget.json', 'r', encoding='utf-8') as f:
-                donnees = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            donnees = {}
-
-        charges_fixes = donnees.get('charges_fixe', [])
-        depenses = donnees.get('depense', [])
-
-        # Calcul des dépenses par nom
-        depenses_par_nom = {}
-        for d in depenses:
-            nom = d['nom']
-            montant = d.get('montant', 0)
-            depenses_par_nom[nom] = depenses_par_nom.get(nom, 0) + montant
-
-        # Calcul des charges à payer
-        self.charges_a_payer = []
-        for charge in charges_fixes:
-            nom = charge['nom']
-            montant_charge = charge.get('montant', 0)
-            total_depense = depenses_par_nom.get(nom, 0)
-            reste_a_payer = montant_charge - total_depense
-
-            if abs(reste_a_payer) > 0.001:
-                charge_copie = charge.copy()
-                charge_copie['reste_a_payer'] = reste_a_payer
-                self.charges_a_payer.append(charge_copie)
-
-        # Remplissage du tableau Charges Fixes
+        charges_fixes, self.charges_a_payer, total_a_payer = lire_et_calculer_charges_a_payer()
+    
+        # === Affichage des charges fixes ===
         self.table_layout.clear_widgets()
         self.table_layout.add_widget(Label(text="[b]Date[/b]", markup=True, color=(0, 0, 0, 1)))
         self.table_layout.add_widget(Label(text="[b]Nom[/b]", markup=True, color=(0, 0, 0, 1)))
         self.table_layout.add_widget(Label(text="[b]Montant (€)[/b]", markup=True, color=(0, 0, 0, 1)))
         self.table_layout.add_widget(Label(text="[b]Action[/b]", markup=True, color=(0, 0, 0, 1)))
-
+    
         for index, item in enumerate(charges_fixes):
             self.table_layout.add_widget(Label(text=item['date'], color=(0, 0, 0, 1)))
             self.table_layout.add_widget(Label(text=item['nom'], color=(0, 0, 0, 1)))
             self.table_layout.add_widget(Label(text=f"{item['montant']:.2f} €", color=(0, 0, 0, 1)))
-
-            # Bouton "Modifier"
+    
             anchor = AnchorLayout(anchor_x='center', anchor_y='center')
             btn_modifier = Button(text="Modifier", size_hint=(0.8, 1), background_color=(0.2, 0.6, 0.8, 1))
             btn_modifier.bind(on_press=lambda btn, idx=index: self.ouvrir_popup_modification(idx))
             anchor.add_widget(btn_modifier)
             self.table_layout.add_widget(anchor)
-
-        # Remplissage du tableau Charges à Payer
+    
+        # === Affichage des charges à payer ===
         self.payer_layout.clear_widgets()
         self.payer_layout.add_widget(Label(text="[b]Nom[/b]", markup=True, color=(0, 0, 0, 1)))
         self.payer_layout.add_widget(Label(text="[b]Reste à payer (€)[/b]", markup=True, color=(0, 0, 0, 1)))
-
+    
         for item in self.charges_a_payer:
             self.payer_layout.add_widget(Label(text=item['nom'], color=(0, 0, 0, 1)))
             reste = item.get('reste_a_payer', 0)
             if reste < 0:
-                # Trop payé
                 lbl = Label(text=f"{abs(reste):.2f} €", color=(0.2, 0.4, 1, 1))
             else:
                 lbl = Label(text=f"+{reste:.2f} €", color=(0, 0.5, 0, 1))
             self.payer_layout.add_widget(lbl)
-
-        # Mise à jour des totaux
+    
+        # Totaux
         total_charges = sum(item['montant'] for item in charges_fixes)
         self.total_charges_fixes_label.text = f"Total des charges : {abs(total_charges):.2f} €"
-
-        total_a_payer = sum(item['reste_a_payer'] for item in self.charges_a_payer if item['reste_a_payer'] < 0)
-        self.total_Charges_à_Payer_label.text = f"Total des charges restant à payer : {abs(total_a_payer):.2f} €"
-
-        self.sauvegarder_charges_a_payer()
-
-    # === Sauvegarde des charges à payer dans le fichier JSON ===
-    def sauvegarder_charges_a_payer(self):
-        chemin = "donnees_budget.json"
-        if os.path.exists(chemin):
-            with open(chemin, 'r', encoding='utf-8') as f:
-                donnees = json.load(f)
-        else:
-            donnees = {}
-
-        donnees["charges_a_payer"] = self.charges_a_payer
-        with open(chemin, 'w', encoding='utf-8') as f:
-            json.dump(donnees, f, indent=4, ensure_ascii=False)
+        self.total_Charges_à_Payer_label.text = f"Total des charges restant à payer : {total_a_payer:.2f} €"
 
     # === Affiche le popup de modification d’une charge fixe ===
     def ouvrir_popup_modification(self, index):
