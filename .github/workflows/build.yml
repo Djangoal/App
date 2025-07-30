@@ -69,7 +69,11 @@ jobs:
     - name: Build APK
       run: |
         source venv/bin/activate
-        ./venv/bin/p4a apk --config=app/pythonforandroid.spec --arch=armeabi-v7a --copy-libs --release
+        ./venv/bin/p4a apk \
+          --config=app/pythonforandroid.spec \
+          --arch=armeabi-v7a \
+          --copy-libs \
+          --release apk --config=app/pythonforandroid.spec --arch=armeabi-v7a --copy-libs --release
    
     - name: Rename APK
       run: |
