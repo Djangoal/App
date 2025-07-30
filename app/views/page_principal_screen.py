@@ -238,7 +238,7 @@ class pageprincipalScreen(Screen):
             padding=(0, 10),  # (horizontal, vertical)
             color=(0, 0, 0, 1)
         )
-        main_layout.add_widget(self.label_economie)
+        #main_layout.add_widget(self.label_economie)
         self.mise_a_jour_economie()
 
         # Conteneur horizontal pour les deux labels
