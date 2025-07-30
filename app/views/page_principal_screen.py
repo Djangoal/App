@@ -24,8 +24,7 @@ from kivy.graphics import Color, Line
 from date_input import DateInput
 from utils import calculer_total_charges_restantes
 import math
-from utils import recalculer_charges_a_payer
-
+from utils import lire_et_calculer_charges_a_payer
 
 
 
@@ -239,7 +238,7 @@ class pageprincipalScreen(Screen):
             padding=(0, 10),  # (horizontal, vertical)
             color=(0, 0, 0, 1)
         )
-      #  main_layout.add_widget(self.label_economie)
+        main_layout.add_widget(self.label_economie)
         self.mise_a_jour_economie()
 
         # Conteneur horizontal pour les deux labels
@@ -304,6 +303,8 @@ class pageprincipalScreen(Screen):
         bottom_layout.add_widget(self.bouton_page_depense)
         bottom_layout.add_widget(self.bouton_page_epargne)
         main_layout.add_widget(bottom_layout)
+        
+        main_layout.add_widget(BoxLayout())
          
         self.charger_donnees()
         self.mettre_a_jour_labels()
@@ -313,14 +314,18 @@ class pageprincipalScreen(Screen):
         self.update_affichage_charges(app, app.show_total_charges)
         self.update_affichage_depenses(app, app.show_total_depenses)
         
-    
-
     def on_pre_enter(self):
-        recalculer_charges_a_payer()
-        self.charger_donnees()
+        
+        self.appliquer_config()
+        
+
+# ...
+        _, charges_a_payer, total_a_payer = lire_et_calculer_charges_a_payer()
+        self.total_charges_restantes_label.text = f"Total des charges restant à payer : {total_a_payer:.2f} €"
+            
+        self.charger_donnees()        
         self.mettre_a_jour_labels()
         self.mise_a_jour_economie()
-        self.appliquer_config()
         
     def ajouter_valeur(self, instance):
         try:
@@ -413,20 +418,11 @@ class pageprincipalScreen(Screen):
     def charger_donnees(self):
         if os.path.exists(self.data_file):
             with open(self.data_file, "r", encoding="utf-8") as f:
-                try:
-                    data = json.load(f)
-                    self.donnees = data  # 👈 stocke toutes les données
-                    self.soldes = data.get("soldes", [])
-                except json.JSONDecodeError:
-                    self.donnees = {}
-                    self.soldes = []
-    
-        else:
-            self.donnees = {}
-            self.soldes = []
-    
-        self.mettre_a_jour_labels()
-        self.calculer_restant_a_payer()
+                data = json.load(f)
+                self.soldes = data.get("soldes", [])
+                self.mettre_a_jour_labels()
+                self.calculer_restant_a_payer()
+                
 ################################################################calcul et mise a jour solde  ######                      
     
     def maj_total_charges_restantes(self):
@@ -452,51 +448,38 @@ class pageprincipalScreen(Screen):
         
     
     def mettre_a_jour_labels(self):
-    # Utilise self.donnees déjà chargées
-        donnees = self.donnees if hasattr(self, 'donnees') else {}
-    
+        # Lecture des données JSON
+        try:
+            with open('donnees_budget.json', 'r', encoding='utf-8') as f:
+                donnees = json.load(f)
+        except Exception as e:
+            print("Erreur lors de la lecture du fichier JSON :", e)
+            donnees = {}
+        
+        # Calcul des totaux
         total_revenus = sum(item.get('montant', 0) for item in donnees.get('revenu', []))
         total_charges = sum(item.get('montant', 0) for item in donnees.get('charges_fixe', []))
         total_depenses = sum(item.get('montant', 0) for item in donnees.get('depense', []))
-        total_reste_a_payer = sum(item.get('reste_a_payer', 0) for item in donnees.get('charges_a_payer', []))
-    
+        
+        # ✅ Total du reste à payer dans les charges à payer
+        total_reste_a_payer = sum(
+            item.get('reste_a_payer', 0) for item in donnees.get('charges_a_payer', [])
+        )
+        
+        # ✅ Mise à jour des labels
         self.label_revenus.text = f"Revenus : {total_revenus:.2f} €"
         self.label_charges.text = f"Charges Fixes : {abs(total_charges):.2f} €"
         self.label_depenses.text = f"Dépenses : {abs(total_depenses):.2f} €"
-    
+        
+        # ✅ Solde (les dépenses sont déjà négatives)
         solde = total_revenus + total_depenses
         self.solde_label.text = f"Solde actuel : {solde:.2f} €"
         self.solde_label.color = (0.2, 0.4, 1, 1) if solde >= 0 else (1, 0, 0, 1)
-    
+        
+        # ✅ Fin de mois (revenus - dépenses - reste à payer réel)
         fin_de_mois = total_revenus - abs(total_depenses) - abs(total_reste_a_payer)
         self.fin_label.text = f"Fin de mois : {fin_de_mois:.2f} €"
         self.fin_label.color = (0.2, 0.6, 0.2, 1) if fin_de_mois >= 0 else (1, 0, 0, 1)
-        
-    def calculer_total_economie_arrondi(self):
-        chemin_fichier = "donnees_budget.json"
-        total = 0
-
-        if not os.path.exists(chemin_fichier):
-            return 0.0
-
-        try:
-            with open(chemin_fichier, "r", encoding="utf-8") as f:
-                donnees = json.load(f)
-                for dep in donnees.get("depense", []):
-                    montant = abs(float(dep["montant"]))
-                    economie = math.ceil(montant) - montant
-                    total += economie
-        except Exception as e:
-            print(f"Erreur lors du calcul : {e}")
-            return 0.0
-
-        return round(total, 2)
-
-    def mise_a_jour_economie(self):
-        total = self.calculer_total_economie_arrondi()  # ✅ avec self maintenant
-        self.label_economie.text = f"Économie depense arrondi : {total:.2f} €"
-            
-    
         
     
     
@@ -552,6 +535,30 @@ class pageprincipalScreen(Screen):
         self.manager.current = nom_ecran
         self.mettre_a_jour_labels()
         
+    def calculer_total_economie_arrondi(self):
+        chemin_fichier = "donnees_budget.json"
+        total = 0
+
+        if not os.path.exists(chemin_fichier):
+            return 0.0
+
+        try:
+            with open(chemin_fichier, "r", encoding="utf-8") as f:
+                donnees = json.load(f)
+                for dep in donnees.get("depense", []):
+                    montant = abs(float(dep["montant"]))
+                    economie = math.ceil(montant) - montant
+                    total += economie
+        except Exception as e:
+            print(f"Erreur lors du calcul : {e}")
+            return 0.0
+
+        return round(total, 2)
+
+    def mise_a_jour_economie(self):
+        total = self.calculer_total_economie_arrondi()  # ✅ avec self maintenant
+        self.label_economie.text = f"Économie depense arrondi : {total:.2f} €"
+            
     
     def close_app(self, instance):
         App.get_running_app().stop()
