@@ -93,7 +93,7 @@ jobs:
           --requirements=python3,kivy,pyjnius,openpyxl,android \
           --ndk-dir=$NDK_DIR/25.2.9519653 \
           --sdk-dir=$SDK_DIR \
-          --android-api=30 \
+          --android-api=36 \
           --permission=INTERNET \
           --permission=ACCESS_NETWORK_STATE \
           --arch=armeabi-v7a \
