@@ -81,8 +81,8 @@ jobs:
 
     - name: Build APK
       run: |
-        source venv/bin/activate
-        p4a apk \
+       source venv/bin/activate
+       p4a apk \
        --package=org.example.monapp \
        --name="Mon budget perso" \
        --version=0.1 \
