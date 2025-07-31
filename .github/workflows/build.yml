@@ -18,35 +18,30 @@ jobs:
 
     - name: Install system dependencies
       run: |
-       sudo apt-get update
-       sudo apt-get install -y \
-       build-essential \
-       libtool \
-       libtool-bin \
-       zip unzip \
-       openjdk-17-jdk \
-       python3-pip \
-       libncurses-dev \
-       libltdl-dev \
-       automake autoconf \
-       pkg-config m4 \
-       gcc g++ \
-       ccache
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          autoconf \
+          automake \
+          libtool \
+          libtool-bin \
+          pkg-config \
+          ccache \
+          zip unzip \
+          openjdk-17-jdk \
+          python3-pip \
+          libncurses-dev \
+          libltdl-dev \
+          m4 \
+          gcc g++
 
-    - name: Test GCC
-      run: |
-       gcc --version
-       echo "int main() {return 0;}" > test.c
-       gcc test.c -o test
-       ./test && echo "GCC is working"
-
-       
     - name: Setup Python and python-for-android
       run: |
         python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip
-        ./venv/bin/pip install cython
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install cython
+        pip install git+https://github.com/kivy/python-for-android.git
 
     - name: Download Android SDK and NDK
       run: |
@@ -64,60 +59,36 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: Préparer le fichier .spec
+    - name: Prepare .spec file
       run: |
         mkdir -p app
-        echo "[app]" > app/pythonforandroid.spec
-        echo "title = Mon budget perso" >> app/pythonforandroid.spec
-        echo "package.name = monapp" >> app/pythonforandroid.spec
-        echo "package.domain = org.example" >> app/pythonforandroid.spec
-        echo "source.dir = ." >> app/pythonforandroid.spec
-        echo "version = 0.1" >> app/pythonforandroid.spec
-        echo "icon.filename = logo.png" >> app/pythonforandroid.spec
-        echo "presplash.filename = app/logo1.png" >> app/pythonforandroid.spec
-        echo "requirements = python3,kivy,kivmob,android" >> app/pythonforandroid.spec
-        echo "orientation = portrait" >> app/pythonforandroid.spec
-        echo "archs = armeabi-v7a" >> app/pythonforandroid.spec
-        echo "bootstrap = sdl2" >> app/pythonforandroid.spec
-        echo "android.api = 36" >> app/pythonforandroid.spec
-        echo "android.ndk = 25b" >> app/pythonforandroid.spec
-        echo "android.gradle_dependencies = com.google.android.gms:play-services-ads:22.6.0" >> app/pythonforandroid.spec
-        echo "permissions = INTERNET, ACCESS_NETWORK_STATE" >> app/pythonforandroid.spec
-
-    - name: Clean previous builds
-      run: |
-        rm -rf .buildozer
-        rm -rf .p4a
-        rm -rf dist
-
-    - name: Debug spec file
-      run: |
-        echo "========== pythonforandroid.spec =========="
-        cat app/pythonforandroid.spec
-        echo "==========================================="
+        cat > app/pythonforandroid.spec <<EOF
+[app]
+title = Mon budget perso
+package.name = monapp
+package.domain = org.example
+source.dir = .
+version = 0.1
+icon.filename = logo.png
+presplash.filename = app/logo1.png
+requirements = python3,kivy,kivmob,android
+orientation = portrait
+archs = armeabi-v7a
+bootstrap = sdl2
+android.api = 36
+android.ndk = 25b
+android.gradle_dependencies = com.google.android.gms:play-services-ads:22.6.0
+permissions = INTERNET, ACCESS_NETWORK_STATE
+EOF
 
     - name: Build APK
       run: |
-       source venv/bin/activate
-       ./venv/bin/p4a create \
-       --dist_name=monapp \
-       --package=org.example.monapp \
-       --name="Mon budget perso" \
-       --version=0.1 \
-       --bootstrap=sdl2 \
-       --requirements=python3,kivy,kivmob,android \
-       --arch=armeabi-v7a \
-       --orientation=portrait \
-       --copy-libs \
-       --presplash=app/logo1.png \
-       --icon=logo.png \
-       --permission=INTERNET \
-       --permission=ACCESS_NETWORK_STATE \
-       --android_api=36 \
-       --ndk-api=25 \
-       --release
-
-       ./venv/bin/p4a apk --dist_name=monapp --arch=armeabi-v7a --release
+        source venv/bin/activate
+        p4a apk \
+          --config=app/pythonforandroid.spec \
+          --arch=armeabi-v7a \
+          --copy-libs \
+          --release
 
     - name: Rename APK
       run: |
