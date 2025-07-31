@@ -96,7 +96,7 @@ jobs:
           --android-api=30 \
           --permission=INTERNET \
           --permission=ACCESS_NETWORK_STATE \
-          --arch=armeabi-v7a,arm64-v8a \
+          --arch=armeabi-v7a \
           --copy-libs \
           --icon=logo.png \
           --presplash=app/logo1.png \
