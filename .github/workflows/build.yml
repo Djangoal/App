@@ -18,12 +18,29 @@ jobs:
 
     - name: Install system dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential libltdl-dev \
-          zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+       sudo apt-get update
+       sudo apt-get install -y \
+       build-essential \
+       libtool \
+       libtool-bin \
+       zip unzip \
+       openjdk-17-jdk \
+       python3-pip \
+       libncurses-dev \
+       libltdl-dev \
+       automake autoconf \
+       pkg-config m4 \
+       gcc g++ \
+       ccache
 
+    - name: Test GCC
+      run: |
+       gcc --version
+       echo "int main() {return 0;}" > test.c
+       gcc test.c -o test
+       ./test && echo "GCC is working"
+
+       
     - name: Setup Python and python-for-android
       run: |
         python3 -m venv venv
