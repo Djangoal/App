@@ -66,6 +66,18 @@ jobs:
         echo "android.gradle_dependencies = com.google.android.gms:play-services-ads:22.6.0" >> app/pythonforandroid.spec
         echo "permissions = INTERNET, ACCESS_NETWORK_STATE" >> app/pythonforandroid.spec
 
+    - name: Clean previous builds
+      run: |
+        rm -rf .buildozer
+        rm -rf .p4a
+        rm -rf dist
+
+    - name: Debug spec file
+      run: |
+       echo "========== pythonforandroid.spec =========="
+       cat app/pythonforandroid.spec
+       echo "==========================================="
+    
     - name: Build APK
       run: |
         source venv/bin/activate
