@@ -61,8 +61,9 @@ jobs:
         echo "requirements = python3,kivy,kivmob,android" >> app/pythonforandroid.spec
         echo "orientation = portrait" >> app/pythonforandroid.spec
         echo "archs = armeabi-v7a" >> app/pythonforandroid.spec
+        echo "bootstrap = sdl2" >> app/pythonforandroid.spec
         echo "android.api = 36" >> app/pythonforandroid.spec
-        echo "android.ndk = 25b" >> app/pythonforandroid.spec
+        echo "android.ndk = 25.2.9519653" >> app/pythonforandroid.spec
         echo "android.gradle_dependencies = com.google.android.gms:play-services-ads:22.6.0" >> app/pythonforandroid.spec
         echo "permissions = INTERNET, ACCESS_NETWORK_STATE" >> app/pythonforandroid.spec
 
@@ -74,10 +75,10 @@ jobs:
 
     - name: Debug spec file
       run: |
-       echo "========== pythonforandroid.spec =========="
-       cat app/pythonforandroid.spec
-       echo "==========================================="
-    
+        echo "========== pythonforandroid.spec =========="
+        cat app/pythonforandroid.spec
+        echo "==========================================="
+
     - name: Build APK
       run: |
         source venv/bin/activate
@@ -85,11 +86,11 @@ jobs:
           --config=app/pythonforandroid.spec \
           --arch=armeabi-v7a \
           --copy-libs \
-          --release apk --config=app/pythonforandroid.spec --arch=armeabi-v7a --copy-libs --release
-   
+          --release
+
     - name: Rename APK
       run: |
-        APK_FILE=$(ls *.apk | head -n 1)
+        APK_FILE=$(find . -name "*.apk" | head -n 1)
         mv "$APK_FILE" "mon_budget_perso.apk"
 
     - name: Upload APK
