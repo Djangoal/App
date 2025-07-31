@@ -1,6 +1,6 @@
 from kivy.core.window import Window
 Window.softinput_mode = 'below_target'
-
+from android.permissions import request_permissions, Permission
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import BooleanProperty
@@ -10,6 +10,7 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.utils import platform
+import hashlib
 
 from views.logs_screen import LogsScreen
 from views.page_principal_screen import pageprincipalScreen
@@ -18,16 +19,15 @@ from views.charges_fixes_screen import ChargesFixesScreen
 from views.depenses_screen import DepenseScreen
 from views.configuration_screen import ConfigurationScreen
 from views.epargne_screen import EpargneScreen
+from kivy.lang import Builder
 
-from android.permissions import request_permissions, Permission
 from android.storage import app_storage_path
 
-import hashlib
+
 import os
 import json
 import sys
 from logger import logger
-
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
