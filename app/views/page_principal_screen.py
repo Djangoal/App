@@ -25,7 +25,7 @@ from date_input import DateInput
 from utils import calculer_total_charges_restantes
 import math
 from utils import lire_et_calculer_charges_a_payer
-from kivmob import KivMob
+from libs.kivmob import KivMob
 from kivy.uix.screenmanager import Screen
 from kivy.uix.button import Button
 from kivy.utils import platform
