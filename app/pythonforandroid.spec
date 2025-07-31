@@ -4,6 +4,7 @@ title = Mon budget perso
 package.name = monapp
 package.domain = org.example
 source.dir = .
+source.main = main.py
 version = 0.1
 icon.filename = logo.png
 presplash.filename = logo1.png
