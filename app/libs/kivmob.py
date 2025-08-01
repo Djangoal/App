@@ -1,42 +1,50 @@
+from jnius import autoclass, cast
 from android.runnable import run_on_ui_thread
 
-ADMOB_AVAILABLE = False
-
-try:
-    from jnius import autoclass, cast
-
-    PythonActivity = autoclass('org.kivy.android.PythonActivity')
-    AdRequest = autoclass('com.google.android.gms.ads.AdRequest')
-    AdSize = autoclass('com.google.android.gms.ads.AdSize')
-    AdView = autoclass('com.google.android.gms.ads.AdView')
-    AdListener = autoclass('com.google.android.gms.ads.AdListener')
-    InterstitialAd = autoclass('com.google.android.gms.ads.interstitial.InterstitialAd')
-    InterstitialAdLoadCallback = autoclass('com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback')
-
-    ADMOB_AVAILABLE = True
-except Exception as e:
-    print("⚠️ AdMob non disponible :", e)
-    ADMOB_AVAILABLE = False
+# Importations Android
+PythonActivity = autoclass('org.kivy.android.PythonActivity')
+AdRequest = autoclass('com.google.android.gms.ads.AdRequest')
+AdSize = autoclass('com.google.android.gms.ads.AdSize')
+AdView = autoclass('com.google.android.gms.ads.AdView')
+AdListener = autoclass('com.google.android.gms.ads.AdListener')
+InterstitialAd = autoclass('com.google.android.gms.ads.interstitial.InterstitialAd')
+InterstitialAdLoadCallback = autoclass('com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback')
+LinearLayout = autoclass('android.widget.LinearLayout')
+Color = autoclass('android.graphics.Color')
+LayoutParams = autoclass('android.widget.LinearLayout$LayoutParams')
 
 
 class AndroidBridge:
     def __init__(self, app_id):
+        self.activity = PythonActivity.mActivity
+        self.app_id = app_id
         self._banner = None
         self._interstitial = None
         self._loaded = False
-        self.app_id = app_id
-        if ADMOB_AVAILABLE:
-            self.activity = PythonActivity.mActivity
 
     @run_on_ui_thread
     def new_banner(self, ad_unit_id, ad_size='BANNER'):
-        if not ADMOB_AVAILABLE:
-            return
+        # Création du AdView
         self._banner = AdView(self.activity)
         self._banner.setAdSize(getattr(AdSize, ad_size))
         self._banner.setAdUnitId(ad_unit_id)
-        layout = self.activity.findViewById(0x01020002)  # android.R.id.content
-        layout.addView(self._banner)
+
+        # Création d'un encadré (LinearLayout parent)
+        layout_parent = LinearLayout(self.activity)
+        layout_parent.setOrientation(LinearLayout.VERTICAL)
+        layout_parent.setBackgroundColor(Color.parseColor("#CCCCCC"))  # Encadré gris
+
+        params = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        layout_parent.setLayoutParams(params)
+
+        # Ajout du AdView dans l'encadré
+        layout_parent.addView(self._banner)
+
+        # Ajout de l'encadré à la vue principale
+        root_layout = self.activity.findViewById(0x01020002)  # android.R.id.content
+        root_layout.addView(layout_parent)
+
+        # Chargement de la publicité
         self._banner.loadAd(AdRequest.Builder().build())
 
     @run_on_ui_thread
@@ -51,25 +59,26 @@ class AndroidBridge:
 
     @run_on_ui_thread
     def new_interstitial(self, ad_unit_id):
-        if not ADMOB_AVAILABLE:
-            return
         self._loaded = False
         ad_request = AdRequest.Builder().build()
+        callback = InterstitialAdLoadCallback()
 
-        class MyInterstitialCallback(InterstitialAdLoadCallback):
-            def onAdLoaded(inner_self, ad):
-                self._interstitial = ad
-                self._loaded = True
+        def on_ad_loaded(ad):
+            self._interstitial = ad
+            self._loaded = True
 
-            def onAdFailedToLoad(inner_self, error):
-                self._interstitial = None
-                self._loaded = False
+        def on_ad_failed_to_load(error):
+            self._interstitial = None
+            self._loaded = False
+
+        callback.onAdLoaded = on_ad_loaded
+        callback.onAdFailedToLoad = on_ad_failed_to_load
 
         InterstitialAd.load(
             self.activity,
             ad_unit_id,
             ad_request,
-            MyInterstitialCallback()
+            callback
         )
 
     @run_on_ui_thread
@@ -80,8 +89,6 @@ class AndroidBridge:
             self._loaded = False
 
     def is_interstitial_loaded(self):
-        if not ADMOB_AVAILABLE:
-            return False
         self._is_interstitial_loaded()
         return self._loaded
 
@@ -91,8 +98,7 @@ class AndroidBridge:
             self._interstitial.show(self.activity)
 
     def show_interstitial(self):
-        if ADMOB_AVAILABLE:
-            self._show_interstitial()
+        self._show_interstitial()
 
 
 class TestIds:
@@ -118,7 +124,7 @@ class KivMob:
         self.bridge.new_interstitial(ad_unit_id)
 
     def request_interstitial(self):
-        pass
+        pass  # Implémentation optionnelle
 
     def is_interstitial_loaded(self):
         return self.bridge.is_interstitial_loaded()
