@@ -35,13 +35,14 @@ jobs:
           m4 \
           gcc g++
 
-    - name: Setup Python and python-for-android
+    - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
         source venv/bin/activate
-        pip install --upgrade pip
-        pip install cython
-        pip install git+https://github.com/kivy/python-for-android.git
+        ./venv/bin/pip install --upgrade pip
+        ./venv/bin/pip install cython
+        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+    
 
     - name: Download Android SDK and NDK
       run: |
@@ -58,8 +59,21 @@ jobs:
           "platforms;android-36" \
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
+          
+    - name: Prepare build environment
+      run: |
+        find . -name "aclocal.m4" -delete
+        find . -name "autom4te.cache" -type d -exec rm -rf {} +
 
-    
+    - name: Debug NDK and SDK dirs
+      run: |
+        echo "SDK_DIR contents:"
+        ls -l $SDK_DIR
+        echo "NDK_DIR contents:"
+        ls -l $NDK_DIR
+        echo "ANDROID_NDK_HOME:"
+        echo $ANDROID_NDK_HOME
+
     - name: Build APK
       run: |
         source venv/bin/activate
@@ -70,8 +84,8 @@ jobs:
           --version=0.1 \
           --bootstrap=sdl2 \
           --requirements=python3,kivy,pyjnius,openpyxl,android \
-          --ndk-dir=$NDK_DIR/25.2.9519653 \
-          --sdk-dir=$SDK_DIR \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
           --android-api=36 \
           --permission=INTERNET \
           --permission=ACCESS_NETWORK_STATE \
@@ -89,7 +103,8 @@ jobs:
         mv "$APK_FILE" "mon_budget_perso.apk"
 
     - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: mon-budget-apk
-        path: ./mon_budget_perso.apk
+          uses: actions/upload-artifact@v4
+          with:
+            name: mon-budget-apk
+            path: ./mon_budget_perso.apk
+    
