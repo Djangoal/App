@@ -25,7 +25,7 @@ from date_input import DateInput
 from utils import calculer_total_charges_restantes
 import math
 from utils import lire_et_calculer_charges_a_payer
-#from controllers.ads_controller import ads_controller
+from controllers.ads_controller import ads_controller
 
 
 
@@ -562,9 +562,9 @@ class pageprincipalScreen(Screen):
         total = self.calculer_total_economie_arrondi()  # ✅ avec self maintenant
         self.label_economie.text = f"Économie depense arrondi : {total:.2f} €"
         
-   # def on_enter(self):
-      #  ads_controller.show_banner()
-      #  ads_controller.show_interstitial()
+    def on_enter(self):
+        ads_controller.show_banner()
+        ads_controller.show_interstitial()
             
     
     def close_app(self, instance):
