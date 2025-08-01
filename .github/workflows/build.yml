@@ -103,8 +103,8 @@ jobs:
         mv "$APK_FILE" "mon_budget_perso.apk"
 
     - name: Upload APK
-          uses: actions/upload-artifact@v4
-          with:
+      uses: actions/upload-artifact@v4
+      with:
             name: mon-budget-apk
             path: ./mon_budget_perso.apk
     
