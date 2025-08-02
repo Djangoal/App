@@ -1,7 +1,7 @@
 from jnius import autoclass, cast
 from android.runnable import run_on_ui_thread
 
-ADS_ENABLED = False  # Passe à True pour activer pubs (en prod Android)
+ADS_ENABLED = True  # Passe à True pour activer pubs (en prod Android)
 
 ADMOB_AVAILABLE = False
 
