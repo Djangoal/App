@@ -90,7 +90,7 @@ jobs:
           --android.permissions = INTERNET, ACCESS_NETWORK_STATE
           --android.gradle_dependencies = 'com.google.android.gms:play-services-ads:22.3.0'
           --android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
-          --arch=armeabi-v7a \
+          --android.archs = armeabi-v7a \
           --copy-libs \
           --icon=logo.png \
           --presplash=app/logo1.png \
