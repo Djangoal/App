@@ -34,7 +34,6 @@ jobs:
           libltdl-dev \
           m4 \
           gcc g++
-
     - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
@@ -52,7 +51,6 @@ jobs:
         mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
         mkdir -p $SDK_DIR/cmdline-tools/latest
         mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
-
         yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
         $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" \
@@ -64,7 +62,6 @@ jobs:
       run: |
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
-
     - name: Debug NDK and SDK dirs
       run: |
         echo "SDK_DIR contents:"
@@ -73,36 +70,36 @@ jobs:
         ls -l $NDK_DIR
         echo "ANDROID_NDK_HOME:"
         echo $ANDROID_NDK_HOME
-
     - name: Build APK
       run: |
-       source venv/bin/activate
-       ./venv/bin/p4a apk \
-       --private ./app \
-       --package=org.example.monapp \
-       --name="Mon budget perso" \
-       --version=0.1 \
-       --bootstrap=sdl2 \
-       --requirements=python3,kivy,pyjnius,openpyxl,kivmob \
-       --sdk_dir=$SDK_DIR \
-       --ndk_dir=$ANDROID_NDK_HOME \
-       --android-api=36 \
-       --arch=armeabi-v7a \
-       --copy-libs \
-       --icon=logo.png \
-       --presplash=app/logo1.png \
-       --orientation=portrait \
-       --dist-name=monapp \
-       --debug
-
+        source venv/bin/activate
+        ./venv/bin/p4a apk \
+          --private ./app \
+          --package=org.example.monapp \
+          --name="Mon budget perso" \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --requirements=python3,kivy,pyjnius,openpyxl,android \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android-api=36 \
+          --permission=INTERNET \
+          --permission=ACCESS_NETWORK_STATE \
+          --arch=armeabi-v7a \
+          --copy-libs \
+          --icon=logo.png \
+          --presplash=app/logo1.png \
+          --orientation=portrait \
+          --dist-name=monapp \
+          --debug
     - name: Rename APK
       run: |
         APK_FILE=$(find . -name "*.apk" | head -n 1)
         mv "$APK_FILE" "mon_budget_perso.apk"
-
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
             name: mon-budget-apk
             path: ./mon_budget_perso.apk
     
+Update kivmob.py · Djangoal/App@91e7a9e 
