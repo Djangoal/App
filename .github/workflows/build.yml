@@ -76,27 +76,25 @@ jobs:
 
     - name: Build APK
       run: |
-        source venv/bin/activate
-        ./venv/bin/p4a apk \
-          --private ./app \
-          --package=org.example.monapp \
-          --name="Mon budget perso" \
-          --version=0.1 \
-          --bootstrap=sdl2 \
-          --requirements=python3,kivy,pyjnius,openpyxl,android \
-          --sdk_dir=$SDK_DIR \
-          --ndk_dir=$ANDROID_NDK_HOME \
-          --android-api=36 \
-          --android.permissions = INTERNET, ACCESS_NETWORK_STATE
-          --android.gradle_dependencies = 'com.google.android.gms:play-services-ads:22.3.0'
-          --android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
-          --android.archs = armeabi-v7a \
-          --copy-libs \
-          --icon=logo.png \
-          --presplash=app/logo1.png \
-          --orientation=portrait \
-          --dist-name=monapp \
-          --debug
+       source venv/bin/activate
+       ./venv/bin/p4a apk \
+       --private ./app \
+       --package=org.example.monapp \
+       --name="Mon budget perso" \
+       --version=0.1 \
+       --bootstrap=sdl2 \
+       --requirements=python3,kivy,pyjnius,openpyxl,kivmob \
+       --sdk_dir=$SDK_DIR \
+       --ndk_dir=$ANDROID_NDK_HOME \
+       --android-api=36 \
+       --permissions=INTERNET,ACCESS_NETWORK_STATE \
+       --arch=armeabi-v7a \
+       --copy-libs \
+       --icon=logo.png \
+       --presplash=app/logo1.png \
+       --orientation=portrait \
+       --dist-name=monapp \
+       --debug
 
     - name: Rename APK
       run: |
