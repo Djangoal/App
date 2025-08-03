@@ -77,8 +77,7 @@ jobs:
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=36 \
           --orientation=portrait \
-          --release \
-          --dist-name=monapp
+          --debug
 
     - name: Rename APK
       run: |
