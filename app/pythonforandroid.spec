@@ -14,5 +14,5 @@ archs = armeabi-v7a
 bootstrap = sdl2
 android.api = 36
 android.ndk = 25.2.9519653
-android.gradle_dependencies = com.google.android.gms:play-services-ads:22.6.0
-permissions = INTERNET,ACCESS_NETWORK_STATE
+android.permissions = INTERNET, ACCESS_NETWORK_STATE
+android.gradle_dependencies = 'com.google.android.gms:play-services-ads:22.6.0'
