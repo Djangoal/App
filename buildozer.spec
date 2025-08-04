@@ -20,14 +20,16 @@ package.name = mon_budget_perso
 # Supported architectures
 arch = armeabi-v7a
 
-# (str) Android API to use
-android.api = 36
 
+android.api = 36
+android.ndk = 25b
+android.sdk = 24.4.1
+android.ndk_path = 
+android.sdk_path =
 # (int) Minimum API your APK will support
 android.minapi = 21
 
-# (str) Android NDK version to use
-android.ndk = 25b
+
 
 # (str) Android SDK Build Tools version to use
 android.build_tools_version = 36.0.0
