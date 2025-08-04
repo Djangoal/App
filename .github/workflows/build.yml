@@ -23,29 +23,23 @@ jobs:
           libssl-dev libsqlite3-dev libjpeg-dev \
           zlib1g-dev libpng-dev
 
-    - name: Setup Python & install Buildozer
+    - name: Setup Python & install Buildozer + Cython
       run: |
         python3 -m pip install --upgrade pip
         pip install buildozer cython
 
-    - name: Install Android SDK Command Line Tools
+    - name: Install Android SDK Command Line Tools properly
       run: |
         mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-        cd $ANDROID_SDK_ROOT
         curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-        unzip cmdline-tools.zip -d cmdline-tools
-        mkdir -p cmdline-tools/latest
-        mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/
-        yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
-        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-
-    - name: Install Android Build Tools & Platform Tools
-      run: |
-        sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+        unzip cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools/latest
+        yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+        $ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
           "platform-tools" \
           "build-tools;36.0.0" \
           "platforms;android-36" \
           "ndk;25.2.9519653"
+        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools/bin" >> $GITHUB_PATH
 
     - name: Build APK with Buildozer
       run: |
