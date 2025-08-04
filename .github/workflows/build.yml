@@ -31,7 +31,10 @@ jobs:
 
     - name: Build APK with Buildozer
       run: |
+        cd ${{ github.workspace }}
         buildozer android debug
+
+    
 
     - name: Rename APK
       run: |
