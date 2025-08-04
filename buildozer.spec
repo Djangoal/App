@@ -41,11 +41,8 @@ android.permissions = INTERNET
 # (bool) Copy library instead of linking (for debugging)
 copy_libs = 1
 
-# (str) Supported orientation (portrait, landscape or all)
-orientation = portrait
 
-# (bool) Indicate if the application should be fullscreen or not
-fullscreen = 1
+
 
 # (list) Screens to add
 # e.g. landscape = 1
