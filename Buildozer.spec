@@ -2,7 +2,8 @@
 title = Mon budget perso
 package.name = monapp
 package.domain = org.example
-source.dir = .
+source.dir = app
+entrypoint = main.py
 source.include_exts = py,png,jpg,kv,atlas,json
 version = 0.1
 requirements = python3,kivy
@@ -11,8 +12,7 @@ presplash.filename = app/logo1.png
 orientation = portrait
 fullscreen = 1
 
-# Entry point
-entrypoint = main.py
+
 
 # Package name for release
 package.name = mon_budget_perso
