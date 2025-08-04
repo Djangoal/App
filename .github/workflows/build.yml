@@ -23,6 +23,10 @@ jobs:
         git build-essential libncurses-dev libffi-dev \
         libssl-dev libsqlite3-dev libjpeg-dev \
         zlib1g-dev libpng-dev
+
+    - name: Install Cython
+      run: |
+        pip install cython
         
     - name: Setup Python & install buildozer
       run: |
