@@ -1,6 +1,6 @@
 [app]
 title = Mon budget perso
-package.name = monapp
+
 package.domain = org.example
 source.dir = app
 entrypoint = main.py
