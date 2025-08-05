@@ -21,10 +21,10 @@ android.api = 36
 android.minapi = 21
 android.ndk = 25b
 android.sdk = 24.4.1
-android.ndk_path =
-android.sdk_path =
 android.build_tools_version = 36.0.0
-
+android.sdk_path = /home/runner/android-sdk
+android.ndk_path = 
+android.api = 36
 # Résolution des erreurs AIDL
 android.accept_sdk_license = True
 android.accept_sdk_license_again = True
