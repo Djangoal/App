@@ -55,4 +55,3 @@ jobs:
       with:
         name: mon-budget-apk
         path: ./mon_budget_perso.apk
-Update build.yml · Djangoal/App@1c522dd
