@@ -7,9 +7,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_SDK_ROOT: $HOME/android-sdk
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -21,45 +18,18 @@ jobs:
           zip unzip openjdk-17-jdk python3-pip \
           git build-essential libncurses-dev libffi-dev \
           libssl-dev libsqlite3-dev libjpeg-dev \
-          zlib1g-dev libpng-dev curl
-
+          zlib1g-dev libpng-dev
     - name: Setup Python & install Buildozer
       run: |
         python3 -m pip install --upgrade pip
         pip install buildozer cython
-
-    - name: Install Android SDK Command Line Tools
-      run: |
-       mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-       cd $ANDROID_SDK_ROOT/cmdline-tools
-       curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o tools.zip
-       unzip tools.zip
-       mv cmdline-tools latest
-       yes | ./latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
-       echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-
     - name: Build APK with Buildozer
       run: |
-        buildozer android debug || exit 1
-
-    - name: Debug Buildozer Log on Failure
-      if: failure()
-      run: |
-        echo "======= BUILD ERROR LOG ======="
-        find .buildozer -name "build.log" || echo "No build.log file found"
-        LOG_FILE=$(find .buildozer -name "build.log" | head -n 1)
-        if [ -n "$LOG_FILE" ]; then
-          echo "Found log at: $LOG_FILE"
-          cat "$LOG_FILE"
-        else
-          echo "Log file not found."
-        fi
-
+        buildozer android debug
     - name: Rename APK
       run: |
         APK_FILE=$(find bin/ -name "*.apk" | head -n 1)
         mv "$APK_FILE" "mon_budget_perso.apk"
-
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
