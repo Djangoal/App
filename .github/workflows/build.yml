@@ -26,6 +26,12 @@ jobs:
     - name: Build APK with Buildozer
       run: |
         buildozer android debug
+    - name: Debug Buildozer Log on Failure
+      if: failure()
+      run: |
+       echo "======= BUILD ERROR LOG ======="
+       cat .buildozer/android/platform/build-armeabi-v7a/d.buildozer/build.log || echo "No build log found"
+   
     - name: Rename APK
       run: |
         APK_FILE=$(find bin/ -name "*.apk" | head -n 1)
