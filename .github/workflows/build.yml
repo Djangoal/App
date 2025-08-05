@@ -33,12 +33,12 @@ jobs:
         mkdir -p $ANDROID_SDK_ROOT
         cd $ANDROID_SDK_ROOT
         curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-        unzip cmdline-tools.zip
+        unzip cmdline-tools.zip -d tmp-cmdline
         mkdir -p cmdline-tools/latest
-        mv cmdline-tools cmdline-tools/latest/cmdline-tools
+        mv tmp-cmdline/cmdline-tools cmdline-tools/latest/
         yes | cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
         echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools/bin" >> $GITHUB_PATH
-
+    
     - name: Install Android Build Tools & Platform Tools
       run: |
         sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
