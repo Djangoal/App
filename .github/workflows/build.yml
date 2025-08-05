@@ -12,22 +12,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show repo content
+      - name: Show files in repo
         run: ls -la
 
-      - name: Verify buildozer.spec exists
+      - name: Ensure buildozer.spec exists
         run: test -f buildozer.spec
 
-      - name: Disable Docker BuildKit
-        run: echo "DOCKER_BUILDKIT=0" >> $GITHUB_ENV
+      - name: Disable BuildKit and pull image manually
+        run: |
+          DOCKER_BUILDKIT=0 docker pull kivy/buildozer:latest
 
-      - name: Build APK using Docker
+      - name: Run Buildozer in Docker
         run: |
           docker run --rm -v ${{ github.workspace }}:/app \
           -w /app kivy/buildozer \
           buildozer android debug
 
-      - name: Upload APK to GitHub Artifacts
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: my-app-debug-apk
