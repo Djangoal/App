@@ -3,8 +3,6 @@ name: Build APK with Buildozer
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
   build:
@@ -14,7 +12,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build APK with Buildozer (Docker)
+      - name: Show repo content
+        run: ls -la
+
+      - name: Verify buildozer.spec exists
+        run: test -f buildozer.spec
+
+      - name: Build APK using Docker
         run: |
           docker run --rm -v ${{ github.workspace }}:/app \
           -w /app kivy/buildozer \
