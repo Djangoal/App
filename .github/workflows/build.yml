@@ -18,6 +18,9 @@ jobs:
       - name: Verify buildozer.spec exists
         run: test -f buildozer.spec
 
+      - name: Disable Docker BuildKit
+        run: echo "DOCKER_BUILDKIT=0" >> $GITHUB_ENV
+
       - name: Build APK using Docker
         run: |
           docker run --rm -v ${{ github.workspace }}:/app \
