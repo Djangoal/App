@@ -12,19 +12,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: List files
-        run: ls -la
-
-      - name: Ensure buildozer.spec exists
+      - name: Check for buildozer.spec
         run: test -f buildozer.spec
 
-      - name: Pull specific version of Buildozer image (stable-python3)
-        run: docker pull kivy/buildozer:stable-python3
+      - name: Pull working Buildozer image
+        run: docker pull kivy/buildozer:20221011
 
-      - name: Build APK with Buildozer
+      - name: Build APK with Docker
         run: |
           docker run --rm -v ${{ github.workspace }}:/app \
-          -w /app kivy/buildozer:stable-python3 \
+          -w /app kivy/buildozer:20221011 \
           buildozer android debug
 
       - name: Upload APK
