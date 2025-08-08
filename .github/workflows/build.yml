@@ -67,7 +67,7 @@ jobs:
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=36 \
-          --android_min_api=21 \
+          
           --orientation=portrait \
           --dist-name=monapp \
           --release
