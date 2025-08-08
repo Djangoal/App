@@ -1,4 +1,4 @@
-name: Build APK with python-for-android
+name: Build AAB with python-for-android
 
 on:
   workflow_dispatch:
@@ -52,19 +52,10 @@ jobs:
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
 
-    - name: Debug NDK and SDK dirs
-      run: |
-        echo "SDK_DIR contents:"
-        ls -l $SDK_DIR
-        echo "NDK_DIR contents:"
-        ls -l $NDK_DIR
-        echo "ANDROID_NDK_HOME:"
-        echo $ANDROID_NDK_HOME
-
-    - name: Build APK
+    - name: Build AAB
       run: |
         source venv/bin/activate
-        ./venv/bin/p4a apk --private ./app \
+        ./venv/bin/p4a aab --private ./app \
           --package=org.example.monapp \
           --name="Mon budget perso" \
           --version=0.1 \
@@ -73,22 +64,21 @@ jobs:
           --presplash=app/logo1.png \
           --requirements=python3,kivy,setuptools,certifi \
           --arch=armeabi-v7a,arm64-v8a \
-          --android_api=36 \
-          --android_min_api=21 \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=36 \
+          --android_min_api=21 \
           --orientation=portrait \
           --dist-name=monapp \
-          --full \
-          --debug
+          --release
 
-    - name: Rename APK
+    - name: Rename AAB
       run: |
-        APK_FILE=$(find . -name "*.apk" | head -n 1)
-        mv "$APK_FILE" "mon_budget_perso.apk"
+        AAB_FILE=$(find . -name "*.aab" | head -n 1)
+        mv "$AAB_FILE" "mon_budget_perso.aab"
 
-    - name: Upload APK
+    - name: Upload AAB
       uses: actions/upload-artifact@v4
       with:
-        name: mon-budget-apk
-        path: ./mon_budget_perso.apk
+        name: mon-budget-aab
+        path: ./mon_budget_perso.aab
