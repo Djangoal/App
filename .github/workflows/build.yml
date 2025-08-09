@@ -1,4 +1,4 @@
-name: Build APK with p4a
+name: Build APK with python-for-android
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
       NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
@@ -14,28 +14,23 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
+      uses: actions/checkout@v3
 
     - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          build-essential libltdl-dev \
-          zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
-        
+        -   build-essential libltdl-dev \
+        -   zip unzip openjdk-17-jdk python3-pip \
+        -   libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+
     - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
-   
+
     - name: Download Android SDK and NDK
       run: |
         mkdir -p $SDK_DIR
@@ -44,6 +39,7 @@ jobs:
         mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
         mkdir -p $SDK_DIR/cmdline-tools/latest
         mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
+
         yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
         $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" \
@@ -65,25 +61,24 @@ jobs:
         echo "ANDROID_NDK_HOME:"
         echo $ANDROID_NDK_HOME
 
-    - name: Build APK with p4a
+    - name: Build APK
       run: |
         source venv/bin/activate
-        export ANDROID_HOME=$SDK_DIR
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-        p4a apk \
-          --private . \
-          --package=org.test.myapp \
-          --name "MyApp" \
-          --version 0.1 \
+        ./venv/bin/p4a apk --private ./app \
+          --package=org.example.monapp \
+          --name="Mon budget perso" \
+          --version=0.1 \
           --bootstrap=sdl2 \
-          --requirements=python3,kivy \
-          --sdk-dir=$ANDROID_HOME \
-          --ndk-dir=$ANDROID_HOME/ndk/25.2.9519653 \
-          --android-api=33 \
-          --arch=armeabi-v7a --arch=arm64-v8a
+          --icon=logo.png \
+          --requirements=python3,kivy,android \
+          --arch=armeabi-v7a \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=36 \
+          
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: myapp-apk
-        path: ./bin/*.apk
+        name: app-debug-apk
+        path: ./*.apk
