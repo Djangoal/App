@@ -1,0 +1,95 @@
+name: Build APK with python-for-android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      SDK_DIR: ${{ github.workspace }}/android-sdk
+      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+        -   build-essential libltdl-dev \
+        -   zip unzip openjdk-17-jdk python3-pip \
+        -   libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+
+    - name: Setup Python, virtualenv and install python-for-android
+      run: |
+        python3 -m venv venv
+        ./venv/bin/pip install --upgrade pip
+        ./venv/bin/pip install cython
+        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+
+    - name: Download Android SDK and NDK
+      run: |
+        mkdir -p $SDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+        unzip cmdline-tools.zip -d $SDK_DIR
+        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
+        mkdir -p $SDK_DIR/cmdline-tools/latest
+        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
+
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+          "platform-tools" \
+          "platforms;android-36" \
+          "build-tools;36.0.0" \
+          "ndk;25.2.9519653"
+
+    - name: Prepare build environment
+      run: |
+        find . -name "aclocal.m4" -delete
+        find . -name "autom4te.cache" -type d -exec rm -rf {} +
+
+    - name: Debug NDK and SDK dirs
+      run: |
+        echo "SDK_DIR contents:"
+        ls -l $SDK_DIR
+        echo "NDK_DIR contents:"
+        ls -l $NDK_DIR
+        echo "ANDROID_NDK_HOME:"
+        echo $ANDROID_NDK_HOME
+
+    - name: Build APK
+      run: |
+        source venv/bin/activate
+        ./venv/bin/p4a apk --private ./app \
+          --package=org.example.monapp \
+          --name="Mon budget perso" \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --icon=logo.png \
+          --presplash=app/logo1.png \
+          --requirements=python3,kivy,android \
+          --arch=armeabi-v7a \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=36 \
+          --orientation=portrait \
+          --dist-name=monapp \
+          --debug
+
+    - name: Rename APK
+      run: |
+        APK_FILE=$(find . -name "*.apk" | head -n 1)
+        mv "$APK_FILE" "mon_budget_perso.apk"
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-apk
+        path: ./mon_budget_perso.apk
+
+
+    
