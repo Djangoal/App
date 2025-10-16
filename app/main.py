@@ -1,15 +1,16 @@
 from kivy.core.window import Window
 Window.softinput_mode = 'below_target'
+
 from android.permissions import request_permissions, Permission
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.clock import Clock
+from kivy.uix.screenmanager import ScreenManager
 from kivy.properties import BooleanProperty
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.button import Button
-from kivy.uix.label import Label
-from kivy.uix.popup import Popup
-import hashlib
+import sys
+import os
+import json
+from logger import logger
+
 from views.login_screen import LoginScreen
 from views.logs_screen import LogsScreen 
 from views.page_principal_screen import pageprincipalScreen
@@ -18,14 +19,9 @@ from views.charges_fixes_screen import ChargesFixesScreen
 from views.depenses_screen import DepenseScreen
 from views.configuration_screen import ConfigurationScreen
 from views.epargne_screen import EpargneScreen
-from kivy.lang import Builder
-from kivy.metrics import sp
-import sys
-import os
-import json
-from logger import logger
 
 
+# --- Gestion des exceptions globales ---
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -33,9 +29,6 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     logger.critical("Exception non gérée", exc_info=(exc_type, exc_value, exc_traceback))
 
 sys.excepthook = handle_exception
-
-
-
 
 
 class MonApp(App):
@@ -46,15 +39,15 @@ class MonApp(App):
     show_restant_a_payer = BooleanProperty(True)
 
     def build(self):
-        
+        # Charger la configuration
         self.config_data = self.charger_config()
-    
+
         self.activer_pin = self.config_data.get("activer_pin", True)
         self.show_total_revenus = self.config_data.get("show_total_revenus", True)
         self.show_total_charges = self.config_data.get("show_total_charges", True)
         self.show_total_depenses = self.config_data.get("show_total_depenses", True)
         self.show_restant_a_payer = self.config_data.get("show_restant_a_payer", True)
-    
+
         # Demander les permissions Android
         try:
             request_permissions([
@@ -63,9 +56,10 @@ class MonApp(App):
             ])
         except Exception as e:
             logger.warning(f"Les permissions Android n'ont pas pu être demandées : {e}")
-    
+
+        # Initialiser le gestionnaire d’écrans
         sm = ScreenManager()
-    
+
         if self.activer_pin:
             sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(pageprincipalScreen(name="principal"))
@@ -75,10 +69,22 @@ class MonApp(App):
         sm.add_widget(ConfigurationScreen(name="config"))
         sm.add_widget(LogsScreen(name="logs"))
         sm.add_widget(EpargneScreen(name="epargne"))
-    
+
         sm.current = 'login' if self.activer_pin else 'principal'
-    
+
+        # 🔄 Correction écran noir : forcer le rendu après le démarrage
+        Clock.schedule_once(self.force_refresh, 0.5)
+
         return sm
+
+    def force_refresh(self, *args):
+        """Force le rafraîchissement du rendu (utile après écran PIN Android)."""
+        try:
+            Window.canvas.ask_update()
+            Window.canvas.flush()
+            logger.info("Rafraîchissement de la fenêtre effectué avec succès.")
+        except Exception as e:
+            logger.warning(f"Erreur lors du rafraîchissement de la fenêtre : {e}")
 
     def charger_config(self):
         if os.path.exists("config.json"):
@@ -102,7 +108,6 @@ class MonApp(App):
         except Exception as e:
             logger.error(f"Erreur lors de la sauvegarde de la configuration : {e}")
 
-    
-   
+
 if __name__ == "__main__":
     MonApp().run()
