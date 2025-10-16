@@ -1,14 +1,13 @@
 from kivy.core.window import Window
-Window.softinput_mode = 'below_target'
-
-from android.permissions import request_permissions, Permission
+from kivy.config import Config
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import BooleanProperty
 from kivy.clock import Clock
 import sys
 import os
 import json
+from android.permissions import request_permissions, Permission
 from logger import logger
 
 # Import des écrans
@@ -21,7 +20,13 @@ from views.depenses_screen import DepenseScreen
 from views.configuration_screen import ConfigurationScreen
 from views.epargne_screen import EpargneScreen
 
+# ---------------- CONFIG SDL2 ----------------
+Config.set('graphics', 'multisamples', '0')  # désactive anti-aliasing
+Config.set('graphics', 'fullscreen', '0')
+Config.set('kivy', 'exit_on_escape', '0')
+# Window.softinput_mode = 'below_target'  # à activer après le lancement si nécessaire
 
+# ---------------- Gestion des exceptions ----------------
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -30,7 +35,11 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 sys.excepthook = handle_exception
 
+# ---------------- SplashScreen ----------------
+class SplashScreen(Screen):
+    pass  # écran blanc vide pour éviter l'écran noir
 
+# ---------------- APPLICATION ----------------
 class MonApp(App):
     activer_pin = BooleanProperty(True)
     show_total_revenus = BooleanProperty(True)
@@ -58,7 +67,10 @@ class MonApp(App):
 
         sm = ScreenManager()
 
-        # Ajout conditionnel du login
+        # Ajout du SplashScreen blanc
+        sm.add_widget(SplashScreen(name='splash'))
+
+        # Ajout des autres écrans
         if self.activer_pin:
             sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(pageprincipalScreen(name="principal"))
@@ -69,18 +81,26 @@ class MonApp(App):
         sm.add_widget(LogsScreen(name="logs"))
         sm.add_widget(EpargneScreen(name="epargne"))
 
-        # Définir l’écran de départ
-        sm.current = 'login' if self.activer_pin else 'principal'
+        # Écran de départ temporaire
+        sm.current = 'splash'
 
-        # ✅ Correction du rafraîchissement initial (sans fondu)
-        Clock.schedule_once(lambda dt: self.refresh_screen(sm), 0.05)
+        # ---------------- Rafraîchissement et passage au vrai écran ----------------
+        Clock.schedule_once(lambda dt: self.show_main_screen(sm), 0.1)
 
         return sm
 
-    def refresh_screen(self, sm):
-        """Force un léger rafraîchissement sans animation pour éviter l’écran noir."""
-        current = sm.current
-        sm.current = current  # simple réaffichage sans transition
+    # ---------------- Méthodes internes ----------------
+    def show_main_screen(self, sm):
+        """Remplace le SplashScreen par l'écran Login ou Principal"""
+        if self.activer_pin and 'login' in sm.screen_names:
+            sm.current = 'login'
+        else:
+            sm.current = 'principal'
+        # Forcer redraw complet pour éviter écran noir
+        from kivy.core.window import Window
+        Window.canvas.ask_update()
+        for screen in sm.screens:
+            screen.canvas.ask_update()
 
     def charger_config(self):
         if os.path.exists("config.json"):
