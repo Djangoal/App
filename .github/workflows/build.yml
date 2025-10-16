@@ -20,15 +20,17 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-        -   build-essential libltdl-dev \
-        -   zip unzip openjdk-17-jdk python3-pip \
-        -   libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+          build-essential libltdl-dev \
+          zip unzip openjdk-17-jdk python3-pip \
+          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+
     - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+
     - name: Download Android SDK and NDK
       run: |
         mkdir -p $SDK_DIR
@@ -43,10 +45,12 @@ jobs:
           "platforms;android-36" \
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
+
     - name: Prepare build environment
       run: |
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
+
     - name: Debug NDK and SDK dirs
       run: |
         echo "SDK_DIR contents:"
@@ -55,10 +59,12 @@ jobs:
         ls -l $NDK_DIR
         echo "ANDROID_NDK_HOME:"
         echo $ANDROID_NDK_HOME
+
     - name: Build APK
       run: |
         source venv/bin/activate
-        ./venv/bin/p4a apk --private ./app \
+        ./venv/bin/p4a apk \
+          --private ./app \
           --package=org.example.monapp \
           --name="Mon budget perso" \
           --version=0.1 \
@@ -66,18 +72,21 @@ jobs:
           --icon=logo.png \
           --presplash=app/logo1.png \
           --requirements=python3,kivy,android \
-          --arch=arm64-v8a  \
+          --permission WRITE_EXTERNAL_STORAGE \
+          --permission READ_EXTERNAL_STORAGE \
+          --arch=arm64-v8a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=36 \
           --orientation=portrait \
           --dist-name=monapp \
           --debug
-          
+
     - name: Rename APK
       run: |
         APK_FILE=$(find . -name "*.apk" | head -n 1)
         mv "$APK_FILE" "mon_budget_perso.apk"
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
