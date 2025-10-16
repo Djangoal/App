@@ -73,8 +73,7 @@ jobs:
           --orientation=portrait \
           --dist-name=monapp \
           --debug
-          --permission WRITE_EXTERNAL_STORAGE 
-          --permission READ_EXTERNAL_STORAGE
+          
     - name: Rename APK
       run: |
         APK_FILE=$(find . -name "*.apk" | head -n 1)
