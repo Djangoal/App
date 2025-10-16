@@ -3,14 +3,15 @@ Window.softinput_mode = 'below_target'
 
 from android.permissions import request_permissions, Permission
 from kivy.app import App
-from kivy.clock import Clock
 from kivy.uix.screenmanager import ScreenManager
 from kivy.properties import BooleanProperty
+from kivy.clock import Clock
 import sys
 import os
 import json
 from logger import logger
 
+# Import des écrans
 from views.login_screen import LoginScreen
 from views.logs_screen import LogsScreen 
 from views.page_principal_screen import pageprincipalScreen
@@ -21,7 +22,6 @@ from views.configuration_screen import ConfigurationScreen
 from views.epargne_screen import EpargneScreen
 
 
-# --- Gestion des exceptions globales ---
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -39,7 +39,6 @@ class MonApp(App):
     show_restant_a_payer = BooleanProperty(True)
 
     def build(self):
-        # Charger la configuration
         self.config_data = self.charger_config()
 
         self.activer_pin = self.config_data.get("activer_pin", True)
@@ -57,9 +56,9 @@ class MonApp(App):
         except Exception as e:
             logger.warning(f"Les permissions Android n'ont pas pu être demandées : {e}")
 
-        # Initialiser le gestionnaire d’écrans
         sm = ScreenManager()
 
+        # Ajout conditionnel du login
         if self.activer_pin:
             sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(pageprincipalScreen(name="principal"))
@@ -70,21 +69,18 @@ class MonApp(App):
         sm.add_widget(LogsScreen(name="logs"))
         sm.add_widget(EpargneScreen(name="epargne"))
 
+        # Définir l’écran de départ
         sm.current = 'login' if self.activer_pin else 'principal'
 
-        # 🔄 Correction écran noir : forcer le rendu après le démarrage
-        Clock.schedule_once(self.force_refresh, 0.5)
+        # ✅ Correction du rafraîchissement initial (sans fondu)
+        Clock.schedule_once(lambda dt: self.refresh_screen(sm), 0.05)
 
         return sm
 
-    def force_refresh(self, *args):
-        """Force le rafraîchissement du rendu (utile après écran PIN Android)."""
-        try:
-            Window.canvas.ask_update()
-            Window.canvas.flush()
-            logger.info("Rafraîchissement de la fenêtre effectué avec succès.")
-        except Exception as e:
-            logger.warning(f"Erreur lors du rafraîchissement de la fenêtre : {e}")
+    def refresh_screen(self, sm):
+        """Force un léger rafraîchissement sans animation pour éviter l’écran noir."""
+        current = sm.current
+        sm.current = current  # simple réaffichage sans transition
 
     def charger_config(self):
         if os.path.exists("config.json"):
