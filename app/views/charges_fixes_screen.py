@@ -227,13 +227,13 @@ class ChargesFixesScreen(Screen):
                 font_size=row_font,
                 background_color=(0.2, 0.6, 0.8, 1)
             )
-            btn_modifier.bind(on_press=lambda btn, idx=index: ouvrir_popup_modification(self, index))
+            btn_modifier.bind(on_press=lambda btn, idx=index: ouvrir_popup_modification(self, idx))
             container.add_widget(btn_modifier)
             self.table_layout.add_widget(container)
-
-        # si le tableau est visible, ajuste sa hauteur pour permettre le scroll (sans pousser la nav)
-        if self.table_fixes_container.height > 0:
-            self.table_fixes_container.height = min(self.table_layout.height, self.max_scroll_height)
+            
+            # si le tableau est visible, ajuste sa hauteur pour permettre le scroll (sans pousser la nav)
+            if self.table_fixes_container.height > 0:
+                self.table_fixes_container.height = min(self.table_layout.height, self.max_scroll_height)
 
     def afficher_charges_a_payer(self):
         self.payer_layout.clear_widgets()
