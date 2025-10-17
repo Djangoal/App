@@ -76,7 +76,7 @@ class pageprincipalScreen(Screen):
     def creer_formulaire(self):
         input_wrapper = BoxLayout(size_hint=(1, None), height=0.15 * Window.height, padding=2)
         with input_wrapper.canvas.before:
-            Color(0, 0, 0, 1)
+            Color(0.2, 0.8, 0.6, 1)
             self.border_rect = Rectangle(size=input_wrapper.size, pos=input_wrapper.pos)
         input_wrapper.bind(size=lambda w, s: setattr(self.border_rect, 'size', s),
                            pos=lambda w, p: setattr(self.border_rect, 'pos', p))
