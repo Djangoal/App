@@ -32,7 +32,7 @@ def afficher_popup(message):
     popup = Popup(
         title="Exportation",
         content=layout,
-        size_hint=(0.8, 0.4),  # taille responsive
+        size_hint=(0.8, 0.3),  # taille responsive
         auto_dismiss=False
     )
 
@@ -570,7 +570,7 @@ class ConfigurationScreen(Screen):
             title=titre,
             content=contenu,
             size_hint=(0.8, None),
-            height=Window.height * 0.4,
+            height=Window.height * 0.25,
             auto_dismiss=False
         )
         popup.open()
