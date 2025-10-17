@@ -15,3 +15,4 @@ from kivy.core.window import Window
 from kivy.metrics import sp
 from kivy.metrics import dp
 from util.supprimer_charge import supprimer_charge, modifier_charge
+from util.popup_modification_charge import ouvrir_popup_modification
