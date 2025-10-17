@@ -46,7 +46,7 @@ class EpargneScreen(Screen):
 
         scrollview = ScrollView(
             size_hint=(1, None),
-            height=Window.height * 0.12
+            height=Window.height * 0.16
         )
         
         contenu_formulaire = GridLayout(
@@ -60,7 +60,7 @@ class EpargneScreen(Screen):
         # Wrapper avec bordure
         input_wrapper = BoxLayout(
             size_hint=(1, None),
-            height=Window.height * 0.1,
+            height=Window.height * 0.12,
             padding=dp(2)
         )
         with input_wrapper.canvas.before:
@@ -90,8 +90,8 @@ class EpargneScreen(Screen):
         inner_layout.bind(size=update_bg_rect, pos=update_bg_rect)
         
         # Champs du formulaire principal
-        self.nom_input = self.creer_champ(inner_layout, "Nom", Window.height * 0.04)
-        self.montant_input = self.creer_champ(inner_layout, "Montant", Window.height * 0.04)
+        self.nom_input = self.creer_champ(inner_layout, "Nom", Window.height * 0.05)
+        self.montant_input = self.creer_champ(inner_layout, "Montant", Window.height * 0.05)
         
         input_wrapper.add_widget(inner_layout)
         contenu_formulaire.add_widget(input_wrapper)
@@ -113,7 +113,7 @@ class EpargneScreen(Screen):
 
         scrollview2 = ScrollView(
             size_hint=(1, None),
-            height=Window.height * 0.1
+            height=Window.height * 0.13
         )
         
         contenu2 = GridLayout(
@@ -127,7 +127,7 @@ class EpargneScreen(Screen):
         # Wrapper avec bordure
         input_wrapper2 = BoxLayout(
             size_hint=(1, None),
-            height=Window.height * 0.06,
+            height=Window.height * 0.07,
             padding=dp(2)
         )
         with input_wrapper2.canvas.before:
@@ -157,7 +157,7 @@ class EpargneScreen(Screen):
         inner_layout2.bind(size=update_bg_rect2, pos=update_bg_rect2)
         
         # Champs du formulaire
-        self.livret_input = self.creer_champ(inner_layout2, "solde livret", Window.height * 0.04)
+        self.livret_input = self.creer_champ(inner_layout2, "solde livret", Window.height * 0.05)
         
         # Label solde livret
         self.solde_livret_label = Label(
