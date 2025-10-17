@@ -14,7 +14,7 @@ def ouvrir_menu(instance):
         title="Menu de navigation",
         content=menu_layout,
         size_hint=(None, None),
-        size=(Window.width * 0.8, Window.height * 0.6),
+        size=(Window.width * 0.8, Window.height * 0.32),
         auto_dismiss=True
     )
 
