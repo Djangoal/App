@@ -40,7 +40,8 @@ class ChargesFixesScreen(Screen):
         self.btn_toggle_fixes = Button(
             text='Afficher les Charges Fixes',
             size_hint_y=None,
-            height=btn_height
+            height=btn_height,
+            background_color=(0.2, 0.8, 0.6, 1)
         )
         self.btn_toggle_fixes.bind(on_release=self.toggle_charges_fixes)
         header_layout.add_widget(self.btn_toggle_fixes)
@@ -49,7 +50,8 @@ class ChargesFixesScreen(Screen):
         self.btn_toggle_payer = Button(
             text='Afficher les Charges à Payer',
             size_hint_y=None,
-            height=btn_height
+            height=btn_height,
+            background_color=(0.2, 0.8, 0.6, 1)
         )
         self.btn_toggle_payer.bind(on_release=self.toggle_charges_a_payer)
         header_layout.add_widget(self.btn_toggle_payer)
