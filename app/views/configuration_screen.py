@@ -108,7 +108,7 @@ def exporter_vers_csv():
 
         afficher_popup(f"Exporté dans :\n{fichier_csv}")
     except Exception as e:
-        afficher_popup(f"Erreur lors de l'enregistrement :\n{e}")
+        afficher_popup(f"Erreur lors de l'export")
 
 
 
