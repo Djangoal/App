@@ -55,7 +55,7 @@ class SplashScreen(Screen):
 
 # ---------------- APPLICATION ----------------
 class MonApp(App):
-    activer_pin = BooleanProperty(True)
+    activer_pin = BooleanProperty(False)
     show_total_revenus = BooleanProperty(True)
     show_total_charges = BooleanProperty(True)
     show_total_depenses = BooleanProperty(True)
