@@ -27,5 +27,3 @@ from android.permissions import request_permissions, Permission
 from android.storage import primary_external_storage_path
 import locale, json, csv, os
 from datetime import datetime
-import traceback
-from openpyxl import Workbook
