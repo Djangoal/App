@@ -1,15 +1,21 @@
 import os, json, csv
 from datetime import datetime
-import locale
-from config.popup import afficher_popup
 from android.permissions import request_permissions, Permission
+from config.popup import afficher_popup
+import locale
 
 def exporter_vers_csv():
-    request_permissions([
-        Permission.READ_EXTERNAL_STORAGE,
-        Permission.WRITE_EXTERNAL_STORAGE
-    ])
+    # --- 1. Demander les permissions ---
+    try:
+        request_permissions([
+            Permission.READ_EXTERNAL_STORAGE,
+            Permission.WRITE_EXTERNAL_STORAGE,
+            Permission.MANAGE_EXTERNAL_STORAGE  # Pour Android 11+
+        ])
+    except Exception:
+        pass
 
+    # --- 2. Définir les chemins ---
     json_file = "donnees_budget.json"
     dossier_export = os.path.join("/storage/emulated/0/Documents", "BudgetApp")
     os.makedirs(dossier_export, exist_ok=True)
@@ -18,6 +24,7 @@ def exporter_vers_csv():
         afficher_popup("Fichier JSON introuvable.")
         return
 
+    # --- 3. Charger les données JSON ---
     try:
         with open(json_file, "r", encoding="utf-8") as f:
             donnees = json.load(f)
@@ -25,6 +32,7 @@ def exporter_vers_csv():
         afficher_popup("Erreur de lecture du fichier JSON.")
         return
 
+    # --- 4. Créer le fichier CSV ---
     try:
         maintenant = datetime.now()
         nom_fichier = f"compte_{maintenant.strftime('%B')}_{maintenant.year}.csv"
@@ -32,7 +40,6 @@ def exporter_vers_csv():
 
         with open(fichier_csv, mode='w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
-
             for cat, titre in [("revenu","Revenus"), ("charges_fixe","Charges Fixes"), ("depense","Dépenses")]:
                 writer.writerow([titre])
                 writer.writerow(["Date", "Nom", "Montant"])
@@ -40,6 +47,6 @@ def exporter_vers_csv():
                     writer.writerow([item.get("date",""), item.get("nom",""), item.get("montant",0)])
                 writer.writerow([])
 
-        afficher_popup(f"Exporté dans :\n{fichier_csv}")
+        afficher_popup(f"✅ Export réussi dans :\n{fichier_csv}")
     except Exception as e:
-        afficher_popup(f"Erreur lors de l'export : {e}")
+        afficher_popup(f"❌ Erreur lors de l'export : {e}")
