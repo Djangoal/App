@@ -41,5 +41,5 @@ def exporter_vers_csv():
                 writer.writerow([])
 
         afficher_popup(f"Exporté dans :\n{fichier_csv}")
-    except Exception:
-        afficher_popup("Erreur lors de l'export")
+    except Exception as e:
+        afficher_popup(f"Erreur lors de l'export : {e}")
