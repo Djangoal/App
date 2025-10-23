@@ -1,47 +1,56 @@
 import os, json, csv
 from datetime import datetime
-from jnius import autoclass
+from jnius import autoclass, cast
 from android.permissions import request_permissions, Permission
 from config.popup import afficher_popup
 
-def get_android_version():
-    """Retourne la version Android en entier, ex: 8, 9, 10, 11, 12, 13."""
-    try:
-        Build_VERSION = autoclass('android.os.Build$VERSION')
-        version_str = Build_VERSION.RELEASE
-        return int(version_str.split('.')[0])
-    except Exception:
-        return 10  # Par défaut Android 10 si erreur
+def get_context():
+    PythonActivity = autoclass('org.kivy.android.PythonActivity')
+    return PythonActivity.mActivity
 
-def get_export_path():
-    """Retourne un dossier valide selon la version Android."""
-    version = get_android_version()
-    if version <= 9:
-        # Ancien Android : permissions + accès total
-        return "/storage/emulated/0/Download/BudgetApp"
-    else:
-        # Android 10+ : Scoped Storage, pas besoin de permissions
-        return "/storage/emulated/0/Download/BudgetApp"
+def get_safe_internal_path():
+    """Retourne un chemin interne accessible à l'app."""
+    context = get_context()
+    path = context.getExternalFilesDir(None).getAbsolutePath() + "/exports"
+    os.makedirs(path, exist_ok=True)
+    return path
+
+def copy_to_downloads(fichier_source, nom_fichier):
+    """Copie le fichier dans /Download via MediaStore (Android 10+)."""
+    try:
+        Environment = autoclass('android.os.Environment')
+        MediaStore = autoclass('android.provider.MediaStore$Downloads')
+        ContentValues = autoclass('android.content.ContentValues')
+        context = get_context()
+
+        resolver = context.getContentResolver()
+        values = ContentValues()
+        values.put("_display_name", nom_fichier)
+        values.put("mime_type", "text/csv")
+        values.put("relative_path", "Download/BudgetApp")
+
+        uri = resolver.insert(MediaStore.EXTERNAL_CONTENT_URI, values)
+        output_stream = resolver.openOutputStream(uri)
+
+        with open(fichier_source, "rb") as input_file:
+            data = input_file.read()
+            output_stream.write(data)
+            output_stream.close()
+
+        return True
+    except Exception as e:
+        print("Erreur copie SAF :", e)
+        return False
 
 def exporter_vers_csv():
-    # --- 1. Déterminer la version ---
-    version = get_android_version()
+    try:
+        request_permissions([
+            Permission.READ_EXTERNAL_STORAGE,
+            Permission.WRITE_EXTERNAL_STORAGE
+        ])
+    except Exception:
+        pass
 
-    # --- 2. Permissions si Android ≤ 9 ---
-    if version <= 9:
-        try:
-            request_permissions([
-                Permission.READ_EXTERNAL_STORAGE,
-                Permission.WRITE_EXTERNAL_STORAGE
-            ])
-        except Exception:
-            pass
-
-    # --- 3. Dossier d’export ---
-    dossier_export = get_export_path()
-    os.makedirs(dossier_export, exist_ok=True)
-
-    # --- 4. Charger les données ---
     json_file = "donnees_budget.json"
     if not os.path.exists(json_file):
         afficher_popup("❌ Fichier JSON introuvable.")
@@ -54,7 +63,6 @@ def exporter_vers_csv():
         afficher_popup("❌ Erreur de lecture du fichier JSON.")
         return
 
-    # --- 5. Créer le fichier CSV ---
     try:
         mois_fr = [
             "janvier", "février", "mars", "avril", "mai", "juin",
@@ -62,9 +70,12 @@ def exporter_vers_csv():
         ]
         maintenant = datetime.now()
         nom_fichier = f"compte_{mois_fr[maintenant.month - 1]}_{maintenant.year}.csv"
-        fichier_csv = os.path.join(dossier_export, nom_fichier)
 
-        with open(fichier_csv, mode='w', newline='', encoding='utf-8') as f:
+        dossier_temp = get_safe_internal_path()
+        fichier_temp = os.path.join(dossier_temp, nom_fichier)
+
+        # --- Création du CSV ---
+        with open(fichier_temp, mode='w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             for cat, titre in [("revenu","Revenus"), ("charges_fixe","Charges Fixes"), ("depense","Dépenses")]:
                 writer.writerow([titre])
@@ -73,6 +84,11 @@ def exporter_vers_csv():
                     writer.writerow([item.get("date",""), item.get("nom",""), item.get("montant",0)])
                 writer.writerow([])
 
-        afficher_popup(f"✅ Export réussi dans :\n{fichier_csv}")
+        # --- Copie vers /Download/BudgetApp ---
+        if copy_to_downloads(fichier_temp, nom_fichier):
+            afficher_popup("✅ Export réussi !\nFichier enregistré dans le dossier Téléchargements.")
+        else:
+            afficher_popup("✅ Export créé mais non copié.\nVérifie le dossier interne de l'application.")
+
     except Exception as e:
         afficher_popup(f"❌ Erreur lors de l'export : {e}")
