@@ -3,9 +3,9 @@ from datetime import datetime
 from config.popup import afficher_popup
 
 try:
-    from jnius import autoclass
+    from jnius import autoclass, cast
 except ImportError:
-    autoclass = None  # si on teste sur PC
+    autoclass = None
 
 MOIS_FR = {
     "January": "janvier", "February": "février", "March": "mars",
@@ -16,21 +16,20 @@ MOIS_FR = {
 
 
 def exporter_vers_csv():
-    """Export CSV universel (Android 8–14) vers le dossier Téléchargements/BudgetApp"""
+    """Export CSV compatible Android 8 → 14"""
     json_file = "donnees_budget.json"
     if not os.path.exists(json_file):
-        afficher_popup("Le fichier 'donnees_budget.json' est introuvable.")
+        afficher_popup("❌ Le fichier 'donnees_budget.json' est introuvable.")
         return
 
-    # Charger les données JSON
     try:
         with open(json_file, "r", encoding="utf-8") as f:
             donnees = json.load(f)
     except json.JSONDecodeError:
-        afficher_popup(" Erreur de lecture du fichier JSON.")
+        afficher_popup("❌ Erreur de lecture du fichier JSON.")
         return
 
-    # Construire le contenu CSV en mémoire
+    # Création du contenu CSV
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     for cat, titre in [("revenu", "Revenus"), ("charges_fixe", "Charges Fixes"), ("depense", "Dépenses")]:
@@ -39,45 +38,56 @@ def exporter_vers_csv():
         for item in donnees.get(cat, []):
             writer.writerow([item.get("date", ""), item.get("nom", ""), item.get("montant", 0)])
         writer.writerow([])
-
     contenu_csv = buffer.getvalue().encode("utf-8")
     buffer.close()
 
-    # Nom du fichier (avec mois français)
+    # Nom de fichier
     mois_en = datetime.now().strftime("%B")
     mois_fr = MOIS_FR.get(mois_en, mois_en).capitalize()
-    annee = datetime.now().year
-    nom_fichier = f"compte_{mois_fr}_{annee}.csv"
+    nom_fichier = f"compte_{mois_fr}_{datetime.now().year}.csv"
 
     try:
-        if autoclass:  # --- Exécution sur Android ---
-            Environment = autoclass("android.os.Environment")
-            MediaStore = autoclass("android.provider.MediaStore$Downloads")
+        if autoclass:
+            # === Android ===
             PythonActivity = autoclass("org.kivy.android.PythonActivity")
-            ContentValues = autoclass("android.content.ContentValues")
+            VERSION = autoclass("android.os.Build$VERSION")  # ✅ correction ici
+            version_android = int(VERSION.SDK_INT)
+            activity = PythonActivity.mActivity
 
-            resolver = PythonActivity.mActivity.getContentResolver()
-            values = ContentValues()
-            values.put("_display_name", nom_fichier)
-            values.put("mime_type", "text/csv")
-            values.put("relative_path", "Download/BudgetApp")
+            if version_android >= 30:
+                # Android 11+
+                Environment = autoclass("android.os.Environment")
+                MediaStore = autoclass("android.provider.MediaStore$Downloads")
+                ContentValues = autoclass("android.content.ContentValues")
 
-            uri = resolver.insert(MediaStore.EXTERNAL_CONTENT_URI, values)
-            output_stream = resolver.openOutputStream(uri)
+                resolver = activity.getContentResolver()
+                values = ContentValues()
+                values.put("_display_name", nom_fichier)
+                values.put("mime_type", "text/csv")
+                values.put("relative_path", "Download/BudgetApp")
 
-            # Écrire le contenu CSV directement dans le flux Java
-            output_stream.write(contenu_csv)
-            output_stream.close()
+                uri = resolver.insert(MediaStore.EXTERNAL_CONTENT_URI, values)
+                output_stream = resolver.openOutputStream(uri)
+                output_stream.write(contenu_csv)
+                output_stream.close()
 
-            afficher_popup(f" Export réussi !\n\nFichier : {nom_fichier}\nDossier : Téléchargements/BudgetApp")
+                afficher_popup("✅ Export réussi dans :\nTéléchargements/BudgetApp")
+            else:
+                # Android 10 ou moins → écriture directe
+                dossier = "/storage/emulated/0/Download/BudgetApp"
+                os.makedirs(dossier, exist_ok=True)
+                chemin = os.path.join(dossier, nom_fichier)
+                with open(chemin, "wb") as f:
+                    f.write(contenu_csv)
+                afficher_popup(f"✅ Exporté dans :\n{chemin}")
         else:
-            # --- Mode fallback (ordinateur ou Pydroid) ---
-            dossier_export = os.path.join(os.path.expanduser("~"), "Downloads", "BudgetApp")
-            os.makedirs(dossier_export, exist_ok=True)
-            fichier_csv = os.path.join(dossier_export, nom_fichier)
-            with open(fichier_csv, "wb") as f:
+            # Mode PC / Pydroid
+            dossier = os.path.join(os.path.expanduser("~"), "Downloads", "BudgetApp")
+            os.makedirs(dossier, exist_ok=True)
+            chemin = os.path.join(dossier, nom_fichier)
+            with open(chemin, "wb") as f:
                 f.write(contenu_csv)
-            afficher_popup(f" Exporté dans : {fichier_csv}")
+            afficher_popup(f"✅ Exporté dans :\n{chemin}")
 
     except Exception as e:
-        afficher_popup(f" Erreur lors de l’export :\n{e}")
+        afficher_popup(f"❌ Erreur lors de l’export :\n{e}")
