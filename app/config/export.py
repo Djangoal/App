@@ -23,10 +23,9 @@ def get_android_version():
     except Exception:
         return 10
 
-def copy_to_downloads(fichier_source, nom_fichier):
+def copy_to_downloads_modern(fichier_source, nom_fichier):
     """Copie le fichier dans /Download via MediaStore (Android 10+)."""
     try:
-        Environment = autoclass('android.os.Environment')
         MediaStore = autoclass('android.provider.MediaStore$Downloads')
         ContentValues = autoclass('android.content.ContentValues')
         context = get_context()
@@ -47,7 +46,20 @@ def copy_to_downloads(fichier_source, nom_fichier):
 
         return True
     except Exception as e:
-        print("Erreur copie SAF :", e)
+        print("Erreur MediaStore (Android 10+):", e)
+        return False
+
+def copy_to_downloads_legacy(fichier_source, nom_fichier):
+    """Copie directe dans /storage/emulated/0/Download/BudgetApp (Android 8–9)."""
+    try:
+        dossier_export = "/storage/emulated/0/Download/BudgetApp"
+        os.makedirs(dossier_export, exist_ok=True)
+        fichier_dest = os.path.join(dossier_export, nom_fichier)
+        with open(fichier_source, "rb") as src, open(fichier_dest, "wb") as dst:
+            dst.write(src.read())
+        return True
+    except Exception as e:
+        print("Erreur copie legacy:", e)
         return False
 
 def exporter_vers_csv():
@@ -59,14 +71,6 @@ def exporter_vers_csv():
         ])
     except Exception:
         pass
-    if version <= 9:
-        try:
-            request_permissions([
-                Permission.READ_EXTERNAL_STORAGE,
-                Permission.WRITE_EXTERNAL_STORAGE
-            ])
-        except Exception:
-            pass
 
     json_file = "donnees_budget.json"
     if not os.path.exists(json_file):
@@ -101,11 +105,16 @@ def exporter_vers_csv():
                     writer.writerow([item.get("date",""), item.get("nom",""), item.get("montant",0)])
                 writer.writerow([])
 
-        # --- Copie vers /Download/BudgetApp ---
-        if copy_to_downloads(fichier_temp, nom_fichier):
-            afficher_popup("✅ Export réussi !\nFichier enregistré dans le dossier Téléchargements.")
+        # --- Export selon version Android ---
+        if version >= 10:
+            ok = copy_to_downloads_modern(fichier_temp, nom_fichier)
         else:
-            afficher_popup("✅ Export créé mais non copié.\nVérifie le dossier interne de l'application.")
+            ok = copy_to_downloads_legacy(fichier_temp, nom_fichier)
+
+        if ok:
+            afficher_popup("✅ Export réussi !\nLe fichier a été enregistré dans le dossier Téléchargements.")
+        else:
+            afficher_popup("⚠️ Export créé mais non copié.\nVérifie le dossier interne de l'application.")
 
     except Exception as e:
         afficher_popup(f"❌ Erreur lors de l'export : {e}")
