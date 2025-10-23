@@ -7,6 +7,7 @@ try:
 except ImportError:
     autoclass = None
 
+# Mois français
 MOIS_FR = {
     "January": "janvier", "February": "février", "March": "mars",
     "April": "avril", "May": "mai", "June": "juin",
@@ -16,7 +17,7 @@ MOIS_FR = {
 
 
 def exporter_vers_csv():
-    """Export CSV compatible Android 8 → 14"""
+    """Export CSV compatible Android 8 → 14, sans crash"""
     json_file = "donnees_budget.json"
     if not os.path.exists(json_file):
         afficher_popup("❌ Le fichier 'donnees_budget.json' est introuvable.")
@@ -29,7 +30,7 @@ def exporter_vers_csv():
         afficher_popup("❌ Erreur de lecture du fichier JSON.")
         return
 
-    # Création du contenu CSV
+    # Créer le contenu CSV en mémoire
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     for cat, titre in [("revenu", "Revenus"), ("charges_fixe", "Charges Fixes"), ("depense", "Dépenses")]:
@@ -41,21 +42,31 @@ def exporter_vers_csv():
     contenu_csv = buffer.getvalue().encode("utf-8")
     buffer.close()
 
-    # Nom de fichier
+    # Nom du fichier en français
     mois_en = datetime.now().strftime("%B")
     mois_fr = MOIS_FR.get(mois_en, mois_en).capitalize()
     nom_fichier = f"compte_{mois_fr}_{datetime.now().year}.csv"
 
     try:
         if autoclass:
-            # === Android ===
+            # === App Android ===
             PythonActivity = autoclass("org.kivy.android.PythonActivity")
-            VERSION = autoclass("android.os.Build$VERSION")  # ✅ correction ici
+            VERSION = autoclass("android.os.Build$VERSION")
             version_android = int(VERSION.SDK_INT)
             activity = PythonActivity.mActivity
 
-            if version_android >= 30:
-                # Android 11+
+            # Dossier privé de l’application (aucune permission requise)
+            app_dir = activity.getFilesDir().getAbsolutePath()
+            export_dir = os.path.join(app_dir, "exports")
+            os.makedirs(export_dir, exist_ok=True)
+            chemin_local = os.path.join(export_dir, nom_fichier)
+
+            # Écriture dans le dossier privé
+            with open(chemin_local, "wb") as f:
+                f.write(contenu_csv)
+
+            # Tentative de copie dans "Download" via MediaStore (Android 10+)
+            try:
                 Environment = autoclass("android.os.Environment")
                 MediaStore = autoclass("android.provider.MediaStore$Downloads")
                 ContentValues = autoclass("android.content.ContentValues")
@@ -71,15 +82,14 @@ def exporter_vers_csv():
                 output_stream.write(contenu_csv)
                 output_stream.close()
 
-                afficher_popup("✅ Export réussi dans :\nTéléchargements/BudgetApp")
-            else:
-                # Android 10 ou moins → écriture directe
-                dossier = "/storage/emulated/0/Download/BudgetApp"
-                os.makedirs(dossier, exist_ok=True)
-                chemin = os.path.join(dossier, nom_fichier)
-                with open(chemin, "wb") as f:
-                    f.write(contenu_csv)
-                afficher_popup(f"✅ Exporté dans :\n{chemin}")
+                afficher_popup("✅ Exporté dans :\nTéléchargements/BudgetApp")
+                return
+            except Exception:
+                pass  # si MediaStore échoue, on garde la version interne
+
+            # Fallback : export local
+            afficher_popup(f"✅ Export sauvegardé dans :\n{chemin_local}")
+
         else:
             # Mode PC / Pydroid
             dossier = os.path.join(os.path.expanduser("~"), "Downloads", "BudgetApp")
