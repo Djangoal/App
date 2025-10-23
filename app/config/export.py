@@ -14,6 +14,14 @@ def get_safe_internal_path():
     path = context.getExternalFilesDir(None).getAbsolutePath() + "/exports"
     os.makedirs(path, exist_ok=True)
     return path
+    
+def get_android_version():
+    try:
+        Build_VERSION = autoclass('android.os.Build$VERSION')
+        version_str = Build_VERSION.RELEASE
+        return int(version_str.split('.')[0])
+    except Exception:
+        return 10
 
 def copy_to_downloads(fichier_source, nom_fichier):
     """Copie le fichier dans /Download via MediaStore (Android 10+)."""
@@ -43,6 +51,7 @@ def copy_to_downloads(fichier_source, nom_fichier):
         return False
 
 def exporter_vers_csv():
+    version = get_android_version()
     try:
         request_permissions([
             Permission.READ_EXTERNAL_STORAGE,
@@ -50,6 +59,14 @@ def exporter_vers_csv():
         ])
     except Exception:
         pass
+    if version <= 9:
+        try:
+            request_permissions([
+                Permission.READ_EXTERNAL_STORAGE,
+                Permission.WRITE_EXTERNAL_STORAGE
+            ])
+        except Exception:
+            pass
 
     json_file = "donnees_budget.json"
     if not os.path.exists(json_file):
