@@ -74,14 +74,14 @@ def exporter_vers_csv():
 
     json_file = "donnees_budget.json"
     if not os.path.exists(json_file):
-        afficher_popup("❌ Fichier JSON introuvable.")
+        afficher_popup("Fichier JSON introuvable.")
         return
 
     try:
         with open(json_file, "r", encoding="utf-8") as f:
             donnees = json.load(f)
     except json.JSONDecodeError:
-        afficher_popup("❌ Erreur de lecture du fichier JSON.")
+        afficher_popup("Erreur de lecture du fichier JSON.")
         return
 
     try:
@@ -112,9 +112,9 @@ def exporter_vers_csv():
             ok = copy_to_downloads_legacy(fichier_temp, nom_fichier)
 
         if ok:
-            afficher_popup("✅ Export réussi !\nLe fichier a été enregistré dans le dossier Téléchargements.")
+            afficher_popup("Export réussi !\nLe fichier a été enregistré dans le dossier Téléchargements.")
         else:
-            afficher_popup("⚠️ Export créé mais non copié.\nVérifie le dossier interne de l'application.")
+            afficher_popup("Export créé mais non copié.\nVérifie le dossier interne de l'application.")
 
     except Exception as e:
-        afficher_popup(f"❌ Erreur lors de l'export : {e}")
+        afficher_popup(f"Erreur lors de l'export : {e}")
