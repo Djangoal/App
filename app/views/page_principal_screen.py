@@ -147,13 +147,11 @@ class pageprincipalScreen(Screen):
 
     def creer_pub_et_menu(self):
         """Affiche un bandeau publicitaire (test ou réel) + le bouton menu."""
-
         if platform == "android":
-            # ✅ AdMob réel
-            self.ads = AdMobBanner()  # ID test déjà dans ads.py
-            self.ads.show_banner(position="bottom")
+            self.ads = AdMobBanner()
+            self.ads.show_banner()  # La pub SDL2 sera visible en bas
         else:
-            # 🧩 Simulateur sur PC/Pydroid
+            # Simulation sur PC / Pydroid
             self.pub_banner = Label(
                 text="[b]Publicité (test)[/b]",
                 markup=True,
@@ -169,8 +167,8 @@ class pageprincipalScreen(Screen):
                                  pos=lambda w, p: setattr(self.pub_bg, 'pos', p))
             Window.bind(size=self.update_pub_banner_size)
             self.main_layout.add_widget(self.pub_banner)
-
-        # 🔹 Bouton Menu
+    
+        # Bouton Menu
         menu_button = Button(
             text="Menu", size_hint=(0.5, 0.1),
             pos_hint={'center_x': 0.5},
