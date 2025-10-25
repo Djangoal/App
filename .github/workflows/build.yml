@@ -1,4 +1,4 @@
-name: Build APK with python-for-android (debug AdMob)
+name: Build APK with python-for-android
 
 on:
   workflow_dispatch:
@@ -24,15 +24,12 @@ jobs:
           zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-    - name: Setup Python, virtualenv and install python-for-android (develop)
+    - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
-        source venv/bin/activate
-        pip install --upgrade pip
-        pip install cython
-        pip install --upgrade --force-reinstall git+https://github.com/kivy/python-for-android.git@develop
-        p4a --version  # Vérifie la version installée
-        pip list        # Vérifie les packages installés
+        ./venv/bin/pip install --upgrade pip
+        ./venv/bin/pip install cython
+        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
 
     - name: Download Android SDK and NDK
       run: |
@@ -47,20 +44,24 @@ jobs:
           "platform-tools" \
           "platforms;android-36" \
           "build-tools;36.0.0" \
-          "ndk;25.2.9519653"
+          "ndk;25.2.9519653" \
+          "extras;google;google_play_services"
 
-    - name: Debug SDK/NDK and environment
+    - name: Prepare build environment
       run: |
-        echo "=== SDK_DIR contents ==="
-        ls -l $SDK_DIR
-        echo "=== NDK_DIR contents ==="
-        ls -l $NDK_DIR
-        echo "=== ANDROID_NDK_HOME ==="
-        echo $ANDROID_NDK_HOME
-        java -version
-        python3 --version
+        find . -name "aclocal.m4" -delete
+        find . -name "autom4te.cache" -type d -exec rm -rf {} +
 
-    - name: Build APK with AdMob dependency
+    - name: Debug NDK and SDK dirs
+      run: |
+        echo "SDK_DIR contents:"
+        ls -l $SDK_DIR
+        echo "NDK_DIR contents:"
+        ls -l $NDK_DIR
+        echo "ANDROID_NDK_HOME:"
+        echo $ANDROID_NDK_HOME
+
+    - name: Build APK
       run: |
         source venv/bin/activate
         ./venv/bin/p4a apk \
@@ -82,7 +83,6 @@ jobs:
           --android_api=36 \
           --orientation=portrait \
           --dist-name=monapp \
-          --add-gradle-dependency "com.google.android.gms:play-services-ads:23.1.0" \
           --debug
 
     - name: Rename APK
@@ -90,13 +90,8 @@ jobs:
         APK_FILE=$(find . -name "*.apk" | head -n 1)
         mv "$APK_FILE" "mon_budget_perso.apk"
 
-    - name: Upload APK artifact
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-apk
         path: ./mon_budget_perso.apk
-
-    - name: Debug final APK
-      run: |
-        echo "=== APK info ==="
-        unzip -l mon_budget_perso.apk | head -n 20
