@@ -26,11 +26,12 @@ jobs:
 
       - name: Setup Python, virtualenv and install python-for-android
         run: |
-          python3 -m venv venv
-          ./venv/bin/pip install --upgrade pip
-          ./venv/bin/pip install cython
-          ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
-
+         python3 -m venv venv
+         ./venv/bin/pip install --upgrade pip
+         ./venv/bin/pip install cython
+         # Installe la version de développement avec support des dépendances Gradle personnalisées
+         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git@develop
+    
       - name: Download Android SDK and NDK
         run: |
           mkdir -p $SDK_DIR
@@ -66,7 +67,7 @@ jobs:
          ./venv/bin/p4a apk \
           --private ./app \
           --package=org.example.monapp \
-          --name="Mon Budget Perso" \
+          --name="Mon budget perso" \
           --version=0.1 \
           --bootstrap=sdl2 \
           --icon=app/logo.png \
@@ -82,8 +83,7 @@ jobs:
           --android_api=36 \
           --orientation=portrait \
           --dist-name=monapp \
-          --extra-packages com.google.android.gms.ads,com.google.android.gms,com.google.android.gms.ads.identifier \
-          --gradle-repository "https://maven.google.com" \
+          --add-gradle-dependency "com.google.android.gms:play-services-ads:23.1.0" \
           --debug
 
       - name: Rename APK
