@@ -40,7 +40,7 @@ class AdMobBanner:
 
             # Création de la bannière
             ad_view = AdView(activity)
-            ad_view.setAdSize(AdSize.BANNER)
+            ad_view.setAdSize(AdSize.SMART_BANNER)
             ad_view.setAdUnitId(self.ad_unit_id)
 
             # Chargement de la pub de test
