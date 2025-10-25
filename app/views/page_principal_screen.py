@@ -1,7 +1,18 @@
 from util.import_page_principale import *
+from pub.ads import AdMobBanner
+from kivy.core.window import Window
+from kivy.graphics import Color, Rectangle
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.utils import platform
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.textinput import TextInput
+from kivy.uix.screenmanager import Screen
+
 
 class pageprincipalScreen(Screen):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -21,10 +32,11 @@ class pageprincipalScreen(Screen):
         self.creer_categorie_checkboxes()
         self.creer_bouton_valider()
         self.creer_labels()
-        self.creer_menu_bouton()
+        self.creer_pub_et_menu()  # <-- fusion de la pub et du menu
 
-        # 🔄 Initialisation de l’affichage
+        # 🔄 Initialisation
         self.initialiser_affichage(app)
+
 
     # =====================================================
     # 🔹 Sous-méthodes de construction
@@ -36,41 +48,25 @@ class pageprincipalScreen(Screen):
         app.bind(show_total_depenses=lambda i, v: update_affichage_depenses(self, i, v))
 
     def creer_header(self):
-        """Crée la barre de titre avec le bouton de fermeture."""
         layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), padding=5, spacing=5)
-        
-        # Fond rouge
         with layout.canvas.before:
             Color(1, 0, 0, 1)
             self.header_bg = Rectangle(size=layout.size, pos=layout.pos)
         layout.bind(size=lambda w, s: setattr(self.header_bg, 'size', s),
                     pos=lambda w, p: setattr(self.header_bg, 'pos', p))
-        
-        # Titre centré
-        title = Label(
-            text='[b]Mon Budget Perso[/b]',
-            markup=True,
-            halign='center',
-            valign='middle',
-            color=(1, 1, 1, 1)
-        )
+
+        title = Label(text='[b]Mon Budget Perso[/b]', markup=True,
+                      halign='center', valign='middle', color=(1, 1, 1, 1))
         title.bind(size=lambda instance, value: setattr(title, 'text_size', (title.width, title.height)))
-        
-        # Bouton de fermeture
+
         close_button = Button(
-            text='X',
-            size_hint=(None, 1),
-            width=Window.width * 0.1,
-            background_color=(1, 1, 1, 1),
-            color=(1, 0, 0, 1),
-            background_normal=''
+            text='X', size_hint=(None, 1), width=Window.width * 0.1,
+            background_color=(1, 1, 1, 1), color=(1, 0, 0, 1), background_normal=''
         )
         close_button.bind(on_release=self.close_app)
 
         layout.add_widget(title)
         layout.add_widget(close_button)
-
-        # ✅ Ajout du header dans le layout principal
         self.main_layout.add_widget(layout)
 
     def creer_formulaire(self):
@@ -96,24 +92,15 @@ class pageprincipalScreen(Screen):
         inner_layout.add_widget(self.date_input)
         inner_layout.add_widget(self.montant_input)
         input_wrapper.add_widget(inner_layout)
-
         self.main_layout.add_widget(input_wrapper)
 
     def creer_categorie_checkboxes(self):
         checkbox_wrapper = BoxLayout(size_hint=(1, None), height=0.06 * Window.height, padding=2)
-        
-        checkbox_container = BoxLayout(
-        orientation='horizontal',
-        spacing=40,
-        size_hint=(0.5, 0.5),
-        height=0.06 * Window.height,
-        pos_hint={'center_x': 0.5, 'center_y': 0.5}  # 💡 centrage horizontal + vertical
-    )
-
+        checkbox_container = BoxLayout(orientation='horizontal', spacing=40,
+                                       size_hint=(0.5, 0.5), pos_hint={'center_x': 0.5, 'center_y': 0.5})
         self.revenu_testbox = TextCheckbox(text="Revenu", group="categorie", allow_no_selection=True)
         self.charges_fixe_testbox = TextCheckbox(text="Charge", group="categorie", allow_no_selection=True)
         self.depense_testbox = TextCheckbox(text="Dépense", group="categorie", allow_no_selection=True)
-
         checkbox_container.add_widget(self.revenu_testbox)
         checkbox_container.add_widget(self.charges_fixe_testbox)
         checkbox_container.add_widget(self.depense_testbox)
@@ -122,17 +109,14 @@ class pageprincipalScreen(Screen):
 
     def creer_bouton_valider(self):
         self.valider_btn = Button(
-            text="Valider",
-            size_hint=(1, 0.1),
-            height=50,
-            background_color=(0.2, 0.6, 0.86, 1),
+            text="Valider", size_hint=(1, 0.1), background_color=(0.2, 0.6, 0.86, 1),
             background_normal=''
         )
         self.valider_btn.bind(on_press=self.ajouter_valeur)
         self.main_layout.add_widget(self.valider_btn)
 
     def creer_labels(self):
-        scroll = ScrollView(size_hint=(1, 1))
+        scroll = ScrollView(size_hint=(1, 0.5))
         labels_container = BoxLayout(orientation='vertical', size_hint_y=None, spacing=10, padding=10)
         labels_container.bind(minimum_height=labels_container.setter('height'))
 
@@ -143,33 +127,66 @@ class pageprincipalScreen(Screen):
             ("Dépenses : 0.00 €", "label_depenses"),
             ("Économie dépense arrondi : 0.00 €", "label_economie")
         ]
-
         for text, attr_name in labels_data:
-            label = Label(text=text, font_size=28, size_hint_y=None, height=40, halign='center', valign='middle', color=(0, 0, 0, 1))
+            label = Label(text=text, font_size=28, size_hint_y=None, height=40,
+                          halign='center', valign='middle', color=(0, 0, 0, 1))
             label.bind(size=label.setter('text_size'))
             setattr(self, attr_name, label)
             labels_container.add_widget(label)
 
         labels_row = BoxLayout(orientation='horizontal', size_hint_y=None, height=60, spacing=20)
-        self.solde_label = Label(text="Solde actuel : 0.00 €", font_size=30, halign='left', valign='middle', color=(1, 0, 0, 1))
-        self.solde_label.bind(size=self.solde_label.setter('text_size'))
-        self.fin_label = Label(text="Fin de mois : 0.00 €", font_size=30, halign='right', valign='middle', color=(1, 0, 0, 1))
-        self.fin_label.bind(size=self.fin_label.setter('text_size'))
-
+        self.solde_label = Label(text="Solde actuel : 0.00 €", font_size=30,
+                                 halign='left', valign='middle', color=(1, 0, 0, 1))
+        self.fin_label = Label(text="Fin de mois : 0.00 €", font_size=30,
+                               halign='right', valign='middle', color=(1, 0, 0, 1))
         labels_row.add_widget(self.solde_label)
         labels_row.add_widget(self.fin_label)
         labels_container.add_widget(labels_row)
         scroll.add_widget(labels_container)
         self.main_layout.add_widget(scroll)
 
-    def creer_menu_bouton(self):
-        """Ajoute le bouton Menu flottant."""
-        menu_button = Button(text="Menu", size_hint=(0.5, 0.1), height=40, pos_hint={'center_x': 0.5})
+    def creer_pub_et_menu(self):
+        """Affiche un bandeau publicitaire (test ou réel) + le bouton menu."""
+
+        if platform == "android":
+            # ✅ AdMob réel
+            self.ads = AdMobBanner()  # ID test déjà dans ads.py
+            self.ads.show_banner(position="bottom")
+        else:
+            # 🧩 Simulateur sur PC/Pydroid
+            self.pub_banner = Label(
+                text="[b]Publicité (test)[/b]",
+                markup=True,
+                size_hint=(1, None),
+                height=Window.height * 0.08,
+                font_size=min(Window.width * 0.04, 24),
+                halign='center', valign='middle', color=(1, 1, 1, 1)
+            )
+            with self.pub_banner.canvas.before:
+                Color(0.95, 0.6, 0, 1)
+                self.pub_bg = Rectangle(size=self.pub_banner.size, pos=self.pub_banner.pos)
+            self.pub_banner.bind(size=lambda w, s: setattr(self.pub_bg, 'size', s),
+                                 pos=lambda w, p: setattr(self.pub_bg, 'pos', p))
+            Window.bind(size=self.update_pub_banner_size)
+            self.main_layout.add_widget(self.pub_banner)
+
+        # 🔹 Bouton Menu
+        menu_button = Button(
+            text="Menu", size_hint=(0.5, 0.1),
+            pos_hint={'center_x': 0.5},
+            background_color=(0.2, 0.6, 0.86, 1), background_normal=''
+        )
         menu_button.bind(on_press=lambda instance: ouvrir_menu(self))
         self.main_layout.add_widget(menu_button)
 
+    def update_pub_banner_size(self, *args):
+        if hasattr(self, 'pub_banner'):
+            self.pub_banner.height = Window.height * 0.08
+            self.pub_banner.font_size = min(Window.width * 0.04, 24)
+
+
     # =====================================================
-    # 🔹 Initialisation et logique
+    # 🔹 Logique
     # =====================================================
 
     def initialiser_affichage(self, app):
@@ -178,22 +195,21 @@ class pageprincipalScreen(Screen):
         mettre_a_jour_labels(self)
         total_restant = calculer_total_charges_restantes()
         self.total_charges_restantes_label.text = f"Restant à payer : {abs(total_restant):.2f} €"
-
         update_affichage_revenus(self, app, app.show_total_revenus)
         update_affichage_charges(self, app, app.show_total_charges)
         update_affichage_depenses(self, app, app.show_total_depenses)
 
     def ajouter_valeur(self, instance):
         ajouter_valeur_ecran(self)
-    
+
     def on_pre_enter(self):
         appliquer_config(self)
         _, charges_a_payer, total_a_payer = lire_et_calculer_charges_a_payer()
         self.total_charges_restantes_label.text = f"Total des charges restant à payer : {total_a_payer:.2f} €"
-        charger_donnees(self)        
+        charger_donnees(self)
         maj_total_charges_restantes(self)
         mettre_a_jour_labels(self)
         mise_a_jour_economie(self.label_economie)
-        
+
     def close_app(self, instance):
         App.get_running_app().stop()
