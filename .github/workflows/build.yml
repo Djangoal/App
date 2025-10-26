@@ -62,32 +62,26 @@ jobs:
 
     - name: Build APK
       run: |
-        source venv/bin/activate
-
-        # Création du dossier personnalisé pour les dépendances Gradle
-        mkdir -p ~/.local/share/python-for-android/recipes/android-extra-dependencies
-        echo "implementation 'com.google.android.gms:play-services-ads:23.1.0'" > ~/.local/share/python-for-android/recipes/android-extra-dependencies/gradle-dependencies.txt
-
-        ./venv/bin/p4a apk \
-          --private ./app \
-          --package=org.example.monapp \
-          --name="Mon budget perso" \
-          --version=0.1 \
-          --bootstrap=sdl2 \
-          --icon=logo.png \
-          --presplash=app/logo1.png \
-          --requirements=python3,kivy,android,plyer,requests \
-          --permission WRITE_EXTERNAL_STORAGE \
-          --permission READ_EXTERNAL_STORAGE \
-          --permission INTERNET \
-          --permission ACCESS_NETWORK_STATE \
-          --arch=arm64-v8a \
-          --sdk_dir=$SDK_DIR \
-          --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=36 \
-          --orientation=portrait \
-          --dist-name=monapp \
-          --debug
+       source venv/bin/activate
+       ./venv/bin/p4a apk \
+       --private ./app \
+       --package=org.example.monapp \
+       --name="Mon budget perso" \
+       --version=0.1 \
+       --bootstrap=sdl2 \
+       --icon=logo.png \
+       --presplash=app/logo1.png \
+       --requirements=python3,kivy,android \
+       --permission WRITE_EXTERNAL_STORAGE \
+       --permission READ_EXTERNAL_STORAGE \
+       --arch=arm64-v8a \
+       --sdk_dir=$SDK_DIR \
+       --ndk_dir=$ANDROID_NDK_HOME \
+       --android_api=36 \
+       --orientation=portrait \
+       --dist-name=monapp \
+       --add-jar app/libs/startapp.jar \
+       --debug
 
     - name: Rename APK
       run: |
