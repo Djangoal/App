@@ -80,7 +80,7 @@ jobs:
        --android_api=36 \
        --orientation=portrait \
        --dist-name=monapp \
-       --add-aar app/libs/inapp-sdk-5.0.2.aar \
+       --add-aar App/app/libs/inapp-sdk-5.0.2.aar \
        --debug
 
     - name: Rename APK
