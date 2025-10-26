@@ -63,6 +63,11 @@ jobs:
     - name: Build APK
       run: |
         source venv/bin/activate
+
+        # Création du dossier personnalisé pour les dépendances Gradle
+        mkdir -p ~/.local/share/python-for-android/recipes/android-extra-dependencies
+        echo "implementation 'com.google.android.gms:play-services-ads:23.1.0'" > ~/.local/share/python-for-android/recipes/android-extra-dependencies/gradle-dependencies.txt
+
         ./venv/bin/p4a apk \
           --private ./app \
           --package=org.example.monapp \
@@ -82,7 +87,6 @@ jobs:
           --android_api=36 \
           --orientation=portrait \
           --dist-name=monapp \
-          --add-gradle-dependency "com.google.android.gms:play-services-ads:23.1.0" \
           --debug
 
     - name: Rename APK
@@ -95,4 +99,3 @@ jobs:
       with:
         name: mon-budget-apk
         path: ./mon_budget_perso.apk
-App/.github/workflows/build.yml at main · Djangoal/App 
