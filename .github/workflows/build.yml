@@ -59,23 +59,18 @@ jobs:
 
     - name: Clean previous builds
       run: |
-       source venv/bin/activate
-       ./venv/bin/p4a clean all
-       rm -rf .buildozer/android/platform/build
-       
+        source venv/bin/activate
+        ./venv/bin/p4a clean all
+        rm -rf .buildozer/android/platform/build
+
     - name: Build APK
       run: |
         source venv/bin/activate
 
-        # Créer le dossier libs si nécessaire
-        mkdir -p app/libs
-
-        # Télécharger le .aar si nécessaire
+        # Vérifier que le .aar est présent
         if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
-          echo "Téléchargement de inapp-sdk-5.0.2.aar..."
-          wget -O app/libs/inapp-sdk-5.0.2.aar https://example.com/inapp-sdk-5.0.2.aar
-        else
-          echo ".aar déjà présent"
+          echo "Erreur : inapp-sdk-5.0.2.aar introuvable !"
+          exit 1
         fi
 
         # Lancer la compilation
