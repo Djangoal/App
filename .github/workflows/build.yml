@@ -59,10 +59,10 @@ jobs:
 
     - name: Clean previous builds
       run: |
-        source venv/bin/activate
-        ./venv/bin/p4a clean
-        rm -rf .buildozer/android/platform/build
-
+       source venv/bin/activate
+       ./venv/bin/p4a clean all
+       rm -rf .buildozer/android/platform/build
+       
     - name: Build APK
       run: |
         source venv/bin/activate
