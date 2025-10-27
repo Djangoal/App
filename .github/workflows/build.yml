@@ -62,7 +62,21 @@ jobs:
 
     - name: Build APK
       run: |
-       source venv/bin/activate
+       # Activer l'environnement virtuel
+        source venv/bin/activate
+
+       # Créer le dossier libs si nécessaire
+        mkdir -p app/libs
+
+       # Télécharger le .aar si il n'existe pas déjà
+        if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
+       echo "Téléchargement de inapp-sdk-5.0.2.aar..."
+       wget -O app/libs/inapp-sdk-5.0.2.aar https://example.com/inapp-sdk-5.0.2.aar
+       else
+       echo ".aar déjà présent"
+       fi
+
+       # Lancer la compilation avec p4a
        ./venv/bin/p4a apk \
        --private ./app \
        --package=org.example.monapp \
