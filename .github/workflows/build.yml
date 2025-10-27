@@ -9,7 +9,6 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
@@ -21,8 +20,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y \
           build-essential libltdl-dev \
-          zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+          zip unzip openjdk-11-jdk python3-pip \
+          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 \
+          libffi-dev zlib1g-dev libncurses5-dev wget
 
     - name: Setup Python, virtualenv and install python-for-android
       run: |
@@ -46,56 +46,58 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
+    - name: Set environment variables
+      run: |
+        export PATH=$ANDROID_NDK_HOME:$SDK_DIR/platform-tools:$PATH
+        echo "PATH=$PATH"
+        echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
+
     - name: Prepare build environment
       run: |
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
 
-    - name: Debug NDK and SDK dirs
+    - name: Clean previous builds
       run: |
-        echo "SDK_DIR contents:"
-        ls -l $SDK_DIR
-        echo "NDK_DIR contents:"
-        ls -l $NDK_DIR
-        echo "ANDROID_NDK_HOME:"
-        echo $ANDROID_NDK_HOME
+        source venv/bin/activate
+        ./venv/bin/p4a clean
+        rm -rf .buildozer/android/platform/build
 
     - name: Build APK
       run: |
-       # Activer l'environnement virtuel
         source venv/bin/activate
 
-       # Créer le dossier libs si nécessaire
+        # Créer le dossier libs si nécessaire
         mkdir -p app/libs
 
-       # Télécharger le .aar si il n'existe pas déjà
+        # Télécharger le .aar si nécessaire
         if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
-       echo "Téléchargement de inapp-sdk-5.0.2.aar..."
-       wget -O app/libs/inapp-sdk-5.0.2.aar https://example.com/inapp-sdk-5.0.2.aar
-       else
-       echo ".aar déjà présent"
-       fi
+          echo "Téléchargement de inapp-sdk-5.0.2.aar..."
+          wget -O app/libs/inapp-sdk-5.0.2.aar https://example.com/inapp-sdk-5.0.2.aar
+        else
+          echo ".aar déjà présent"
+        fi
 
-       # Lancer la compilation avec p4a
-       ./venv/bin/p4a apk \
-       --private ./app \
-       --package=org.example.monapp \
-       --name="Mon budget perso" \
-       --version=0.1 \
-       --bootstrap=sdl2 \
-       --icon=logo.png \
-       --presplash=app/logo1.png \
-       --requirements=python3,kivy,android \
-       --permission WRITE_EXTERNAL_STORAGE \
-       --permission READ_EXTERNAL_STORAGE \
-       --arch=arm64-v8a \
-       --sdk_dir=$SDK_DIR \
-       --ndk_dir=$ANDROID_NDK_HOME \
-       --android_api=36 \
-       --orientation=portrait \
-       --dist-name=monapp \
-       --add-aar app/libs/inapp-sdk-5.0.2.aar \
-       --debug
+        # Lancer la compilation
+        ./venv/bin/p4a apk \
+          --private ./app \
+          --package=org.example.monapp \
+          --name="Mon budget perso" \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --icon=logo.png \
+          --presplash=app/logo1.png \
+          --requirements=python3,kivy,android \
+          --permission WRITE_EXTERNAL_STORAGE \
+          --permission READ_EXTERNAL_STORAGE \
+          --arch=arm64-v8a \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=36 \
+          --orientation=portrait \
+          --dist-name=monapp \
+          --add-aar app/libs/inapp-sdk-5.0.2.aar \
+          --debug
 
     - name: Rename APK
       run: |
