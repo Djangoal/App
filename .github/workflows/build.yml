@@ -9,7 +9,7 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/23.1.7779620
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/28.0.12433566
 
     steps:
       - name: Checkout code
@@ -44,7 +44,7 @@ jobs:
             "platform-tools" \
             "platforms;android-36" \
             "build-tools;36.0.0" \
-            "ndk;23.1.7779620"
+            "ndk;28.0.12433566"
 
       - name: Set environment variables
         run: |
