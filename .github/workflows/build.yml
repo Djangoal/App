@@ -9,9 +9,8 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
-   
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -22,7 +21,8 @@ jobs:
         sudo apt-get install -y \
           build-essential libltdl-dev \
           zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 \
+          libffi-dev zlib1g-dev libncurses5-dev wget
 
     - name: Setup Python, virtualenv and install python-for-android
       run: |
@@ -55,14 +55,25 @@ jobs:
       run: |
         echo "SDK_DIR contents:"
         ls -l $SDK_DIR
-        echo "NDK_DIR contents:"
-        ls -l $NDK_DIR
         echo "ANDROID_NDK_HOME:"
         echo $ANDROID_NDK_HOME
 
     - name: Build APK
       run: |
         source venv/bin/activate
+
+        # Vérifier la présence du .aar
+        AAR_FILE=app/libs/inapp-sdk-5.0.2.aar
+        if [ -f "$AAR_FILE" ]; then
+          echo "✅ AAR trouvé : $AAR_FILE"
+          AAR_PATH=$(realpath "$AAR_FILE")
+          ADD_AAR="--add-aar $AAR_PATH"
+        else
+          echo "⚠️ AAR non trouvé, build sans .aar"
+          ADD_AAR=""
+        fi
+
+        # Lancer la compilation
         ./venv/bin/p4a apk \
           --private ./app \
           --package=org.example.monapp \
@@ -80,6 +91,7 @@ jobs:
           --android_api=36 \
           --orientation=portrait \
           --dist-name=monapp \
+          $ADD_AAR \
           --debug
 
     - name: Rename APK
