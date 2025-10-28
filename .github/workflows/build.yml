@@ -68,7 +68,7 @@ jobs:
        source venv/bin/activate
 
        # Vérifier que le .aar est présent
-       if [ ! -f inapp-sdk-5.0.2.aar ]; then
+       if [ ! -f app/inapp-sdk-5.0.2.aar ]; then
        echo "Erreur : inapp-sdk-5.0.2.aar introuvable !"
        exit 1
        fi
