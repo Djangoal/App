@@ -62,28 +62,29 @@ jobs:
 
     - name: Build APK
       run: |
-       # Activer l'environnement virtuel
-        source venv/bin/activate
+       source venv/bin/activate
 
-       # Créer le dossier libs si nécessaire
-        mkdir -p app/libs
-
-       # Télécharger le .aar si il n'existe pas déjà
-        if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
-       echo "Téléchargement de inapp-sdk-5.0.2.aar..."
-       wget -O app/libs/inapp-sdk-5.0.2.aar https://example.com/inapp-sdk-5.0.2.aar
+       # Vérifier que le .aar est présent
+       if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
+       echo "❌ Erreur : app/libs/inapp-sdk-5.0.2.aar introuvable !"
+       ls -l app/libs
+       exit 1
        else
-       echo ".aar déjà présent"
+       echo "✅ Fichier trouvé : app/libs/inapp-sdk-5.0.2.aar"
        fi
 
-       # Lancer la compilation avec p4a
+       # Obtenir le chemin absolu du .aar
+       AAR_PATH=$(realpath app/libs/inapp-sdk-5.0.2.aar)
+       echo "Utilisation du chemin absolu : $AAR_PATH"
+
+       # Lancer la compilation avec python-for-android
        ./venv/bin/p4a apk \
        --private ./app \
        --package=org.example.monapp \
        --name="Mon budget perso" \
        --version=0.1 \
        --bootstrap=sdl2 \
-       --icon=logo.png \
+       --icon=app/logo.png \
        --presplash=app/logo1.png \
        --requirements=python3,kivy,android \
        --permission WRITE_EXTERNAL_STORAGE \
@@ -94,7 +95,7 @@ jobs:
        --android_api=36 \
        --orientation=portrait \
        --dist-name=monapp \
-       --add-aar app/libs/inapp-sdk-5.0.2.aar \
+       --add-aar "$AAR_PATH" \
        --debug
 
     - name: Rename APK
