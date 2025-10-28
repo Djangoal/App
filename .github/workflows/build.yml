@@ -15,6 +15,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Debug project structure
+      run: |
+       echo "Vérification du contenu du dossier app/"
+       ls -l app
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
