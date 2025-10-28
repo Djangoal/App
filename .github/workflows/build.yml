@@ -21,8 +21,7 @@ jobs:
         sudo apt-get install -y \
           build-essential libltdl-dev \
           zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 \
-          libffi-dev zlib1g-dev libncurses5-dev wget
+          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
     - name: Setup Python, virtualenv and install python-for-android
       run: |
@@ -46,34 +45,23 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: Prepare build environment
+    - name: Clean previous builds
       run: |
-        find . -name "aclocal.m4" -delete
-        find . -name "autom4te.cache" -type d -exec rm -rf {} +
+        source venv/bin/activate
+        ./venv/bin/p4a clean all
+        rm -rf .buildozer/android/platform/build
 
-    - name: Debug NDK and SDK dirs
-      run: |
-        echo "SDK_DIR contents:"
-        ls -l $SDK_DIR
-        echo "ANDROID_NDK_HOME:"
-        echo $ANDROID_NDK_HOME
-
-    - name: Build APK
+    - name: Build APK without SDL patches
       run: |
         source venv/bin/activate
 
-        # Vérifier la présence du .aar
-        AAR_FILE=app/libs/inapp-sdk-5.0.2.aar
-        if [ -f "$AAR_FILE" ]; then
-          echo "✅ AAR trouvé : $AAR_FILE"
-          AAR_PATH=$(realpath "$AAR_FILE")
-          ADD_AAR="--add-aar $AAR_PATH"
-        else
-          echo "⚠️ AAR non trouvé, build sans .aar"
-          ADD_AAR=""
+        # Vérifier que le .aar est présent
+        if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
+          echo "❌ Erreur : inapp-sdk-5.0.2.aar introuvable !"
+          exit 1
         fi
 
-        # Lancer la compilation
+        # Compilation avec SDL2 propre
         ./venv/bin/p4a apk \
           --private ./app \
           --package=org.example.monapp \
@@ -91,8 +79,9 @@ jobs:
           --android_api=36 \
           --orientation=portrait \
           --dist-name=monapp \
-          $ADD_AAR \
-          --debug
+          --add-aar app/libs/inapp-sdk-5.0.2.aar \
+          --debug \
+          --ignore-setup-py
 
     - name: Rename APK
       run: |
