@@ -9,7 +9,7 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/23.1.7779620
 
     steps:
       - name: Checkout code
@@ -44,7 +44,7 @@ jobs:
             "platform-tools" \
             "platforms;android-36" \
             "build-tools;36.0.0" \
-            "ndk;25.2.9519653"
+            "ndk;23.1.7779620"
 
       - name: Set environment variables
         run: |
@@ -59,28 +59,28 @@ jobs:
 
       - name: Clean previous builds
         run: |
-          source venv/bin/activate
-          ./venv/bin/p4a clean bootstrap_builds
-          ./venv/bin/p4a clean dist
-          rm -rf .buildozer/android/platform/build
-          rm -rf .buildozer/android/platform/bootstrap_builds
-
+         source venv/bin/activate
+         ./venv/bin/p4a clean bootstrap_builds
+         ./venv/bin/p4a clean all
+         rm -rf .buildozer/android/platform/build
+         rm -rf .buildozer/android/platform/bootstrap_builds
+         
       - name: Build APK
         run: |
           source venv/bin/activate
 
           # Vérifier que le .aar est présent
           if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
-            echo "❌ Erreur : inapp-sdk-5.0.2.aar introuvable dans $(pwd)/app/libs"
-            ls -l app/libs
+            echo "❌ Erreur : inapp-sdk-5.0.2.aar introuvable !"
             exit 1
-          else
-            echo "✅ AAR trouvé"
           fi
 
           # Chemin absolu du .aar
           AAR_PATH=$(realpath app/libs/inapp-sdk-5.0.2.aar)
           echo "Utilisation du chemin absolu : $AAR_PATH"
+
+          # Appliquer patch SDLActivity.java si nécessaire (optionnel)
+          # patch -N -p1 < patches/SDLActivity.java.patch || echo "Patch SDLActivity déjà appliqué"
 
           # Lancer la compilation
           ./venv/bin/p4a apk \
