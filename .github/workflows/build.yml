@@ -70,34 +70,42 @@ jobs:
 
     - name: Build APK
       run: |
-       source venv/bin/activate
+        # Activer l'environnement virtuel
+        source venv/bin/activate
 
-       # Vérifier que le .aar est présent
-       if [ ! -f app/inapp-sdk-5.0.2.aar ]; then
-       echo "Erreur : inapp-sdk-5.0.2.aar introuvable !"
-       exit 1
-       fi
+        # Se déplacer dans le dossier contenant main.py et le AAR
+        cd app
 
-       # Lancer la compilation
-       ./venv/bin/p4a apk \
-       --private ./app \
-       --package=org.example.monapp \
-       --name="Mon budget perso" \
-       --version=0.1 \
-       --bootstrap=sdl2 \
-       --icon=logo.png \
-       --presplash=app/logo1.png \
-       --requirements=python3,kivy,android \
-       --permission WRITE_EXTERNAL_STORAGE \
-       --permission READ_EXTERNAL_STORAGE \
-       --arch=arm64-v8a \
-       --sdk_dir=$SDK_DIR \
-       --ndk_dir=$ANDROID_NDK_HOME \
-       --android_api=36 \
-       --orientation=portrait \
-       --dist-name=monapp \
-       --add-aar app/inapp-sdk-5.0.2.aar \
-       --debug
+        # Vérifier que le AAR existe
+        if [ ! -f "inapp-sdk-5.0.2.aar" ]; then
+          echo "❌ Erreur : inapp-sdk-5.0.2.aar introuvable dans app/"
+          ls -l
+          exit 1
+        else
+          echo "✅ Fichier AAR trouvé :"
+          ls -l inapp-sdk-5.0.2.aar
+        fi
+
+        # Lancer la compilation avec python-for-android
+        ../venv/bin/p4a apk \
+          --private . \
+          --package=org.example.monapp \
+          --name="Mon budget perso" \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --icon=logo.png \
+          --presplash=logo1.png \
+          --requirements=python3,kivy,android \
+          --permission WRITE_EXTERNAL_STORAGE \
+          --permission READ_EXTERNAL_STORAGE \
+          --arch=arm64-v8a \
+          --sdk_dir=../android-sdk \
+          --ndk_dir=../android-sdk/ndk/25.2.9519653 \
+          --android_api=36 \
+          --orientation=portrait \
+          --dist-name=monapp \
+          --add-aar inapp-sdk-5.0.2.aar \
+          --debug
 
     - name: Rename APK
       run: |
