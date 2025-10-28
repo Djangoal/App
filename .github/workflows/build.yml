@@ -67,7 +67,7 @@ jobs:
        # Vérifier que le .aar est présent
        if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
        echo "❌ Erreur : app/libs/inapp-sdk-5.0.2.aar introuvable !"
-       ls -l app/libs
+        ls -l app/libs
        exit 1
        else
        echo "✅ Fichier trouvé : app/libs/inapp-sdk-5.0.2.aar"
@@ -76,6 +76,10 @@ jobs:
        # Obtenir le chemin absolu du .aar
        AAR_PATH=$(realpath app/libs/inapp-sdk-5.0.2.aar)
        echo "Utilisation du chemin absolu : $AAR_PATH"
+
+       # Désactiver temporairement les patches SDL
+       export P4A_NO_PATCHES=1
+       echo "⚠️ Patches SDL désactivés pour ce build"
 
        # Lancer la compilation avec python-for-android
        ./venv/bin/p4a apk \
