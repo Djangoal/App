@@ -1,119 +1,119 @@
 name: Build APK with python-for-android
 
 on:
-workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
-build:
-runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-env:  
-  SDK_DIR: ${{ github.workspace }}/android-sdk  
-  ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653  
+    env:  
+      SDK_DIR: ${{ github.workspace }}/android-sdk  
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653  
 
-steps:  
-- name: Checkout code  
-  uses: actions/checkout@v3  
+    steps:  
+      - name: Checkout code  
+        uses: actions/checkout@v3  
 
-- name: Debug project structure  
-  run: |  
-   echo "Vérification du contenu du dossier app/"  
-   ls -l app  
+      - name: Debug project structure  
+        run: |  
+          echo "Vérification du contenu du dossier app/"  
+          ls -l app  
 
-- name: Install system dependencies  
-  run: |  
-    sudo apt-get update  
-    sudo apt-get install -y \  
-      build-essential libltdl-dev \  
-      zip unzip openjdk-11-jdk python3-pip \  
-      libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 \  
-      libffi-dev zlib1g-dev libncurses5-dev wget  
+      - name: Install system dependencies  
+        run: |  
+          sudo apt-get update  
+          sudo apt-get install -y \  
+            build-essential libltdl-dev \  
+            zip unzip openjdk-11-jdk python3-pip \  
+            libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 \  
+            libffi-dev zlib1g-dev libncurses5-dev wget  
 
-- name: Setup Python, virtualenv and install python-for-android  
-  run: |  
-    python3 -m venv venv  
-    ./venv/bin/pip install --upgrade pip  
-    ./venv/bin/pip install cython  
-    ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git  
+      - name: Setup Python, virtualenv and install python-for-android  
+        run: |  
+          python3 -m venv venv  
+          ./venv/bin/pip install --upgrade pip  
+          ./venv/bin/pip install cython  
+          ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git  
 
-- name: Download Android SDK and NDK  
-  run: |  
-    mkdir -p $SDK_DIR  
-    curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip  
-    unzip cmdline-tools.zip -d $SDK_DIR  
-    mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp  
-    mkdir -p $SDK_DIR/cmdline-tools/latest  
-    mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest  
-    yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses  
-    $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \  
-      "platform-tools" \  
-      "platforms;android-36" \  
-      "build-tools;36.0.0" \  
-      "ndk;25.2.9519653"  
+      - name: Download Android SDK and NDK  
+        run: |  
+          mkdir -p $SDK_DIR  
+          curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip  
+          unzip cmdline-tools.zip -d $SDK_DIR  
+          mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp  
+          mkdir -p $SDK_DIR/cmdline-tools/latest  
+          mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest  
+          yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses  
+          $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \  
+            "platform-tools" \  
+            "platforms;android-36" \  
+            "build-tools;36.0.0" \  
+            "ndk;25.2.9519653"  
 
-- name: Set environment variables  
-  run: |  
-    export PATH=$ANDROID_NDK_HOME:$SDK_DIR/platform-tools:$PATH  
-    echo "PATH=$PATH"  
-    echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"  
+      - name: Set environment variables  
+        run: |  
+          export PATH=$ANDROID_NDK_HOME:$SDK_DIR/platform-tools:$PATH  
+          echo "PATH=$PATH"  
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"  
 
-- name: Prepare build environment  
-  run: |  
-    find . -name "aclocal.m4" -delete  
-    find . -name "autom4te.cache" -type d -exec rm -rf {} +  
+      - name: Prepare build environment  
+        run: |  
+          find . -name "aclocal.m4" -delete  
+          find . -name "autom4te.cache" -type d -exec rm -rf {} +  
 
-- name: Clean previous builds  
-  run: |  
-    source venv/bin/activate  
-    ./venv/bin/p4a clean all  
-    rm -rf .buildozer/android/platform/build  
+      - name: Clean previous builds  
+        run: |  
+          source venv/bin/activate  
+          ./venv/bin/p4a clean all  
+          rm -rf .buildozer/android/platform/build  
 
-- name: Build APK  
-  run: |  
-    source venv/bin/activate  
-    cd app  
+      - name: Build APK  
+        run: |  
+          source venv/bin/activate  
+          cd app  
 
-    # Vérifier la présence du AAR  
-    if [ ! -f "inapp-sdk-5.0.2.aar" ]; then  
-      echo "❌ Erreur : inapp-sdk-5.0.2.aar introuvable dans $(pwd)"  
-      ls -l  
-      exit 1  
-    else  
-      echo "✅ AAR trouvé dans $(pwd)"  
-    fi  
+          # Vérifier la présence du AAR  
+          if [ ! -f "inapp-sdk-5.0.2.aar" ]; then  
+            echo "❌ Erreur : inapp-sdk-5.0.2.aar introuvable dans $(pwd)"  
+            ls -l  
+            exit 1  
+          else  
+            echo "✅ AAR trouvé dans $(pwd)"  
+          fi  
 
-    # Obtenir le chemin absolu du AAR  
-    AAR_PATH=$(realpath inapp-sdk-5.0.2.aar)  
-    echo "Utilisation du chemin absolu : $AAR_PATH"  
+          # Obtenir le chemin absolu du AAR  
+          AAR_PATH=$(realpath inapp-sdk-5.0.2.aar)  
+          echo "Utilisation du chemin absolu : $AAR_PATH"  
 
-    # Compilation avec chemin absolu  
-    ../venv/bin/p4a apk \  
-      --private . \  
-      --package=org.example.monapp \  
-      --name="Mon budget perso" \  
-      --version=0.1 \  
-      --bootstrap=sdl2 \  
-      --icon=logo.png \  
-      --presplash=logo1.png \  
-      --requirements=python3,kivy,android \  
-      --permission WRITE_EXTERNAL_STORAGE \  
-      --permission READ_EXTERNAL_STORAGE \  
-      --arch=arm64-v8a \  
-      --sdk_dir=../android-sdk \  
-      --ndk_dir=../android-sdk/ndk/25.2.9519653 \  
-      --android_api=36 \  
-      --orientation=portrait \  
-      --dist-name=monapp \  
-      --add-aar "$AAR_PATH" \  
-      --debug  
+          # Compilation avec chemin absolu  
+          ../venv/bin/p4a apk \  
+            --private . \  
+            --package=org.example.monapp \  
+            --name="Mon budget perso" \  
+            --version=0.1 \  
+            --bootstrap=sdl2 \  
+            --icon=logo.png \  
+            --presplash=logo1.png \  
+            --requirements=python3,kivy,android \  
+            --permission WRITE_EXTERNAL_STORAGE \  
+            --permission READ_EXTERNAL_STORAGE \  
+            --arch=arm64-v8a \  
+            --sdk_dir=../android-sdk \  
+            --ndk_dir=../android-sdk/ndk/25.2.9519653 \  
+            --android_api=36 \  
+            --orientation=portrait \  
+            --dist-name=monapp \  
+            --add-aar "$AAR_PATH" \  
+            --debug  
 
-- name: Rename APK  
-  run: |  
-    APK_FILE=$(find . -name "*.apk" | head -n 1)  
-    mv "$APK_FILE" "mon_budget_perso.apk"  
+      - name: Rename APK  
+        run: |  
+          APK_FILE=$(find . -name "*.apk" | head -n 1)  
+          mv "$APK_FILE" "mon_budget_perso.apk"  
 
-- name: Upload APK  
-  uses: actions/upload-artifact@v4  
-  with:  
-    name: mon-budget-apk  
-    path: ./mon_budget_perso.apk
+      - name: Upload APK  
+        uses: actions/upload-artifact@v4  
+        with:  
+          name: mon-budget-apk  
+          path: ./mon_budget_perso.apk
