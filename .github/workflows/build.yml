@@ -11,7 +11,7 @@ jobs:
       SDK_DIR: ${{ github.workspace }}/android-sdk
       NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
-
+   
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -62,45 +62,25 @@ jobs:
 
     - name: Build APK
       run: |
-       source venv/bin/activate
-
-       # Vérifier que le .aar est présent
-       if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
-       echo "❌ Erreur : app/libs/inapp-sdk-5.0.2.aar introuvable !"
-        ls -l app/libs
-       exit 1
-       else
-       echo "✅ Fichier trouvé : app/libs/inapp-sdk-5.0.2.aar"
-       fi
-
-       # Obtenir le chemin absolu du .aar
-       AAR_PATH=$(realpath app/libs/inapp-sdk-5.0.2.aar)
-       echo "Utilisation du chemin absolu : $AAR_PATH"
-
-       # Désactiver temporairement les patches SDL
-       export P4A_NO_PATCHES=1
-       echo "⚠️ Patches SDL désactivés pour ce build"
-
-       # Lancer la compilation avec python-for-android
-       ./venv/bin/p4a apk \
-       --private ./app \
-       --package=org.example.monapp \
-       --name="Mon budget perso" \
-       --version=0.1 \
-       --bootstrap=sdl2 \
-       --icon=app/logo.png \
-       --presplash=app/logo1.png \
-       --requirements=python3,kivy,android \
-       --permission WRITE_EXTERNAL_STORAGE \
-       --permission READ_EXTERNAL_STORAGE \
-       --arch=arm64-v8a \
-       --sdk_dir=$SDK_DIR \
-       --ndk_dir=$ANDROID_NDK_HOME \
-       --android_api=36 \
-       --orientation=portrait \
-       --dist-name=monapp \
-       --add-aar "$AAR_PATH" \
-       --debug
+        source venv/bin/activate
+        ./venv/bin/p4a apk \
+          --private ./app \
+          --package=org.example.monapp \
+          --name="Mon budget perso" \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --icon=logo.png \
+          --presplash=app/logo1.png \
+          --requirements=python3,kivy,android \
+          --permission WRITE_EXTERNAL_STORAGE \
+          --permission READ_EXTERNAL_STORAGE \
+          --arch=arm64-v8a \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=36 \
+          --orientation=portrait \
+          --dist-name=monapp \
+          --debug
 
     - name: Rename APK
       run: |
