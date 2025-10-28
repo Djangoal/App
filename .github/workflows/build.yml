@@ -64,9 +64,14 @@ jobs:
 
     - name: Clean previous builds
       run: |
-        source venv/bin/activate
-        ./venv/bin/p4a clean --all
-
+       source venv/bin/activate
+       # Supprimer les builds SDL2 existants
+       ./venv/bin/p4a clean bootstrap_builds
+       ./venv/bin/p4a clean dist
+       # Supprimer manuellement les dossiers résiduels
+       rm -rf .buildozer/android/platform/build
+       rm -rf .buildozer/android/platform/bootstrap_builds
+ 
     - name: Build APK
       run: |
         source venv/bin/activate
