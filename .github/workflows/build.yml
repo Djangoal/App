@@ -70,23 +70,23 @@ jobs:
 
     - name: Build APK
       run: |
-        # Activer l'environnement virtuel
         source venv/bin/activate
-
-        # Se déplacer dans le dossier contenant main.py et le AAR
         cd app
 
-        # Vérifier que le AAR existe
+        # Vérifier la présence du AAR
         if [ ! -f "inapp-sdk-5.0.2.aar" ]; then
-          echo "❌ Erreur : inapp-sdk-5.0.2.aar introuvable dans app/"
+          echo "❌ Erreur : inapp-sdk-5.0.2.aar introuvable dans $(pwd)"
           ls -l
           exit 1
         else
-          echo "✅ Fichier AAR trouvé :"
-          ls -l inapp-sdk-5.0.2.aar
+          echo "✅ AAR trouvé dans $(pwd)"
         fi
 
-        # Lancer la compilation avec python-for-android
+        # Obtenir le chemin absolu du AAR
+        AAR_PATH=$(realpath inapp-sdk-5.0.2.aar)
+        echo "Utilisation du chemin absolu : $AAR_PATH"
+
+        # Compilation avec chemin absolu
         ../venv/bin/p4a apk \
           --private . \
           --package=org.example.monapp \
@@ -104,7 +104,7 @@ jobs:
           --android_api=36 \
           --orientation=portrait \
           --dist-name=monapp \
-          --add-aar inapp-sdk-5.0.2.aar\
+          --add-aar "$AAR_PATH" \
           --debug
 
     - name: Rename APK
