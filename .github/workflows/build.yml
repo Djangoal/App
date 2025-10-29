@@ -30,7 +30,7 @@ jobs:
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
         # ✅ Version stable de python-for-android (corrige le bug SDLSurface)
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git@2024.06.02
+        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git@2024.07.28
 
     - name: Download Android SDK and NDK
       run: |
