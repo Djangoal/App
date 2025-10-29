@@ -75,7 +75,7 @@ jobs:
        --android_api=36 \
        --orientation=portrait \
        --dist-name=monapp \
-       --release /
+       --release \
        --sign
        
        # 🧩 Patch du build.gradle pour inclure AdMob
