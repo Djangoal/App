@@ -23,12 +23,14 @@ jobs:
           build-essential libltdl-dev \
           zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+
     - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+
     - name: Download Android SDK and NDK
       run: |
         mkdir -p $SDK_DIR
@@ -43,10 +45,12 @@ jobs:
           "platforms;android-36" \
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
+
     - name: Prepare build environment
       run: |
         find . -name "aclocal.m4" -delete
         find . -name "autom4te.cache" -type d -exec rm -rf {} +
+
     - name: Debug NDK and SDK dirs
       run: |
         echo "SDK_DIR contents:"
@@ -55,42 +59,49 @@ jobs:
         ls -l $NDK_DIR
         echo "ANDROID_NDK_HOME:"
         echo $ANDROID_NDK_HOME
+
     - name: Build APK
       run: |
-       source venv/bin/activate
-       ./venv/bin/p4a clean_builds
-       ./venv/bin/p4a apk \
-       --private ./app \
-       --package=org.example.monapp \
-       --name="Mon budget perso" \
-       --version=0.1 \
-       --bootstrap=sdl2 \
-       --icon=logo.png \
-       --presplash=app/logo1.png \
-       --requirements=python3,kivy,android \
-       --permission WRITE_EXTERNAL_STORAGE \
-       --permission READ_EXTERNAL_STORAGE \
-       --arch=armeabi-v7a \
-       --sdk_dir=$SDK_DIR \
-       --ndk_dir=$ANDROID_NDK_HOME \
-       --android_api=36 \
-       --orientation=portrait \
-       --dist-name=monapp \
-       --release \
-       --sign
-       
-       # 🧩 Patch du build.gradle pour inclure AdMob
-       GRADLE_FILE=$(find . -name "build.gradle" | grep "monapp" | head -n 1)
-       if [ -f "$GRADLE_FILE" ]; then
-       echo 'implementation "com.google.android.gms:play-services-ads:22.1.0"' >> "$GRADLE_FILE"
-       echo "✅ AdMob ajouté à build.gradle"
-       else
-       echo "⚠️ build.gradle introuvable"
-       fi
+        source venv/bin/activate
+        # Nettoyage complet pour éviter erreur patch
+        ./venv/bin/p4a clean_builds
+        rm -rf .buildozer .p4a
+
+        # Build release signé multi-arch
+        ./venv/bin/p4a apk \
+          --private ./app \
+          --package=org.example.monapp \
+          --name="Mon budget perso" \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --icon=logo.png \
+          --presplash=app/logo1.png \
+          --requirements=python3,kivy,android \
+          --permission WRITE_EXTERNAL_STORAGE \
+          --permission READ_EXTERNAL_STORAGE \
+          --arch=armeabi-v7a,arm64-v8a \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=36 \
+          --orientation=portrait \
+          --dist-name=monapp \
+          --release \
+          --sign
+
+        # Ajouter AdMob dependency dans build.gradle si présent
+        GRADLE_FILE=$(find . -name "build.gradle" | grep "monapp" | head -n 1)
+        if [ -f "$GRADLE_FILE" ]; then
+          echo 'implementation "com.google.android.gms:play-services-ads:22.1.0"' >> "$GRADLE_FILE"
+          echo "✅ AdMob ajouté à build.gradle"
+        else
+          echo "⚠️ build.gradle introuvable"
+        fi
+
     - name: Rename APK
       run: |
         APK_FILE=$(find . -name "*.apk" | head -n 1)
         mv "$APK_FILE" "mon_budget_perso.apk"
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
