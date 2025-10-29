@@ -75,7 +75,9 @@ jobs:
        --android_api=36 \
        --orientation=portrait \
        --dist-name=monapp \
-       --release
+       --release /
+       --sign
+       
        # 🧩 Patch du build.gradle pour inclure AdMob
        GRADLE_FILE=$(find . -name "build.gradle" | grep "monapp" | head -n 1)
        if [ -f "$GRADLE_FILE" ]; then
