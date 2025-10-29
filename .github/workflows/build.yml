@@ -79,7 +79,7 @@ jobs:
           --requirements=python3,kivy,android \
           --permission WRITE_EXTERNAL_STORAGE \
           --permission READ_EXTERNAL_STORAGE \
-          --arch=armeabi-v7a,arm64-v8a \
+          --arch=arm64-v8a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=36 \
