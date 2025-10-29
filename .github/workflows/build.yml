@@ -51,37 +51,38 @@ jobs:
         ./venv/bin/p4a clean all
         rm -rf .buildozer/android/platform/build
 
-    - name: Build APK without SDL patches
+    - name: Build APK
       run: |
-        source venv/bin/activate
+       source venv/bin/activate
+       cd app
 
-        # Vérifier que le .aar est présent
-        if [ ! -f app/libs/inapp-sdk-5.0.2.aar ]; then
-          echo "❌ Erreur : inapp-sdk-5.0.2.aar introuvable !"
-          exit 1
-        fi
+       # Vérifier que le .aar existe
+       if [ ! -f libs/inapp-sdk-5.0.2.aar ]; then
+       echo "❌ Erreur : AAR introuvable !"
+       ls -l libs
+       exit 1
+       fi
 
-        # Compilation avec SDL2 propre
-        ./venv/bin/p4a apk \
-          --private ./app \
-          --package=org.example.monapp \
-          --name="Mon budget perso" \
-          --version=0.1 \
-          --bootstrap=sdl2 \
-          --icon=logo.png \
-          --presplash=app/logo1.png \
-          --requirements=python3,kivy,android \
-          --permission WRITE_EXTERNAL_STORAGE \
-          --permission READ_EXTERNAL_STORAGE \
-          --arch=arm64-v8a \
-          --sdk_dir=$SDK_DIR \
-          --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=36 \
-          --orientation=portrait \
-          --dist-name=monapp \
-          --add-aar ./app/libs/inapp-sdk-5.0.2.aar \
-          --debug \
-          --ignore-setup-py
+       # Compiler
+       ../venv/bin/p4a apk \
+       --private . \
+       --package=org.example.monapp \
+       --name="Mon budget perso" \
+       --version=0.1 \
+       --bootstrap=sdl2 \
+       --icon=logo.png \
+       --presplash=logo1.png \
+       --requirements=python3,kivy,android \
+       --permission WRITE_EXTERNAL_STORAGE \
+       --permission READ_EXTERNAL_STORAGE \
+       --arch=arm64-v8a \
+       --sdk_dir=../android-sdk \
+       --ndk_dir=../android-sdk/ndk/25.2.9519653 \
+       --android_api=36 \
+       --orientation=portrait \
+       --dist-name=monapp \
+       --add-aar libs/inapp-sdk-5.0.2.aar \
+       --debug
 
     - name: Rename APK
       run: |
