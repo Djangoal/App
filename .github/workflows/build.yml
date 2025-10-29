@@ -58,6 +58,7 @@ jobs:
     - name: Build APK
       run: |
        source venv/bin/activate
+       ./venv/bin/p4a clean_builds
        ./venv/bin/p4a apk \
        --private ./app \
        --package=org.example.monapp \
