@@ -29,7 +29,8 @@ jobs:
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+        # ✅ Version stable de python-for-android (corrige le bug SDLSurface)
+        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git@2024.06.02
 
     - name: Download Android SDK and NDK
       run: |
@@ -63,11 +64,13 @@ jobs:
     - name: Build APK
       run: |
         source venv/bin/activate
-        # Nettoyage complet pour éviter erreur patch
         ./venv/bin/p4a clean_builds
-        rm -rf .buildozer .p4a
+        rm -rf .p4a .buildozer
 
-        # Build release signé multi-arch
+        # ⚙️ Supprimer le patch fautif SDLSurface.java avant compilation
+        find $(./venv/bin/python3 -m site --user-site)/pythonforandroid/ -name "SDLSurface.java.patch" -delete || true
+
+        # ⚙️ Build complet en mode release + signature
         ./venv/bin/p4a apk \
           --private ./app \
           --package=org.example.monapp \
@@ -79,7 +82,8 @@ jobs:
           --requirements=python3,kivy,android \
           --permission WRITE_EXTERNAL_STORAGE \
           --permission READ_EXTERNAL_STORAGE \
-          --arch=arm64-v8a \
+          --arch armeabi-v7a \
+          --arch arm64-v8a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=36 \
@@ -88,7 +92,7 @@ jobs:
           --release \
           --sign
 
-        # Ajouter AdMob dependency dans build.gradle si présent
+        # 🧩 Injection d'AdMob dans le build.gradle
         GRADLE_FILE=$(find . -name "build.gradle" | grep "monapp" | head -n 1)
         if [ -f "$GRADLE_FILE" ]; then
           echo 'implementation "com.google.android.gms:play-services-ads:22.1.0"' >> "$GRADLE_FILE"
