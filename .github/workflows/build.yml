@@ -69,7 +69,7 @@ jobs:
 
         if [ "$BUILD_TYPE" = "release" ]; then
           ./venv/bin/p4a apk \
-            --private ./app \
+            --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
             --name="Mon budget perso" \
             --version=0.1 \
