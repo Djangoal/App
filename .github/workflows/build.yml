@@ -94,8 +94,8 @@ jobs:
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_release \
-            --release \
-            --sign
+            --release 
+            
         else
           echo "🐞 Compilation en mode DEBUG..."
           ./venv/bin/p4a apk \
