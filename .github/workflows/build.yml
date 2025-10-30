@@ -39,7 +39,8 @@ jobs:
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
         # Version stable
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git@2024.01.21
+        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+        
 
     - name: Download Android SDK and NDK
       run: |
