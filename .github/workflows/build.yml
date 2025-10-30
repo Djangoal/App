@@ -97,8 +97,8 @@ jobs:
             --release \
             --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
             --signkey=monalias \
-            --keystorepw=19051987 \
-            --keypw=19051987 
+            --keystorepw=19051987 
+            
             
         else
           echo "🐞 Compilation en mode DEBUG..."
