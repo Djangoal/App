@@ -33,7 +33,7 @@ jobs:
           zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-    - name: Setup Python, virtualenv and install python-for-android
+    - name: Setup Python and python-for-android
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
@@ -55,43 +55,19 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: 🧹 Préparation avant build
+    - name: Clean previous builds
       run: |
-        echo "🧹 Nettoyage des anciens builds..."
         rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
-
-        echo "📦 Version de python-for-android :"
-        ./venv/bin/p4a --version
-
-        echo "🧩 Vérification Java et Android SDK/NDK"
-        java -version
-        echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
-        echo "SDK_DIR=$SDK_DIR"
-        echo "Contenu du SDK :"
-        ls -l $SDK_DIR || true
-        echo "Contenu du NDK :"
-        ls -l $NDK_DIR || true
-
-        echo "✅ Environnement prêt pour compilation."
-
-    - name: Ajouter setup.py minimal
-      run: |
-        echo "from setuptools import setup
-setup(
-    name='monapp',
-    version='0.1',
-    packages=['.'],
-)" > ./app/setup.py
+        echo "✅ Clean done"
 
     - name: Build APK
       run: |
         source venv/bin/activate
-        BUILD_TYPE="${{ github.event.inputs.build_type }}"
-        echo "🚀 Type de build : $BUILD_TYPE"
+        BUILD_TYPE=${{ github.event.inputs.build_type }}
+        echo "🚀 Build type: $BUILD_TYPE"
 
         if [ "$BUILD_TYPE" = "release" ]; then
-          echo "🔒 Compilation en mode RELEASE..."
           ./venv/bin/p4a apk \
             --private ./app \
             --package=org.example.monapp \
@@ -108,11 +84,10 @@ setup(
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
             --orientation=portrait \
-            --dist-name=monapp \
+            --dist-name=monapp_release \
             --release \
             --sign
         else
-          echo "🐞 Compilation en mode DEBUG..."
           ./venv/bin/p4a apk \
             --private ./app \
             --package=org.example.monapp \
@@ -129,16 +104,33 @@ setup(
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
             --orientation=portrait \
-            --dist-name=monapp \
+            --dist-name=monapp_debug \
             --debug
+        fi
+
+    - name: Add AdMob to build.gradle
+      run: |
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          DIST_DIR=$(find . -type d -name "monapp_release" | head -n 1)
+        else
+          DIST_DIR=$(find . -type d -name "monapp_debug" | head -n 1)
+        fi
+
+        GRADLE_FILE="$DIST_DIR/build.gradle"
+        if [ -f "$GRADLE_FILE" ]; then
+          echo 'implementation "com.google.android.gms:play-services-ads:22.1.0"' >> "$GRADLE_FILE"
+          echo "✅ AdMob ajouté à build.gradle"
+        else
+          echo "⚠️ build.gradle introuvable"
         fi
 
     - name: Rename APK
       run: |
-        APK_FILE=$(find . -name "*.apk" | head -n 1)
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          APK_FILE=$(find . -name "*.apk" | grep "monapp_release" | head -n 1)
           mv "$APK_FILE" "mon_budget_perso_release.apk"
         else
+          APK_FILE=$(find . -name "*.apk" | grep "monapp_debug" | head -n 1)
           mv "$APK_FILE" "mon_budget_perso_debug.apk"
         fi
 
