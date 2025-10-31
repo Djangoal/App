@@ -87,7 +87,7 @@ jobs:
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_release \
-            --release \
+            --release
             
             
             
