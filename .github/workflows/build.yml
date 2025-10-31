@@ -32,15 +32,14 @@ jobs:
           build-essential libltdl-dev \
           zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
-
     - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
-        # On garde la version fonctionnelle de p4a
+        # On garde ta version fonctionnelle de p4a
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
-
+        
     - name: Download Android SDK and NDK
       run: |
         mkdir -p $SDK_DIR
@@ -55,7 +54,6 @@ jobs:
           "platforms;android-36" \
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
-
     - name: 🧹 Préparation avant build
       run: |
         echo "🧹 Nettoyage complet des anciens builds..."
@@ -66,7 +64,6 @@ jobs:
         echo "📦 Version de python-for-android :"
         ./venv/bin/p4a --version
         echo "✅ Environnement prêt."
-
     - name: Build APK
       run: |
         source venv/bin/activate
@@ -90,7 +87,12 @@ jobs:
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_release \
-            --release
+            --release \
+            --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
+            --signkey=monalias \
+            --keystorepw=19051987 
+            
+            
         else
           echo "🐞 Compilation en mode DEBUG..."
           ./venv/bin/p4a apk \
@@ -111,30 +113,15 @@ jobs:
             --orientation=portrait \
             --dist-name=monapp_debug \
             --debug
-
-    - name: ✅ Signature APK (release uniquement)
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        echo "🔒 Signature du fichier APK..."
-        APK_FILE=$(find . -name "*.apk" | head -n 1)
-        mkdir -p android/keystore
-        cp android/keystore/my-release-key.keystore my-release-key.keystore
-        $SDK_DIR/build-tools/36.0.0/apksigner sign \
-          --ks my-release-key.keystore \
-          --ks-key-alias monalias \
-          --ks-pass pass:19051987 \
-          --key-pass pass:19051987 \
-          "$APK_FILE"
-        echo "📜 Vérification de la signature..."
-        $SDK_DIR/build-tools/36.0.0/apksigner verify --verbose "$APK_FILE"
-        mv "$APK_FILE" "mon_budget_perso_release.apk"
-
-    - name: Rename APK (debug)
-      if: ${{ github.event.inputs.build_type == 'debug' }}
+        fi
+    - name: Rename APK
       run: |
         APK_FILE=$(find . -name "*.apk" | head -n 1)
-        mv "$APK_FILE" "mon_budget_perso_debug.apk"
-
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          mv "$APK_FILE" "mon_budget_perso_release.apk"
+        else
+          mv "$APK_FILE" "mon_budget_perso_debug.apk"
+        fi
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
