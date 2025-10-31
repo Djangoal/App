@@ -1,4 +1,4 @@
-name: Build APK with python-for-android
+name: Build and Sign APK with python-for-android
 
 on:
   workflow_dispatch:
@@ -18,29 +18,22 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          build-essential libltdl-dev \
-          zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
-
-    - name: Setup Python, virtualenv and install python-for-android
-      run: |
+          build-essential zip unzip openjdk-17-jdk python3-pip \
+          libtool libtool-bin automake autoconf pkg-config m4 \
+          libncurses-dev
         python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip
-        ./venv/bin/pip install cython
-        # On garde ta version fonctionnelle de p4a
+        ./venv/bin/pip install --upgrade pip cython
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
-        
 
     - name: Download Android SDK and NDK
       run: |
@@ -62,12 +55,7 @@ jobs:
         echo "🧹 Nettoyage complet des anciens builds..."
         rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
-        rm -rf ~/.local/share/python-for-android/dists/monapp_release
-        rm -rf ~/.local/share/python-for-android/dists/monapp_debug
-
-        echo "📦 Version de python-for-android :"
-        ./venv/bin/p4a --version
-
+        rm -rf ~/.local/share/python-for-android/dists/*
         echo "✅ Environnement prêt."
 
     - name: Build APK
@@ -76,7 +64,6 @@ jobs:
         echo "🚀 Type de build : ${{ github.event.inputs.build_type }}"
 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "🔒 Compilation en mode RELEASE..."
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -88,20 +75,14 @@ jobs:
             --requirements=python3,kivy,android \
             --permission WRITE_EXTERNAL_STORAGE \
             --permission READ_EXTERNAL_STORAGE \
-            --arch=arm64-v8a \
+            --arch=armeabi-v7a,arm64-v8a \
             --sdk_dir=$SDK_DIR \
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_release \
-            --release \
-            --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
-            --signkey=monalias \
-            --keystorepw=19051987 
-            
-            
+            --release
         else
-          echo "🐞 Compilation en mode DEBUG..."
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -122,14 +103,29 @@ jobs:
             --debug
         fi
 
-    - name: Rename APK
+    - name: ✅ Signature APK (release uniquement)
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      run: |
+        echo "🔒 Signature du fichier APK..."
+        APK_FILE=$(find . -name "*.apk" | head -n 1)
+        mkdir -p android/keystore
+        cp android/keystore/my-release-key.keystore my-release-key.keystore
+        # Signature avec apksigner
+        $SDK_DIR/build-tools/36.0.0/apksigner sign \
+          --ks my-release-key.keystore \
+          --ks-key-alias monalias \
+          --ks-pass pass:19051987 \
+          --key-pass pass:19051987 \
+          "$APK_FILE"
+        echo "📜 Vérification de la signature..."
+        $SDK_DIR/build-tools/36.0.0/apksigner verify --verbose "$APK_FILE"
+        mv "$APK_FILE" "mon_budget_perso_release.apk"
+
+    - name: Rename APK (debug)
+      if: ${{ github.event.inputs.build_type == 'debug' }}
       run: |
         APK_FILE=$(find . -name "*.apk" | head -n 1)
-        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          mv "$APK_FILE" "mon_budget_perso_release.apk"
-        else
-          mv "$APK_FILE" "mon_budget_perso_debug.apk"
-        fi
+        mv "$APK_FILE" "mon_budget_perso_debug.apk"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
