@@ -66,7 +66,7 @@ jobs:
         ./venv/bin/p4a --version
         echo "✅ Environnement prêt."
 
-    # 🧱 Nouvelle étape : restauration du keystore depuis les secrets GitHub
+    # 🔒 Restauration du keystore depuis les secrets GitHub
     - name: Restore keystore from GitHub Secret
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
@@ -99,7 +99,8 @@ jobs:
             --release \
             --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
             --signkey=${{ secrets.KEY_ALIAS }} \
-            --keystorepw=${{ secrets.KEYSTORE_PASSWORD }}
+            --keystorepw=${{ secrets.KEYSTORE_PASSWORD }} \
+            --gradle-repository "com.google.android.gms:play-services-ads:23.3.0"
         else
           echo "🐞 Compilation en mode DEBUG..."
           ./venv/bin/p4a apk \
@@ -119,7 +120,8 @@ jobs:
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_debug \
-            --debug
+            --debug \
+            --gradle-repository "com.google.android.gms:play-services-ads:23.3.0"
         fi
 
     - name: Rename APK
