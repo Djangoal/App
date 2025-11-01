@@ -22,10 +22,10 @@ jobs:
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
-    - name: Checkout code
+    - name: 📥 Checkout code
       uses: actions/checkout@v3
 
-    - name: Install system dependencies
+    - name: 🧩 Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -33,14 +33,14 @@ jobs:
           zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-    - name: Setup Python, virtualenv and install python-for-android
+    - name: 🐍 Setup Python and install python-for-android
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
 
-    - name: Download Android SDK and NDK
+    - name: 📦 Download Android SDK and NDK
       run: |
         mkdir -p $SDK_DIR
         curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
@@ -55,28 +55,36 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: 🧹 Préparation avant build
+    - name: 🧹 Nettoyage complet avant compilation
       run: |
-        echo "🧹 Nettoyage complet des anciens builds..."
+        echo "Suppression des caches python-for-android..."
+        rm -rf ~/.local/share/python-for-android
+        rm -rf ~/.buildozer
+        rm -rf build dist .buildozer
+        rm -rf $HOME/.gradle/caches
+        echo "✅ Cache supprimé, prêt pour un build propre."
+
+    - name: 🧱 Préparation avant build
+      run: |
+        echo "🧱 Nettoyage complet des anciens builds..."
         rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
         rm -rf ~/.local/share/python-for-android/dists/monapp_release
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
         echo "📦 Version de python-for-android :"
         ./venv/bin/p4a --version
-        echo "✅ Environnement prêt."
 
-    # 🔒 Restauration du keystore depuis les secrets GitHub
-    - name: Restore keystore from GitHub Secret
+    - name: 🔐 Restore keystore from GitHub Secret
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
         mkdir -p android/keystore
         echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
 
-    - name: Build APK
+    - name: 🏗️ Build APK
       run: |
         source venv/bin/activate
         echo "🚀 Type de build : ${{ github.event.inputs.build_type }}"
+
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           echo "🔒 Compilation en mode RELEASE..."
           ./venv/bin/p4a apk \
@@ -97,6 +105,7 @@ jobs:
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_release \
+            --force-build \
             --release \
             --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
             --signkey=${{ secrets.KEY_ALIAS }} \
@@ -121,10 +130,11 @@ jobs:
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_debug \
+            --force-build \
             --debug
         fi
 
-    - name: Rename APK
+    - name: 📦 Rename APK
       run: |
         APK_FILE=$(find . -name "*.apk" | head -n 1)
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
@@ -133,13 +143,13 @@ jobs:
           mv "$APK_FILE" "mon_budget_perso_debug.apk"
         fi
 
-    - name: Verify signed APK
+    - name: ✅ Verify signed APK
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
         sudo apt-get install -y apksigner zipalign
         apksigner verify --verbose mon_budget_perso_release.apk
 
-    - name: Upload APK
+    - name: 🚀 Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
