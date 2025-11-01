@@ -32,12 +32,14 @@ jobs:
           build-essential libltdl-dev \
           zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+
     - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+
     - name: Download Android SDK and NDK
       run: |
         mkdir -p $SDK_DIR
@@ -52,6 +54,7 @@ jobs:
           "platforms;android-36" \
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
+
     - name: 🧹 Préparation avant build
       run: |
         echo "🧹 Nettoyage complet des anciens builds..."
@@ -62,12 +65,14 @@ jobs:
         echo "📦 Version de python-for-android :"
         ./venv/bin/p4a --version
         echo "✅ Environnement prêt."
+
     # 🧱 Nouvelle étape : restauration du keystore depuis les secrets GitHub
     - name: Restore keystore from GitHub Secret
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
         mkdir -p android/keystore
         echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
+
     - name: Build APK
       run: |
         source venv/bin/activate
@@ -116,6 +121,7 @@ jobs:
             --dist-name=monapp_debug \
             --debug
         fi
+
     - name: Rename APK
       run: |
         APK_FILE=$(find . -name "*.apk" | head -n 1)
@@ -124,11 +130,13 @@ jobs:
         else
           mv "$APK_FILE" "mon_budget_perso_debug.apk"
         fi
+
     - name: Verify signed APK
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
         sudo apt-get install -y apksigner zipalign
         apksigner verify --verbose mon_budget_perso_release.apk
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
