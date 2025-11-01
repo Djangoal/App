@@ -90,6 +90,7 @@ jobs:
             --requirements=python3,kivy,android \
             --permission WRITE_EXTERNAL_STORAGE \
             --permission READ_EXTERNAL_STORAGE \
+            --depend com.google.android.gms:play-services-ads:23.3.0 \
             --arch=arm64-v8a \
             --sdk_dir=$SDK_DIR \
             --ndk_dir=$ANDROID_NDK_HOME \
@@ -99,8 +100,7 @@ jobs:
             --release \
             --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
             --signkey=${{ secrets.KEY_ALIAS }} \
-            --keystorepw=${{ secrets.KEYSTORE_PASSWORD }} \
-            --gradle-repository "com.google.android.gms:play-services-ads:23.3.0"
+            --keystorepw=${{ secrets.KEYSTORE_PASSWORD }}
         else
           echo "🐞 Compilation en mode DEBUG..."
           ./venv/bin/p4a apk \
@@ -114,14 +114,14 @@ jobs:
             --requirements=python3,kivy,android \
             --permission WRITE_EXTERNAL_STORAGE \
             --permission READ_EXTERNAL_STORAGE \
+            --depend com.google.android.gms:play-services-ads:23.3.0 \
             --arch=armeabi-v7a \
             --sdk_dir=$SDK_DIR \
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_debug \
-            --debug \
-            --gradle-repository "com.google.android.gms:play-services-ads:23.3.0"
+            --debug
         fi
 
     - name: Rename APK
