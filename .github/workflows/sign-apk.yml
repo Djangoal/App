@@ -1,0 +1,44 @@
+name: Sign and Align APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  sign-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore keystore
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > mon_budget_perso.jks
+
+      - name: Install Android SDK tools
+        run: sudo apt-get update && sudo apt-get install -y apksigner zipalign
+
+      - name: Sign APK
+        run: |
+          apksigner sign \
+            --ks mon_budget_perso.jks \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass pass:$KEY_STORE_PASSWORD \
+            --key-pass pass:$KEY_PASSWORD \
+            --out mon_budget_perso_signed.apk \
+            mon_budget_perso_release.apk
+
+      - name: Align APK
+        run: |
+          zipalign -v -p 4 mon_budget_perso_signed.apk mon_budget_perso_aligned.apk
+
+      - name: Verify APK
+        run: apksigner verify --verbose mon_budget_perso_aligned.apk
+
+      - name: Upload signed APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mon_budget_perso_signed
+          path: mon_budget_perso_aligned.apk
