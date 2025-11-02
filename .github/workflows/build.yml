@@ -37,7 +37,9 @@ jobs:
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
+        # On garde ta version fonctionnelle de p4a
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+        
     - name: Download Android SDK and NDK
       run: |
         mkdir -p $SDK_DIR
@@ -62,12 +64,6 @@ jobs:
         echo "📦 Version de python-for-android :"
         ./venv/bin/p4a --version
         echo "✅ Environnement prêt."
-    # 🧱 Nouvelle étape : restauration du keystore depuis les secrets GitHub
-    - name: Restore keystore from GitHub Secret
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        mkdir -p android/keystore
-        echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
     - name: Build APK
       run: |
         source venv/bin/activate
@@ -93,8 +89,10 @@ jobs:
             --dist-name=monapp_release \
             --release \
             --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
-            --signkey=${{ secrets.KEY_ALIAS }} \
-            --keystorepw=${{ secrets.KEYSTORE_PASSWORD }}
+            --signkey=monalias \
+            --keystorepw=19051987 
+            
+            
         else
           echo "🐞 Compilation en mode DEBUG..."
           ./venv/bin/p4a apk \
@@ -124,11 +122,6 @@ jobs:
         else
           mv "$APK_FILE" "mon_budget_perso_debug.apk"
         fi
-    - name: Verify signed APK
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        sudo apt-get install -y apksigner zipalign
-        apksigner verify --verbose mon_budget_perso_release.apk
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
