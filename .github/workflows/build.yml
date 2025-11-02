@@ -130,6 +130,24 @@ jobs:
         else
           mv "$APK_FILE" "mon_budget_perso_debug.apk"
         fi
+    - name: Sign release APK manually
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      run: |
+        echo "🔏 Signature manuelle de l'APK..."
+        sudo apt-get install -y apksigner zipalign
+        apksigner sign \
+          --ks android/keystore/my-release-key.keystore \
+          --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+          --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+          mon_budget_perso_release.apk
+        echo "✅ APK signé avec succès."
+
+    - name: Verify signed APK
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      run: |
+        sudo apt-get install -y apksigner
+        echo "🔍 Vérification de la signature APK..."
+        apksigner verify --verbose mon_budget_perso_release.apk
     - name: Debug APK contents
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
