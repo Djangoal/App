@@ -124,6 +124,11 @@ jobs:
         else
           mv "$APK_FILE" "mon_budget_perso_debug.apk"
         fi
+    - name: Verify signed APK
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      run: |
+        sudo apt-get install -y apksigner zipalign
+        apksigner verify --verbose mon_budget_perso_release.apk
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
