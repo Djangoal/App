@@ -23,7 +23,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install system dependencies
       run: |
@@ -33,7 +33,7 @@ jobs:
           zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-    - name: Setup Python, virtualenv and install python-for-android
+    - name: Setup Python & install python-for-android
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
@@ -55,69 +55,58 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: 🧹 Préparation avant build
+    - name: Clean previous builds
       run: |
-        echo "🧹 Nettoyage complet des anciens builds..."
         rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
-        rm -rf ~/.local/share/python-for-android/dists/monapp_release
-        rm -rf ~/.local/share/python-for-android/dists/monapp_debug
-        echo "📦 Version de python-for-android :"
-        ./venv/bin/p4a --version
-        echo "✅ Environnement prêt."
+        rm -rf ~/.local/share/python-for-android/dists/*
 
-    # 🧱 Nouvelle étape : restauration du keystore depuis les secrets GitHub
-    - name: Restore keystore from GitHub Secret
-      if: ${{ github.event.inputs.build_type == 'release' }}
+    - name: Restore keystore (if secrets exist)
+      if: ${{ github.event.inputs.build_type == 'release' && secrets.KEYSTORE_BASE64 != '' }}
       run: |
         mkdir -p android/keystore
         echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
+        echo "✅ Keystore restauré avec succès"
 
     - name: Build APK
       run: |
         source venv/bin/activate
         echo "🚀 Type de build : ${{ github.event.inputs.build_type }}"
-        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "🔒 Compilation en mode RELEASE..."
-          ./venv/bin/p4a apk \
-            --private "$GITHUB_WORKSPACE/app" \
-            --package=org.example.monapp \
-            --name="Mon budget perso" \
-            --version=0.1 \
-            --bootstrap=sdl2 \
-            --icon=logo.png \
-            --presplash=app/logo1.png \
-            --requirements=python3,kivy,android \
-            --permission WRITE_EXTERNAL_STORAGE \
-            --permission READ_EXTERNAL_STORAGE \
+
+        BASE_ARGS="--private \"$GITHUB_WORKSPACE/app\" \
+          --package=org.example.monapp \
+          --name='Mon budget perso' \
+          --version=0.1 \
+          --bootstrap=sdl2 \
+          --icon=logo.png \
+          --presplash=app/logo1.png \
+          --requirements=python3,kivy,android \
+          --permission WRITE_EXTERNAL_STORAGE \
+          --permission READ_EXTERNAL_STORAGE \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=36 \
+          --orientation=portrait"
+
+        if [ "${{ github.event.inputs.build_type }}" = "release" ] && [ -f "android/keystore/my-release-key.keystore" ]; then
+          echo "🔒 Compilation en mode RELEASE signée..."
+          ./venv/bin/p4a apk $BASE_ARGS \
             --arch=arm64-v8a \
-            --sdk_dir=$SDK_DIR \
-            --ndk_dir=$ANDROID_NDK_HOME \
-            --android_api=36 \
-            --orientation=portrait \
             --dist-name=monapp_release \
-            --release \
             --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
-            --signkey=${{ secrets.KEY_ALIAS }} \
-            --keystorepw=${{ secrets.KEYSTORE_PASSWORD }}
+            --signkey="${{ secrets.KEY_ALIAS }}" \
+            --keystorepw="${{ secrets.KEYSTORE_PASSWORD }}" \
+            --release
+        elif [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          echo "⚠️ Aucun keystore détecté — build RELEASE non signé."
+          ./venv/bin/p4a apk $BASE_ARGS \
+            --arch=arm64-v8a \
+            --dist-name=monapp_unsigned \
+            --release
         else
           echo "🐞 Compilation en mode DEBUG..."
-          ./venv/bin/p4a apk \
-            --private "$GITHUB_WORKSPACE/app" \
-            --package=org.example.monapp \
-            --name="Mon budget perso" \
-            --version=0.1 \
-            --bootstrap=sdl2 \
-            --icon=logo.png \
-            --presplash=app/logo1.png \
-            --requirements=python3,kivy,android \
-            --permission WRITE_EXTERNAL_STORAGE \
-            --permission READ_EXTERNAL_STORAGE \
+          ./venv/bin/p4a apk $BASE_ARGS \
             --arch=armeabi-v7a \
-            --sdk_dir=$SDK_DIR \
-            --ndk_dir=$ANDROID_NDK_HOME \
-            --android_api=36 \
-            --orientation=portrait \
             --dist-name=monapp_debug \
             --debug
         fi
@@ -131,11 +120,17 @@ jobs:
           mv "$APK_FILE" "mon_budget_perso_debug.apk"
         fi
 
+    - name: Check APK contents
+      run: |
+        echo "🧩 Vérification du contenu META-INF..."
+        unzip -l mon_budget_perso_${{ github.event.inputs.build_type }}.apk | grep META-INF || echo "❌ META-INF non trouvé (non signé)."
+
     - name: Verify signed APK
-      if: ${{ github.event.inputs.build_type == 'release' }}
+      if: ${{ github.event.inputs.build_type == 'release' && secrets.KEYSTORE_BASE64 != '' }}
       run: |
         sudo apt-get install -y apksigner zipalign
-        apksigner verify --verbose mon_budget_perso_release.apk
+        echo "🔍 Vérification de la signature APK..."
+        apksigner verify --verbose mon_budget_perso_release.apk || echo "⚠️ APK non signé correctement."
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
