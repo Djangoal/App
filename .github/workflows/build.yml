@@ -130,7 +130,10 @@ jobs:
         else
           mv "$APK_FILE" "mon_budget_perso_debug.apk"
         fi
-
+    - name: Debug APK contents
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      run: |
+        unzip -l mon_budget_perso_release.apk | head -n 20
     - name: Verify signed APK
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
