@@ -68,11 +68,13 @@ jobs:
         mkdir -p android/keystore
         echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
 
-    - name: Build APK
+    - name: Build and Sign APK
       run: |
         source venv/bin/activate
         echo "Build type: ${{ github.event.inputs.build_type }}"
+
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          # Build APK release non signé
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -90,12 +92,25 @@ jobs:
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_release \
-            --release \
-            --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
-            --key-alias=${{ secrets.KEY_ALIAS }} \
-            --key-pass=${{ secrets.KEY_PASSWORD }} \
-            --keystore-pass=${{ secrets.KEYSTORE_PASSWORD }}
+            --release
+
+          # Sign APK avec apksigner
+          APK_PATH=$(find . -name "*-release-unsigned.apk" | head -n 1)
+          echo "Signing APK: $APK_PATH"
+          $SDK_DIR/build-tools/36.0.0/apksigner sign \
+            --ks $GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
+            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
+            "$APK_PATH"
+
+          # Vérifier la signature
+          $SDK_DIR/build-tools/36.0.0/apksigner verify "$APK_PATH"
+
+          # Renommer APK signé
+          mv "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release.apk"
+
         else
+          # Build APK debug
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -114,26 +129,13 @@ jobs:
             --orientation=portrait \
             --dist-name=monapp_debug \
             --debug
-        fi
 
-    - name: Rename APK
-      run: |
-        APK_FILE=$(find . -name "*.apk" | head -n 1)
-        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          mv "$APK_FILE" "mon_budget_perso_release.apk"
-        else
-          mv "$APK_FILE" "mon_budget_perso_debug.apk"
+          APK_PATH=$(find . -name "*-debug.apk" | head -n 1)
+          mv "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
         fi
-
-    - name: Verify signed APK
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        echo "Verifying APK signature..."
-        ./venv/bin/p4a apk-sign-tool verify mon_budget_perso_release.apk || true
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
         path: ./mon_budget_perso_${{ github.event.inputs.build_type }}.apk
-
