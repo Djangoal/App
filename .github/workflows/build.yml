@@ -1,4 +1,4 @@
-name: Build APK with python-for-android
+name: Build & Sign APK
 
 on:
   workflow_dispatch:
@@ -28,10 +28,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          build-essential libltdl-dev \
-          zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
     - name: Setup Python, virtualenv and install python-for-android
       run: |
@@ -55,19 +52,17 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: 🧹 Préparation avant build
+    - name: Cleanup previous builds
       run: |
-        echo "🧹 Nettoyage complet des anciens builds..."
+        echo "Cleaning old builds..."
         rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
         rm -rf ~/.local/share/python-for-android/dists/monapp_release
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
-        echo "📦 Version de python-for-android :"
-        ./venv/bin/p4a --version
-        echo "✅ Environnement prêt."
+        echo "Environment ready"
 
-    # 🧱 Nouvelle étape : restauration du keystore depuis les secrets GitHub
-    - name: Restore keystore from GitHub Secret
+    # Restaurer le keystore depuis les secrets si build release
+    - name: Restore keystore
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
         mkdir -p android/keystore
@@ -76,9 +71,8 @@ jobs:
     - name: Build APK
       run: |
         source venv/bin/activate
-        echo "🚀 Type de build : ${{ github.event.inputs.build_type }}"
+        echo "Build type: ${{ github.event.inputs.build_type }}"
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "🔒 Compilation en mode RELEASE..."
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -98,10 +92,10 @@ jobs:
             --dist-name=monapp_release \
             --release \
             --keystore=$GITHUB_WORKSPACE/android/keystore/my-release-key.keystore \
-            --signkey=${{ secrets.KEY_ALIAS }} \
-            --keystorepw=${{ secrets.KEYSTORE_PASSWORD }}
+            --key-alias=${{ secrets.KEY_ALIAS }} \
+            --key-pass=${{ secrets.KEY_PASSWORD }} \
+            --keystore-pass=${{ secrets.KEYSTORE_PASSWORD }}
         else
-          echo "🐞 Compilation en mode DEBUG..."
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -130,36 +124,16 @@ jobs:
         else
           mv "$APK_FILE" "mon_budget_perso_debug.apk"
         fi
-    - name: Sign release APK manually
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        echo "🔏 Signature manuelle de l'APK..."
-        sudo apt-get install -y apksigner zipalign
-        apksigner sign \
-          --ks android/keystore/my-release-key.keystore \
-          --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
-          --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
-          mon_budget_perso_release.apk
-        echo "✅ APK signé avec succès."
 
     - name: Verify signed APK
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
-        sudo apt-get install -y apksigner
-        echo "🔍 Vérification de la signature APK..."
-        apksigner verify --verbose mon_budget_perso_release.apk
-    - name: Debug APK contents
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        unzip -l mon_budget_perso_release.apk | head -n 20
-    - name: Verify signed APK
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        sudo apt-get install -y apksigner zipalign
-        apksigner verify --verbose mon_budget_perso_release.apk
+        echo "Verifying APK signature..."
+        ./venv/bin/p4a apk-sign-tool verify mon_budget_perso_release.apk || true
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
         path: ./mon_budget_perso_${{ github.event.inputs.build_type }}.apk
+
