@@ -61,25 +61,38 @@ jobs:
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
         echo "Environment ready"
 
+    # Debug: Vérifier la longueur du secret
+    - name: Debug KEYSTORE_BASE64 length
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      run: |
+        echo "KEYSTORE_BASE64 length: ${#KEYSTORE_BASE64}"
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
     # Restaurer le keystore et vérifier sa validité
     - name: Restore and Verify Keystore
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
         mkdir -p android/keystore
         echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
+
+        # Vérifier que le fichier a une taille > 0
+        FILESIZE=$(stat -c%s "android/keystore/my-release-key.keystore")
+        if [ "$FILESIZE" -eq 0 ]; then
+          echo "ERROR: Keystore is empty. Check KEYSTORE_BASE64 secret."
+          exit 1
+        fi
+
         echo "Keystore restored. File info:"
         ls -lh android/keystore/my-release-key.keystore
 
-        # Vérification du keystore
+        # Vérification du keystore avec keytool
         keytool -list -v \
           -keystore android/keystore/my-release-key.keystore \
           -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
           || { echo "ERROR: Keystore could not be read. Check Base64 or passwords."; exit 1; }
 
-    # Vérification SHA256 du keystore
-    - name: Check Keystore Integrity
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
+        # Vérification SHA256 du keystore
         echo "SHA256 of restored keystore:"
         sha256sum android/keystore/my-release-key.keystore
 
