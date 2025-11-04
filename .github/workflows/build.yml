@@ -76,6 +76,13 @@ jobs:
           -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
           || { echo "ERROR: Keystore could not be read. Check Base64 or passwords."; exit 1; }
 
+    # Vérification SHA256 du keystore
+    - name: Check Keystore Integrity
+      if: ${{ github.event.inputs.build_type == 'release' }}
+      run: |
+        echo "SHA256 of restored keystore:"
+        sha256sum android/keystore/my-release-key.keystore
+
     - name: Build APK
       run: |
         source venv/bin/activate
@@ -116,8 +123,15 @@ jobs:
           $SDK_DIR/build-tools/36.0.0/apksigner verify "$APK_PATH"
           echo "APK successfully signed!"
 
+          # Vérifier SHA256 de l'APK signé
+          echo "SHA256 of signed APK:"
+          sha256sum "$APK_PATH"
+
           # Renommer APK signé
           mv "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release.apk"
+
+          # Nettoyer le keystore pour plus de sécurité
+          rm -f android/keystore/my-release-key.keystore
 
         else
           # Build APK debug
