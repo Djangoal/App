@@ -74,7 +74,8 @@ jobs:
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
         mkdir -p android/keystore
-        echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
+        printf "%s" "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
+
 
         # Vérifier que le fichier a une taille > 0
         FILESIZE=$(stat -c%s "android/keystore/my-release-key.keystore")
