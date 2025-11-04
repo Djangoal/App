@@ -61,23 +61,15 @@ jobs:
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
         echo "Environment ready"
 
-    # Debug: Vérifier la longueur du secret
-    - name: Debug KEYSTORE_BASE64 length
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        echo "KEYSTORE_BASE64 length: ${#KEYSTORE_BASE64}"
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-
-    # Restaurer le keystore et vérifier sa validité
+    # Restaurer le keystore seulement pour release
     - name: Restore and Verify Keystore
       if: ${{ github.event.inputs.build_type == 'release' }}
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       run: |
         mkdir -p android/keystore
         printf "%s" "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
 
-
-        # Vérifier que le fichier a une taille > 0
         FILESIZE=$(stat -c%s "android/keystore/my-release-key.keystore")
         if [ "$FILESIZE" -eq 0 ]; then
           echo "ERROR: Keystore is empty. Check KEYSTORE_BASE64 secret."
@@ -87,13 +79,11 @@ jobs:
         echo "Keystore restored. File info:"
         ls -lh android/keystore/my-release-key.keystore
 
-        # Vérification du keystore avec keytool
         keytool -list -v \
           -keystore android/keystore/my-release-key.keystore \
           -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
           || { echo "ERROR: Keystore could not be read. Check Base64 or passwords."; exit 1; }
 
-        # Vérification SHA256 du keystore
         echo "SHA256 of restored keystore:"
         sha256sum android/keystore/my-release-key.keystore
 
@@ -137,15 +127,8 @@ jobs:
           $SDK_DIR/build-tools/36.0.0/apksigner verify "$APK_PATH"
           echo "APK successfully signed!"
 
-          # Vérifier SHA256 de l'APK signé
-          echo "SHA256 of signed APK:"
-          sha256sum "$APK_PATH"
-
           # Renommer APK signé
           mv "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release.apk"
-
-          # Nettoyer le keystore pour plus de sécurité
-          rm -f android/keystore/my-release-key.keystore
 
         else
           # Build APK debug
