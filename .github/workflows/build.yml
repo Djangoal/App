@@ -1,4 +1,4 @@
-name: Build & Sign APK
+name: Build APK (unsigned)
 
 on:
   workflow_dispatch:
@@ -61,39 +61,13 @@ jobs:
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
         echo "Environment ready"
 
-    # Restaurer le keystore seulement pour release
-    - name: Restore and Verify Keystore
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-      run: |
-        mkdir -p android/keystore
-        printf "%s" "$KEYSTORE_BASE64" | base64 --decode > android/keystore/my-release-key.keystore
-
-        FILESIZE=$(stat -c%s "android/keystore/my-release-key.keystore")
-        if [ "$FILESIZE" -eq 0 ]; then
-          echo "ERROR: Keystore is empty. Check KEYSTORE_BASE64 secret."
-          exit 1
-        fi
-
-        echo "Keystore restored. File info:"
-        ls -lh android/keystore/my-release-key.keystore
-
-        keytool -list -v \
-          -keystore android/keystore/my-release-key.keystore \
-          -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
-          || { echo "ERROR: Keystore could not be read. Check Base64 or passwords."; exit 1; }
-
-        echo "SHA256 of restored keystore:"
-        sha256sum android/keystore/my-release-key.keystore
-
     - name: Build APK
       run: |
         source venv/bin/activate
         echo "Build type: ${{ github.event.inputs.build_type }}"
 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          # Build release non signé
+          echo "=== Building unsigned release APK ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -113,25 +87,11 @@ jobs:
             --dist-name=monapp_release \
             --release
 
-          # Signer APK avec apksigner
           APK_PATH=$(find . -name "*-release-unsigned.apk" | head -n 1)
-          echo "Signing APK: $APK_PATH"
-          $SDK_DIR/build-tools/36.0.0/apksigner sign \
-            --ks android/keystore/my-release-key.keystore \
-            --ks-pass pass:"${{ secrets.KEYSTORE_PASSWORD }}" \
-            --key-pass pass:"${{ secrets.KEY_PASSWORD }}" \
-            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
-            "$APK_PATH"
-
-          # Vérifier la signature
-          $SDK_DIR/build-tools/36.0.0/apksigner verify "$APK_PATH"
-          echo "APK successfully signed!"
-
-          # Renommer APK signé
-          mv "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release.apk"
+          mv "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
 
         else
-          # Build APK debug
+          echo "=== Building debug APK ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -159,4 +119,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ./mon_budget_perso_${{ github.event.inputs.build_type }}.apk
+        path: |
+          ./mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
