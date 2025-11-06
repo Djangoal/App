@@ -35,7 +35,7 @@ jobs:
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
-        # 🔄 On utilise la branche 'develop' pour supporter --gradle-repository
+        # ✅ Branche develop = support de --add-gradle-dep
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git@develop
 
     - name: Download Android SDK and NDK
@@ -85,7 +85,9 @@ jobs:
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_release \
-            --release
+            --release \
+            --add-gradle-dep com.google.android.gms:play-services-ads:23.3.0
+
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
           if [ -z "$APK_PATH" ]; then
@@ -95,9 +97,11 @@ jobs:
           fi
           echo "✅ APK release trouvé : $APK_PATH"
           cp "$APK_PATH" "$FINAL_APK"
+
           # Zipalign pour optimiser l'APK
           $SDK_DIR/build-tools/36.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
           echo "✅ APK aligné : ${FINAL_APK%.apk}-aligned.apk"
+
         else
           echo "=== Building DEBUG APK ==="
           ./venv/bin/p4a apk \
@@ -117,7 +121,9 @@ jobs:
             --android_api=36 \
             --orientation=portrait \
             --dist-name=monapp_debug \
-            --debug
+            --debug \
+            --add-gradle-dep com.google.android.gms:play-services-ads:23.3.0
+
           APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
           if [ -z "$APK_PATH" ]; then
@@ -128,6 +134,13 @@ jobs:
           echo "✅ APK debug trouvé : $APK_PATH"
           cp "$APK_PATH" "$FINAL_APK"
         fi
+
+    - name: 🔍 Vérification de la présence d'AdMob
+      run: |
+        echo "🔎 Vérification que la lib Google Ads est bien embarquée..."
+        unzip -l mon_budget_perso_*_unsigned*.apk | grep -q "com/google/android/gms/ads" && \
+          echo "✅ AdMob détecté dans l'APK !" || \
+          (echo "❌ AdMob non trouvé dans l'APK — la dépendance semble manquante !" && exit 1)
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
