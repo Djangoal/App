@@ -80,7 +80,6 @@ jobs:
             --permission WRITE_EXTERNAL_STORAGE \
             --permission READ_EXTERNAL_STORAGE \
             --arch=arm64-v8a \
-            --gradle-repository "com.google.android.gms:play-services-ads:23.3.0" \
             --sdk_dir=$SDK_DIR \
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
@@ -113,7 +112,6 @@ jobs:
             --permission WRITE_EXTERNAL_STORAGE \
             --permission READ_EXTERNAL_STORAGE \
             --arch=armeabi-v7a \
-            --gradle-repository "com.google.android.gms:play-services-ads:23.3.0" \
             --sdk_dir=$SDK_DIR \
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
