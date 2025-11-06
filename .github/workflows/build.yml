@@ -79,6 +79,7 @@ jobs:
           echo "=== Building unsigned RELEASE APK ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
+            --hook "$GITHUB_WORKSPACE/app/hooks/patch_ads_gradle.py" \
             --package=org.example.monapp \
             --name="Mon budget perso" \
             --version=0.1 \
@@ -112,6 +113,7 @@ jobs:
           echo "=== Building DEBUG APK ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
+            --hook "$GITHUB_WORKSPACE/app/hooks/patch_ads_gradle.py" \
             --package=org.example.monapp \
             --name="Mon budget perso" \
             --version=0.1 \
