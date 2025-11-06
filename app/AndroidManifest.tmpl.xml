@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.example.monapp">
+
+    <application
+        android:label="Mon budget perso"
+        android:icon="@mipmap/icon">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-6034346911104431~3247422827"/>
+    </application>
+</manifest>
