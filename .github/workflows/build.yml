@@ -75,6 +75,7 @@ jobs:
       run: |
         source venv/bin/activate
         echo "🚀 Type de build : ${{ github.event.inputs.build_type }}"
+
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           echo "=== Building unsigned RELEASE APK ==="
           ./venv/bin/p4a apk \
@@ -94,7 +95,6 @@ jobs:
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
             --orientation=portrait \
-            --hook "$GITHUB_WORKSPACE/app/hooks/patch_ads_gradle.py" \
             --dist-name=monapp_release \
             --release
 
@@ -107,8 +107,10 @@ jobs:
           fi
           echo "✅ APK release trouvé : $APK_PATH"
           cp "$APK_PATH" "$FINAL_APK"
+
           $SDK_DIR/build-tools/36.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
           echo "✅ APK aligné : ${FINAL_APK%.apk}-aligned.apk"
+
         else
           echo "=== Building DEBUG APK ==="
           ./venv/bin/p4a apk \
@@ -128,7 +130,6 @@ jobs:
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
             --orientation=portrait \
-            --hook "$GITHUB_WORKSPACE/app/hooks/patch_ads_gradle.py" \
             --dist-name=monapp_debug \
             --debug
 
