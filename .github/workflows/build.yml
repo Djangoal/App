@@ -93,6 +93,7 @@ jobs:
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
             --orientation=portrait \
+            --hook "$GITHUB_WORKSPACE/app/hooks/patch_ads_gradle.py" \
             --dist-name=monapp_release \
             --release
 
@@ -125,6 +126,7 @@ jobs:
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=36 \
             --orientation=portrait \
+            --hook "$GITHUB_WORKSPACE/app/hooks/patch_ads_gradle.py" \
             --dist-name=monapp_debug \
             --debug
 
