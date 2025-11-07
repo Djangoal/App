@@ -54,7 +54,10 @@ jobs:
       run: |
         rm -rf .buildozer dist build bin ~/.local/share/python-for-android ~/.gradle ~/.cache
         echo "✅ Environnement propre."
-
+    
+    - name: 🧩 Donner les droits d’exécution à la recette AdMob
+      run: chmod +x app/recipes/google_play_services_ads/recipe.sh
+    
     - name: 🏗️ Build APK
       run: |
         source venv/bin/activate
