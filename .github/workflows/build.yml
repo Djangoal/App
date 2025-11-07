@@ -21,18 +21,6 @@ jobs:
       NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
-      # ✅ Injection automatique d'AdMob dans le projet Gradle
-      P4A_EXTRA_GRADLE_ARGUMENTS: |
-        allprojects {
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-        dependencies {
-            implementation 'com.google.android.gms:play-services-ads:23.3.0'
-        }
-
     steps:
     - name: 📥 Checkout code
       uses: actions/checkout@v3
@@ -66,10 +54,59 @@ jobs:
       run: |
         rm -rf .buildozer dist build bin ~/.local/share/python-for-android ~/.gradle ~/.cache
 
+    - name: 🧩 Create custom Gradle template
+      run: |
+        echo "🧩 Création du fichier build.tmpl.gradle avec AdMob..."
+        mkdir -p app/templates
+        cat > app/templates/build.tmpl.gradle <<'EOF'
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion = 36
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 36
+    }
+    sourceSets {
+        main {
+            java.srcDirs = ['src']
+            manifest.srcFile 'AndroidManifest.xml'
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.android.gms:play-services-ads:23.3.0'
+}
+EOF
+        echo "✅ Template Gradle avec AdMob créé."
+
     - name: 🏗️ Build APK
       run: |
         source venv/bin/activate
         echo "🚀 Type de build : ${{ github.event.inputs.build_type }}"
+        DIST_DIR="$HOME/.local/share/python-for-android/dists"
+        TEMPLATE_PATH="$GITHUB_WORKSPACE/app/templates/build.tmpl.gradle"
+
+        echo "📦 Injection du template Gradle personnalisé..."
+        mkdir -p "$DIST_DIR/monapp_release"
+        cp "$TEMPLATE_PATH" "$DIST_DIR/monapp_release/build.tmpl.gradle" || true
+        mkdir -p "$DIST_DIR/monapp_debug"
+        cp "$TEMPLATE_PATH" "$DIST_DIR/monapp_debug/build.tmpl.gradle" || true
+        echo "✅ Template injecté dans les distributions P4A."
+
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
@@ -125,4 +162,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ./dist/*.apk
+        path: |
+          ./mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
