@@ -18,7 +18,6 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
@@ -31,8 +30,7 @@ jobs:
         sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
         python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip
-        ./venv/bin/pip install cython
+        ./venv/bin/pip install --upgrade pip cython
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git@develop
 
     - name: 📦 Download Android SDK and NDK
@@ -59,8 +57,6 @@ jobs:
     - name: 🏗️ Build APK + Patch AdMob
       run: |
         source venv/bin/activate
-        echo "🚀 Type de build : ${{ github.event.inputs.build_type }}"
-
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           DIST_NAME="monapp_release"
           ARCH="arm64-v8a"
@@ -96,15 +92,17 @@ jobs:
 
         if [ -f "$GRADLE_FILE" ]; then
           echo "📄 Fichier trouvé : $GRADLE_FILE"
-          # Ajout du dépôt Google
+
+          # Ajoute le dépôt Google
           if ! grep -q "google()" "$GRADLE_FILE"; then
             sed -i '/repositories {/a\    google()' "$GRADLE_FILE"
             echo "✅ Dépôt Google ajouté"
           fi
-          # Ajout de la dépendance AdMob (syntaxe compile compatible)
+
+          # Ajoute la dépendance AdMob (testée sur Gradle sans plugin)
           if ! grep -q "com.google.android.gms:play-services-ads" "$GRADLE_FILE"; then
-            sed -i '/dependencies {/a\    compile "com.google.android.gms:play-services-ads:23.3.0"' "$GRADLE_FILE"
-            echo "✅ Dépendance AdMob ajoutée avec compile"
+            sed -i '/dependencies {/a\    api "com.google.android.gms:play-services-ads:23.3.0"' "$GRADLE_FILE"
+            echo "✅ Dépendance AdMob ajoutée avec api()"
           fi
         else
           echo "❌ Fichier build.gradle introuvable : $GRADLE_FILE"
