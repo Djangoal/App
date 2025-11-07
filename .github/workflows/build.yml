@@ -53,14 +53,10 @@ jobs:
     - name: 🧹 Clean previous builds
       run: |
         echo "🧹 Nettoyage complet..."
-        rm -rf .buildozer dist build bin
-        ./venv/bin/p4a clean_builds || true
-        rm -rf ~/.local/share/python-for-android
-        rm -rf ~/.gradle
-        rm -rf ~/.cache
-        echo "✅ Environnement propre."
+        rm -rf .buildozer dist build bin ~/.local/share/python-for-android ~/.gradle ~/.cache
+        echo "✅ Environnement propre et prêt."
 
-    - name: 🏗️ Build APK
+    - name: 🏗️ Build APK + Patch AdMob
       run: |
         source venv/bin/activate
         echo "🚀 Type de build : ${{ github.event.inputs.build_type }}"
@@ -75,7 +71,7 @@ jobs:
           MODE="--debug"
         fi
 
-        echo "📦 Compilation..."
+        echo "📦 Compilation avec python-for-android..."
         ./venv/bin/p4a apk \
           --private "$GITHUB_WORKSPACE/app" \
           --package=org.example.monapp \
@@ -97,12 +93,22 @@ jobs:
 
         echo "🧩 Injection de la dépendance AdMob..."
         GRADLE_FILE="$HOME/.local/share/python-for-android/dists/$DIST_NAME/build.gradle"
+
         if [ -f "$GRADLE_FILE" ]; then
-          sed -i '/dependencies {/a\    implementation "com.google.android.gms:play-services-ads:23.3.0"' "$GRADLE_FILE"
-          sed -i '/repositories {/a\    google()' "$GRADLE_FILE"
-          echo "✅ AdMob ajouté dans build.gradle"
+          echo "📄 Fichier trouvé : $GRADLE_FILE"
+          # Ajout du dépôt Google
+          if ! grep -q "google()" "$GRADLE_FILE"; then
+            sed -i '/repositories {/a\    google()' "$GRADLE_FILE"
+            echo "✅ Dépôt Google ajouté"
+          fi
+          # Ajout de la dépendance AdMob (syntaxe compile compatible)
+          if ! grep -q "com.google.android.gms:play-services-ads" "$GRADLE_FILE"; then
+            sed -i '/dependencies {/a\    compile "com.google.android.gms:play-services-ads:23.3.0"' "$GRADLE_FILE"
+            echo "✅ Dépendance AdMob ajoutée avec compile"
+          fi
         else
-          echo "⚠️ Fichier build.gradle introuvable, injection impossible."
+          echo "❌ Fichier build.gradle introuvable : $GRADLE_FILE"
+          exit 1
         fi
 
         echo "🏗️ Reconstruction Gradle..."
@@ -110,10 +116,10 @@ jobs:
         ./gradlew clean assembleRelease || ./gradlew clean assembleDebug || true
         popd
 
-        APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
+        APK_PATH=$(find "$HOME/.local/share/python-for-android/dists/$DIST_NAME" -type f -name "*.apk" | head -n 1)
         if [ -z "$APK_PATH" ]; then
           echo "❌ Aucun APK trouvé après reconstruction !"
-          find . -type f -name "*.apk"
+          find "$HOME/.local/share/python-for-android/dists/$DIST_NAME" -type f -name "*.apk"
           exit 1
         fi
 
@@ -123,7 +129,7 @@ jobs:
     - name: 🔍 Vérification de la présence d'AdMob
       run: |
         echo "🔎 Vérification de la présence des classes Google Ads..."
-        APK_FILE=$(find . -name "mon_budget_perso_*.apk" | head -n 1)
+        APK_FILE=$(find . -name "*.apk" | head -n 1)
         if unzip -l "$APK_FILE" | grep -q "com/google/android/gms/ads"; then
           echo "✅ AdMob détecté dans l'APK !"
         else
@@ -135,4 +141,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: mon_budget_perso_${{ github.event.inputs.build_type }}.apk
+        path: ./mon_budget_perso_${{ github.event.inputs.build_type }}.apk
