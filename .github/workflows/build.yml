@@ -6,7 +6,7 @@ on:
       build_type:
         description: "Type de build (debug ou release)"
         required: true
-        default: "debug"
+        default: "release"
         type: choice
         options:
           - debug
@@ -18,6 +18,7 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
+      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
@@ -28,9 +29,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip \
-          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 wget
         python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip cython
+        ./venv/bin/pip install --upgrade pip
+        ./venv/bin/pip install cython
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git@develop
 
     - name: 📦 Download Android SDK and NDK
@@ -52,77 +54,90 @@ jobs:
       run: |
         echo "🧹 Nettoyage complet..."
         rm -rf .buildozer dist build bin ~/.local/share/python-for-android ~/.gradle ~/.cache
-        echo "✅ Environnement propre et prêt."
+        echo "✅ Environnement propre."
 
-    - name: 🏗️ Build APK + Patch AdMob
+    - name: 🧩 Create AdMob recipe
+      run: |
+        echo "🧩 Création de la recette AdMob..."
+        mkdir -p app/recipes/google_play_services_ads
+        cat << 'EOF' > app/recipes/google_play_services_ads/recipe.sh
+        #!/bin/bash
+        VERSION=23.3.0
+        URL="https://repo1.maven.org/maven2/com/google/android/gms/play-services-ads/$VERSION/play-services-ads-$VERSION.aar"
+        BUILD_DIR=$BUILD_PATH/java/libs
+        echo "[AdMob Recipe] Téléchargement de $URL..."
+        mkdir -p $BUILD_DIR
+        wget -q -O "$BUILD_DIR/play-services-ads.aar" "$URL"
+        echo "[AdMob Recipe] ✅ Dépendance AdMob ajoutée à $BUILD_DIR"
+        EOF
+        chmod +x app/recipes/google_play_services_ads/recipe.sh
+        echo "✅ Script AdMob rendu exécutable."
+
+    - name: 🏗️ Build APK
       run: |
         source venv/bin/activate
+        echo "🚀 Type de build : ${{ github.event.inputs.build_type }}"
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          DIST_NAME="monapp_release"
-          ARCH="arm64-v8a"
-          MODE="--release"
-        else
-          DIST_NAME="monapp_debug"
-          ARCH="armeabi-v7a"
-          MODE="--debug"
-        fi
-
-        echo "📦 Compilation avec python-for-android..."
-        ./venv/bin/p4a apk \
-          --private "$GITHUB_WORKSPACE/app" \
-          --package=org.example.monapp \
-          --name="Mon budget perso" \
-          --version=0.1 \
-          --bootstrap=sdl2 \
-          --icon=logo.png \
-          --presplash=app/logo1.png \
-          --requirements=python3,kivy,android \
-          --permission WRITE_EXTERNAL_STORAGE \
-          --permission READ_EXTERNAL_STORAGE \
-          --arch=$ARCH \
-          --sdk_dir=$SDK_DIR \
-          --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=36 \
-          --orientation=portrait \
-          --dist-name=$DIST_NAME \
-          $MODE
-
-        echo "🧩 Injection de la dépendance AdMob..."
-        GRADLE_FILE="$HOME/.local/share/python-for-android/dists/$DIST_NAME/build.gradle"
-
-        if [ -f "$GRADLE_FILE" ]; then
-          echo "📄 Fichier trouvé : $GRADLE_FILE"
-
-          # Ajoute le dépôt Google
-          if ! grep -q "google()" "$GRADLE_FILE"; then
-            sed -i '/repositories {/a\    google()' "$GRADLE_FILE"
-            echo "✅ Dépôt Google ajouté"
+          echo "=== Building unsigned RELEASE APK ==="
+          ./venv/bin/p4a apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=0.1 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=app/logo1.png \
+            --requirements=python3,kivy,android,google_play_services_ads \
+            --permission WRITE_EXTERNAL_STORAGE \
+            --permission READ_EXTERNAL_STORAGE \
+            --arch=arm64-v8a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=36 \
+            --orientation=portrait \
+            --dist-name=monapp_release \
+            --release
+          APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK release trouvé !"
+            find . -type f -name "*.apk"
+            exit 1
           fi
-
-          # Ajoute la dépendance AdMob (testée sur Gradle sans plugin)
-          if ! grep -q "com.google.android.gms:play-services-ads" "$GRADLE_FILE"; then
-            sed -i '/dependencies {/a\    api "com.google.android.gms:play-services-ads:23.3.0"' "$GRADLE_FILE"
-            echo "✅ Dépendance AdMob ajoutée avec api()"
-          fi
+          echo "✅ APK release trouvé : $APK_PATH"
+          cp "$APK_PATH" "$FINAL_APK"
+          $SDK_DIR/build-tools/36.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
+          echo "✅ APK aligné : ${FINAL_APK%.apk}-aligned.apk"
         else
-          echo "❌ Fichier build.gradle introuvable : $GRADLE_FILE"
-          exit 1
+          echo "=== Building DEBUG APK ==="
+          ./venv/bin/p4a apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=0.1 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=app/logo1.png \
+            --requirements=python3,kivy,android,google_play_services_ads \
+            --permission WRITE_EXTERNAL_STORAGE \
+            --permission READ_EXTERNAL_STORAGE \
+            --arch=armeabi-v7a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=36 \
+            --orientation=portrait \
+            --dist-name=monapp_debug \
+            --debug
+          APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK debug trouvé !"
+            find . -type f -name "*.apk"
+            exit 1
+          fi
+          echo "✅ APK debug trouvé : $APK_PATH"
+          cp "$APK_PATH" "$FINAL_APK"
         fi
-
-        echo "🏗️ Reconstruction Gradle..."
-        pushd "$HOME/.local/share/python-for-android/dists/$DIST_NAME"
-        ./gradlew clean assembleRelease || ./gradlew clean assembleDebug || true
-        popd
-
-        APK_PATH=$(find "$HOME/.local/share/python-for-android/dists/$DIST_NAME" -type f -name "*.apk" | head -n 1)
-        if [ -z "$APK_PATH" ]; then
-          echo "❌ Aucun APK trouvé après reconstruction !"
-          find "$HOME/.local/share/python-for-android/dists/$DIST_NAME" -type f -name "*.apk"
-          exit 1
-        fi
-
-        echo "✅ APK généré : $APK_PATH"
-        cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_${{ github.event.inputs.build_type }}.apk"
 
     - name: 🔍 Vérification de la présence d'AdMob
       run: |
@@ -139,4 +154,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ./mon_budget_perso_${{ github.event.inputs.build_type }}.apk
+        path: |
+          ./mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
