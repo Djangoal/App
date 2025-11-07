@@ -16,35 +16,47 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      SDK_DIR: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
+      NDK_DIR: ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b
+      ANDROID_NDK_HOME: ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.11
-
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          build-essential git unzip zip zlib1g-dev \
-          libncurses5-dev libffi-dev libssl-dev \
-          openjdk-17-jdk autoconf automake libtool pkg-config \
-          python3-venv
+        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip python3-venv libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 zlib1g-dev libffi-dev libssl-dev
 
-    - name: Setup virtual environment and Buildozer
+    - name: Setup Python and Buildozer
       run: |
         python3 -m venv venv
         source venv/bin/activate
         python -m pip install --upgrade pip setuptools wheel
         pip install cython buildozer
 
+    - name: Download Android SDK and NDK
+      run: |
+        mkdir -p $SDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d $SDK_DIR
+        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
+        mkdir -p $SDK_DIR/cmdline-tools/latest
+        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+          "platform-tools" \
+          "platforms;android-36" \
+          "build-tools;36.0.0" \
+          "ndk;25.2.9519653"
+
     - name: Clean previous builds
       run: |
         source venv/bin/activate
         buildozer android clean || true
+        rm -rf .buildozer dist build bin
 
     - name: Build APK
       run: |
