@@ -2,7 +2,7 @@
 title = Mon budget perso
 package.name = monbudgetperso
 package.domain = org.example
-source.dir = app
+source.dir = .
 version = 0.1
 icon.filename = logo.png
 presplash.filename = app/logo1.png
