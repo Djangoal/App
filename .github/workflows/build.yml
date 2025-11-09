@@ -24,6 +24,18 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    # ⚡️ Étape de cache : garde le SDK, Gradle et Buildozer entre les builds
+    - name: Cache Buildozer and Gradle
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.buildozer
+          ~/.gradle
+          ~/.local/share/python-for-android
+        key: buildozer-cache-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          buildozer-cache-${{ runner.os }}-
+
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -41,6 +53,7 @@ jobs:
         python3 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip
+        pip install setuptools  # ✅ Corrige le problème distutils
         pip install cython buildozer==1.5.0
 
     - name: Download Android SDK + NDK
@@ -65,7 +78,7 @@ jobs:
 
     - name: Clean previous builds
       run: |
-        rm -rf .buildozer build bin dist
+        rm -rf build bin dist
 
     - name: Build APK
       run: |
