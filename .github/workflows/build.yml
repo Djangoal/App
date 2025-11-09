@@ -32,7 +32,8 @@ jobs:
           zip unzip \
           openjdk-17-jdk \
           python3-pip \
-          libncurses5 \
+          libncurses6 \
+          libncurses-dev \
           libstdc++6 \
           libffi-dev \
           libssl-dev \
