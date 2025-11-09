@@ -1,4 +1,4 @@
-name: Build APK (unsigned)
+name: Build APK (Buildozer)
 
 on:
   workflow_dispatch:
@@ -17,60 +17,55 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    # ⚡️ Cache Buildozer, Gradle et python-for-android
-    - name: Cache Buildozer & Gradle
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.buildozer
-          ~/.gradle
-          ~/.local/share/python-for-android
-        key: buildozer-cache-${{ runner.os }}-${{ github.sha }}
-        restore-keys: |
-          buildozer-cache-${{ runner.os }}-
-
-    # 🔧 Installer toutes les dépendances système pour SDL2 et Kivy
     - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          build-essential autoconf automake libtool libtool-bin pkg-config m4 \
-          python3 python3-venv python3-pip \
-          zip unzip openjdk-17-jdk \
-          libffi-dev libssl-dev liblzma-dev zlib1g-dev libncurses5-dev libsqlite3-dev \
-          libjpeg-dev libfreetype6-dev libpng-dev \
-          libsdl2-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+          python3-pip python3-venv \
+          git zip unzip openjdk-17-jdk \
+          build-essential libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 \
+          zlib1g-dev
 
-    # ⚡️ Installer Python + Buildozer dans le venv
-    - name: Setup Python & Buildozer
+    - name: Setup Python virtualenv and Buildozer
       run: |
         python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip setuptools wheel cython
-        ./venv/bin/pip install buildozer==1.5.0
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install cython
+        pip install buildozer
 
-    # 🧹 Nettoyage des builds précédents
-    - name: Clean old builds
-      run: rm -rf .buildozer build bin dist
+    - name: Cleanup previous builds
+      run: |
+        source venv/bin/activate
+        echo "Cleaning old builds..."
+        buildozer android clean || true
+        rm -rf bin/ .buildozer
 
-    # 🏗️ Build APK
     - name: Build APK
       run: |
-        echo "=== Building ${{ github.event.inputs.build_type }} APK ==="
-        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          ./venv/bin/buildozer android release
-          APK_PATH=$(find bin -name "*release*.apk" | head -n 1)
-          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+        source venv/bin/activate
+        BUILD_TYPE=${{ github.event.inputs.build_type }}
+        echo "Build type: $BUILD_TYPE"
+        if [ "$BUILD_TYPE" = "release" ]; then
+          echo "=== Building unsigned release APK ==="
+          buildozer android release
+          APK_PATH=$(find ./.buildozer/android/platform/build/dists -type f -name "*release-unsigned.apk" | head -n 1)
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+          cp "$APK_PATH" "$FINAL_APK"
+          echo "✅ APK release non signé : $FINAL_APK"
         else
-          ./venv/bin/buildozer android debug
-          APK_PATH=$(find bin -name "*debug*.apk" | head -n 1)
-          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+          echo "=== Building debug APK ==="
+          buildozer android debug
+          APK_PATH=$(find ./.buildozer/android/platform/build/dists -type f -name "*debug.apk" | head -n 1)
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+          cp "$APK_PATH" "$FINAL_APK"
+          echo "✅ APK debug : $FINAL_APK"
         fi
 
-    # 📤 Upload APK
-    - name: Upload APK artifact
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
