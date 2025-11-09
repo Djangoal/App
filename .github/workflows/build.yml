@@ -89,16 +89,6 @@ jobs:
             --release
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
-          if [ -z "$APK_PATH" ]; then
-            echo "❌ Aucun APK release trouvé !"
-            find . -type f -name "*.apk"
-            exit 1
-          fi
-          echo "✅ APK release trouvé : $APK_PATH"
-          cp "$APK_PATH" "$FINAL_APK"
-          # Zipalign pour optimiser l'APK
-          $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
-          echo "✅ APK aligné : ${FINAL_APK%.apk}-aligned.apk"
         else
           echo "=== Building debug APK ==="
           ./venv/bin/p4a apk \
@@ -123,13 +113,33 @@ jobs:
             --debug
           APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
-          if [ -z "$APK_PATH" ]; then
-            echo "❌ Aucun APK debug trouvé !"
-            find . -type f -name "*.apk"
-            exit 1
-          fi
-          echo "✅ APK debug trouvé : $APK_PATH"
-          cp "$APK_PATH" "$FINAL_APK"
+        fi
+
+        if [ -z "$APK_PATH" ]; then
+          echo "❌ Aucun APK trouvé !"
+          find . -type f -name "*.apk"
+          exit 1
+        fi
+
+        echo "✅ APK trouvé : $APK_PATH"
+        cp "$APK_PATH" "$FINAL_APK"
+
+        # Zipalign uniquement pour release
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
+          echo "✅ APK aligné : ${FINAL_APK%.apk}-aligned.apk"
+        fi
+
+    - name: Verify AdMob presence
+      run: |
+        echo "Vérification de la présence de AdMob dans l'APK..."
+        TMP_DIR=$(mktemp -d)
+        unzip -q "$FINAL_APK" -d "$TMP_DIR"
+        if grep -qr "com/google/android/gms/ads" "$TMP_DIR"; then
+          echo "✅ AdMob SDK trouvé dans l'APK."
+        else
+          echo "❌ AdMob SDK NON trouvé !"
+          exit 1
         fi
 
     - name: Upload APK
