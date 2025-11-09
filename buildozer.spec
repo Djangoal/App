@@ -10,6 +10,7 @@ orientation = portrait
 fullscreen = 0
 requirements = python3,kivy
 android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
+android.build_tools = 36.0.0
 android.api = 36
 android.arch = armeabi-v7a, arm64-v8a
 android.minapi = 21
