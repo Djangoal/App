@@ -24,31 +24,39 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          python3-pip python3-venv python3-dev \
+          python3 python3-pip python3-venv python3-dev \
           git zip unzip openjdk-17-jdk \
-          build-essential libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 \
-          zlib1g-dev
+          build-essential autoconf automake libtool libtool-bin pkg-config m4 \
+          libncurses-dev zlib1g-dev libffi-dev libssl-dev libsqlite3-dev \
+          libjpeg-dev libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev \
+          liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+          ccache
+
+        echo "✅ System dependencies installed successfully"
+        autoconf --version
+        automake --version
 
     - name: Setup Python virtualenv and Buildozer
       run: |
         python3 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip setuptools wheel
-        pip install cython buildozer
+        pip install cython
+        pip install buildozer
 
     - name: Cleanup previous builds
       run: |
         source venv/bin/activate
-        echo "Cleaning old builds..."
+        echo "🧹 Cleaning previous builds..."
         buildozer android clean || true
-        rm -rf bin/ .buildozer
+        rm -rf .buildozer bin
 
     - name: Build APK
       run: |
         set -e
         source venv/bin/activate
         BUILD_TYPE=${{ github.event.inputs.build_type }}
-        echo "Build type: $BUILD_TYPE"
+        echo "🏗️ Build type: $BUILD_TYPE"
         if [ "$BUILD_TYPE" = "release" ]; then
           echo "=== Building unsigned release APK ==="
           buildozer android release
@@ -59,7 +67,7 @@ jobs:
             exit 1
           fi
           cp "$APK_PATH" "$FINAL_APK"
-          echo "✅ APK release non signé : $FINAL_APK"
+          echo "✅ APK release non signé généré : $FINAL_APK"
         else
           echo "=== Building debug APK ==="
           buildozer android debug
@@ -70,7 +78,7 @@ jobs:
             exit 1
           fi
           cp "$APK_PATH" "$FINAL_APK"
-          echo "✅ APK debug : $FINAL_APK"
+          echo "✅ APK debug généré : $FINAL_APK"
         fi
 
     - name: Upload APK
