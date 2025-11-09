@@ -24,7 +24,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          python3-pip python3-venv \
+          python3-pip python3-venv python3-distutils \
           git zip unzip openjdk-17-jdk \
           build-essential libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 \
           zlib1g-dev
@@ -46,6 +46,7 @@ jobs:
 
     - name: Build APK
       run: |
+        set -e
         source venv/bin/activate
         BUILD_TYPE=${{ github.event.inputs.build_type }}
         echo "Build type: $BUILD_TYPE"
@@ -54,6 +55,10 @@ jobs:
           buildozer android release
           APK_PATH=$(find ./.buildozer/android/platform/build/dists -type f -name "*release-unsigned.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK release trouvé !"
+            exit 1
+          fi
           cp "$APK_PATH" "$FINAL_APK"
           echo "✅ APK release non signé : $FINAL_APK"
         else
@@ -61,6 +66,10 @@ jobs:
           buildozer android debug
           APK_PATH=$(find ./.buildozer/android/platform/build/dists -type f -name "*debug.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK debug trouvé !"
+            exit 1
+          fi
           cp "$APK_PATH" "$FINAL_APK"
           echo "✅ APK debug : $FINAL_APK"
         fi
