@@ -1,0 +1,26 @@
+// build.gradle.tmpl — ajouté à ton projet Kivy
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion {{ android.api }}
+    defaultConfig {
+        minSdkVersion {{ android.minapi }}
+        targetSdkVersion {{ android.api }}
+        versionCode 1
+        versionName "{{ version }}"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.android.gms:play-services-ads:24.7.0'
+}
