@@ -32,7 +32,7 @@ jobs:
         restore-keys: |
           buildozer-cache-${{ runner.os }}-
 
-    # 🔧 Installer toutes les dépendances système nécessaires
+    # 🔧 Installer toutes les dépendances système nécessaires pour SDL2 et Kivy
     - name: Install system dependencies
       run: |
         sudo apt-get update
