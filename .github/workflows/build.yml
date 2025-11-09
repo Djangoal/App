@@ -24,7 +24,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          python3-pip python3-venv python3-distutils \
+          python3-pip python3-venv python3-dev \
           git zip unzip openjdk-17-jdk \
           build-essential libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 \
           zlib1g-dev
@@ -33,9 +33,8 @@ jobs:
       run: |
         python3 -m venv venv
         source venv/bin/activate
-        pip install --upgrade pip
-        pip install cython
-        pip install buildozer
+        pip install --upgrade pip setuptools wheel
+        pip install cython buildozer
 
     - name: Cleanup previous builds
       run: |
