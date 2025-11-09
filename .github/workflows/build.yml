@@ -1,4 +1,4 @@
-name: Build APK (Buildozer)
+name: Build APK (unsigned)
 
 on:
   workflow_dispatch:
@@ -17,9 +17,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      SDK_DIR: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
-      NDK_DIR: ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b
-      ANDROID_NDK_HOME: ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b
+      SDK_DIR: ${{ github.workspace }}/android-sdk
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
     - name: Checkout code
@@ -28,14 +27,27 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip python3-venv libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 zlib1g-dev libffi-dev libssl-dev
+        sudo apt-get install -y \
+          build-essential \
+          zip unzip \
+          openjdk-17-jdk \
+          python3-pip \
+          libncurses5 \
+          libstdc++6 \
+          libffi-dev \
+          libssl-dev \
+          liblzma-dev \
+          ccache \
+          git
 
     - name: Setup Python and Buildozer
       run: |
         python3 -m venv venv
         source venv/bin/activate
-        python -m pip install --upgrade pip setuptools wheel
-        pip install cython buildozer
+        pip install --upgrade pip
+        pip install cython
+        pip install buildozer
+        pip install git+https://github.com/kivy/python-for-android.git
 
     - name: Download Android SDK and NDK
       run: |
@@ -45,6 +57,7 @@ jobs:
         mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
         mkdir -p $SDK_DIR/cmdline-tools/latest
         mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
+
         yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
         $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" \
@@ -52,29 +65,33 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
 
-    - name: Clean previous builds
+    - name: Set environment variables for Buildozer
       run: |
-        source venv/bin/activate
-        buildozer android clean || true
-        rm -rf .buildozer dist build bin
+        echo "ANDROIDSDK=$SDK_DIR" >> $GITHUB_ENV
+        echo "ANDROIDNDK=$ANDROID_NDK_HOME" >> $GITHUB_ENV
+        echo "ANDROIDAPI=36" >> $GITHUB_ENV
+        echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
 
-    - name: Build APK
+    - name: Cleanup previous builds
+      run: |
+        rm -rf .buildozer bin
+
+    - name: Build APK with Buildozer
       run: |
         source venv/bin/activate
-        BUILD_TYPE="${{ github.event.inputs.build_type }}"
-        if [ "$BUILD_TYPE" = "release" ]; then
-          echo "=== Building release APK ==="
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           buildozer android release
-          APK=$(find bin -name "*.apk" | grep "release")
+          APK_PATH=$(find bin -type f -name "*release-unsigned.apk" | head -n 1)
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
         else
-          echo "=== Building debug APK ==="
           buildozer android debug
-          APK=$(find bin -name "*.apk" | grep "debug")
+          APK_PATH=$(find bin -type f -name "*debug.apk" | head -n 1)
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
         fi
-        echo "✅ APK built: $APK"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ${{ github.workspace }}/$APK
+        path: |
+          ./mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
