@@ -12,14 +12,12 @@ fullscreen = 0
 requirements = python3,kivy
 
 android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
-android.build_tools = 36.0.0
 android.api = 36
-android.arch = armeabi-v7a, arm64-v8a
 android.minapi = 21
-android.sdk = 36
 android.ndk = 25b
+android.build_tools = 36.0.0
 
-# ✅ Accepter automatiquement les licences Android SDK/NDK
+# Accepte automatiquement les licences SDK/NDK
 android.accept_sdk_license = True
 android.accept_sdk_ndk_license = True
 android.accept_all_sdk_licenses = True
