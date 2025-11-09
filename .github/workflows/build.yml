@@ -59,12 +59,17 @@ jobs:
         mkdir -p $SDK_DIR/cmdline-tools/latest
         mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
 
-        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
-        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+        echo "Installing Android SDK packages..."
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses || true
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" \
           "platforms;android-36" \
           "build-tools;36.0.0" \
           "ndk;25.2.9519653"
+
+    - name: Accept Android licenses (again)
+      run: |
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
 
     - name: Set environment variables for Buildozer
       run: |
@@ -81,10 +86,12 @@ jobs:
       run: |
         source venv/bin/activate
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          echo "=== Building unsigned release APK ==="
           buildozer android release
           APK_PATH=$(find bin -type f -name "*release-unsigned.apk" | head -n 1)
           cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
         else
+          echo "=== Building debug APK ==="
           buildozer android debug
           APK_PATH=$(find bin -type f -name "*debug.apk" | head -n 1)
           cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
