@@ -27,6 +27,7 @@ jobs:
           python3 python3-pip python3-venv python3-dev \
           git zip unzip openjdk-17-jdk \
           build-essential autoconf automake libtool libtool-bin pkg-config m4 \
+          gettext texinfo \
           libncurses-dev zlib1g-dev libffi-dev libssl-dev libsqlite3-dev \
           libjpeg-dev libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev \
           liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
