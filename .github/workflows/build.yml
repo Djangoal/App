@@ -80,7 +80,6 @@ jobs:
             --permission READ_EXTERNAL_STORAGE \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
-            --gradle-dep=com.google.android.gms:play-services-ads:24.7.0 \
             --arch=arm64-v8a \
             --sdk_dir=$SDK_DIR \
             --ndk_dir=$ANDROID_NDK_HOME \
@@ -115,7 +114,6 @@ jobs:
             --permission READ_EXTERNAL_STORAGE \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
-            --gradle-dep=com.google.android.gms:play-services-ads:24.7.0 \
             --arch=armeabi-v7a \
             --sdk_dir=$SDK_DIR \
             --ndk_dir=$ANDROID_NDK_HOME \
