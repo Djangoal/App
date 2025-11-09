@@ -65,8 +65,16 @@ jobs:
       run: |
         source venv/bin/activate
         echo "Build type: ${{ github.event.inputs.build_type }}"
+
+        # Définir le chemin final de l'APK avant build
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "=== Building unsigned release APK ==="
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+        else
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+        fi
+
+        echo "=== Building APK ==="
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -88,9 +96,7 @@ jobs:
             --dist-name=monapp_release \
             --release
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
-          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
         else
-          echo "=== Building debug APK ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -112,7 +118,6 @@ jobs:
             --dist-name=monapp_debug \
             --debug
           APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
-          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
         fi
 
         if [ -z "$APK_PATH" ]; then
@@ -127,7 +132,8 @@ jobs:
         # Zipalign uniquement pour release
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
-          echo "✅ APK aligné : ${FINAL_APK%.apk}-aligned.apk"
+          FINAL_APK="${FINAL_APK%.apk}-aligned.apk"
+          echo "✅ APK aligné : $FINAL_APK"
         fi
 
     - name: Verify AdMob presence
