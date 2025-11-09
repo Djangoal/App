@@ -24,8 +24,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # ⚡️ Étape de cache : garde le SDK, Gradle et Buildozer entre les builds
-    - name: Cache Buildozer and Gradle
+    # ⚡️ Cache Buildozer, Gradle et p4a
+    - name: Cache Buildozer & Gradle
       uses: actions/cache@v3
       with:
         path: |
@@ -36,50 +36,37 @@ jobs:
         restore-keys: |
           buildozer-cache-${{ runner.os }}-
 
-    - name: Install dependencies
+    # 🔧 Installer toutes les dépendances système nécessaires
+    - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           build-essential \
+          autoconf \
+          automake \
+          libtool \
+          pkg-config \
+          m4 \
+          python3 python3-venv python3-pip \
           zip unzip \
           openjdk-17-jdk \
-          python3 python3-venv python3-pip \
           libffi-dev libssl-dev liblzma-dev \
           zlib1g-dev libncurses5-dev libsqlite3-dev \
           libjpeg-dev libfreetype6-dev
 
+    # ⚡️ Installer Python + Buildozer
     - name: Setup Python & Buildozer
       run: |
         python3 -m venv venv
         source venv/bin/activate
-        pip install --upgrade pip
-        pip install setuptools  # ✅ Corrige le problème distutils
+        pip install --upgrade pip setuptools wheel
         pip install cython buildozer==1.5.0
 
-    - name: Download Android SDK + NDK
-      run: |
-        mkdir -p $SDK_DIR
-        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d $SDK_DIR
-        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
-        mkdir -p $SDK_DIR/cmdline-tools/latest
-        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
+    # 🧹 Nettoyage des builds précédents
+    - name: Clean old builds
+      run: rm -rf .buildozer build bin dist
 
-        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses || true
-        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
-          "platform-tools" \
-          "platforms;android-36" \
-          "build-tools;36.0.0" \
-          "ndk;25.2.9519653"
-
-    - name: Accept Android licenses
-      run: |
-        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses || true
-
-    - name: Clean previous builds
-      run: |
-        rm -rf build bin dist
-
+    # 🏗️ Build APK
     - name: Build APK
       run: |
         source venv/bin/activate
@@ -94,7 +81,8 @@ jobs:
           cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
         fi
 
-    - name: Upload APK
+    # 📤 Upload APK
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
