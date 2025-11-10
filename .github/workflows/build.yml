@@ -65,7 +65,7 @@ jobs:
       run: |
         source venv/bin/activate
         echo "Build type: ${{ github.event.inputs.build_type }}"
- 
+
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
           BUILD_TYPE="--release"
@@ -77,7 +77,7 @@ jobs:
           DIST_NAME="monapp_debug"
           ARCH="armeabi-v7a"
         fi
- 
+
         echo "=== Building APK with AdMob ==="
         ./venv/bin/p4a apk \
           --private "$GITHUB_WORKSPACE/app" \
@@ -98,11 +98,12 @@ jobs:
           --android_api=35 \
           --orientation=portrait \
           --dist-name=$DIST_NAME \
+          --manifest=app/templates/AndroidManifest.tmpl.xml \
           $BUILD_TYPE \
-          --add-jar=app/libs/play-services-basement-18.5.0.aar \
-          --add-jar=app/libs/play-services-tasks-18.3.2.aar \
-          --add-jar=app/libs/play-services-ads-24.3.0.aar \
-          --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
+          --add-aar=app/libs/play-services-basement-18.5.0.aar \
+          --add-aar=app/libs/play-services-tasks-18.3.2.aar \
+          --add-aar=app/libs/play-services-ads-24.3.0.aar
+
         APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
 
         if [ -z "$APK_PATH" ]; then
@@ -113,7 +114,7 @@ jobs:
 
         echo "✅ APK trouvé : $APK_PATH"
         cp "$APK_PATH" "$FINAL_APK"
- 
+
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
           FINAL_APK="${FINAL_APK%.apk}-aligned.apk"
