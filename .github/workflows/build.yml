@@ -1,5 +1,5 @@
-name: Build APK with p4a + AdMob
-
+name: Build APK (unsigned)
+ 
 on:
   workflow_dispatch:
     inputs:
@@ -11,32 +11,32 @@ on:
         options:
           - debug
           - release
-
+ 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+ 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
       NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
-
+ 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v3
-
+ 
     - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
-
+ 
     - name: Setup Python, virtualenv and install python-for-android
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
         ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
-
+ 
     - name: Download Android SDK and NDK
       run: |
         mkdir -p $SDK_DIR
@@ -51,18 +51,21 @@ jobs:
           "platforms;android-35" \
           "build-tools;35.0.0" \
           "ndk;25.2.9519653"
-
+ 
     - name: Cleanup previous builds
       run: |
+        echo "Cleaning old builds..."
         rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
-        rm -rf ~/.local/share/python-for-android/dists/monapp_*
-
-    - name: Build APK with AdMob
+        rm -rf ~/.local/share/python-for-android/dists/monapp_release
+        rm -rf ~/.local/share/python-for-android/dists/monapp_debug
+        echo "Environment ready"
+ 
+    - name: Build APK
       run: |
         source venv/bin/activate
         echo "Build type: ${{ github.event.inputs.build_type }}"
-
+ 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
           BUILD_TYPE="--release"
@@ -74,7 +77,8 @@ jobs:
           DIST_NAME="monapp_debug"
           ARCH="armeabi-v7a"
         fi
-
+ 
+        echo "=== Building APK with AdMob ==="
         ./venv/bin/p4a apk \
           --private "$GITHUB_WORKSPACE/app" \
           --package=org.example.monapp \
@@ -108,24 +112,25 @@ jobs:
 
         echo "✅ APK trouvé : $APK_PATH"
         cp "$APK_PATH" "$FINAL_APK"
-
+ 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
           FINAL_APK="${FINAL_APK%.apk}-aligned.apk"
           echo "✅ APK aligné : $FINAL_APK"
         fi
-
-    - name: Verify AdMob SDK
+ 
+    - name: Verify AdMob presence
       run: |
+        echo "Vérification de la présence de AdMob dans l'APK..."
         TMP_DIR=$(mktemp -d)
         unzip -q "$FINAL_APK" -d "$TMP_DIR"
         if grep -qr "com/google/android/gms/ads" "$TMP_DIR"; then
-          echo "✅ AdMob SDK détecté dans l'APK."
+          echo "✅ AdMob SDK trouvé dans l'APK."
         else
-          echo "❌ AdMob SDK non trouvé !"
+          echo "❌ AdMob SDK NON trouvé !"
           exit 1
         fi
-
+ 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
