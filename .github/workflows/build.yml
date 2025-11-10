@@ -56,28 +56,21 @@ jobs:
         rm -rf ~/.local/share/python-for-android/dists/monapp_release
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
         echo "Environment ready"
-
+    
     - name: Build APK
       run: |
         source venv/bin/activate
-        echo "Build type: ${{ github.event.inputs.build_type }}"
-
-        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
-          BUILD_TYPE="--release"
-          DIST_NAME="monapp_release"
-          ARCH="arm64-v8a"
-        else
-          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
-          BUILD_TYPE="--debug"
-          DIST_NAME="monapp_debug"
-          ARCH="armeabi-v7a"
-        fi
-
-        echo "=== Remplacement du manifest personnalisé ==="
+        
+        echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
+        cd "$GITHUB_WORKSPACE"
+        
+        echo "=== Vérification des .aar ==="
+        ls -l app/libs/*.aar || { echo "❌ Les fichiers .aar sont introuvables !"; exit 1; }
+        
+        echo "=== Copie du manifest personnalisé ==="
         mkdir -p ~/.local/share/python-for-android/templates/
         cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
-
+        
         echo "=== Extraction des classes.jar depuis les AAR ==="
         mkdir -p app/libs/jars
         for aar in app/libs/*.aar; do
@@ -90,48 +83,79 @@ jobs:
         for jar in $GITHUB_WORKSPACE/app/libs/jars/*.jar; do
           ADD_JARS="$ADD_JARS --add-jar=$jar"
         done
-
-        echo "=== Compilation de l’APK avec AdMob ==="
-        ./venv/bin/p4a apk \
-          --private "$GITHUB_WORKSPACE/app" \
-          --package=org.example.monapp \
-          --name="Mon budget perso" \
-          --version=0.1 \
-          --bootstrap=sdl2 \
-          --icon=logo.png \
-          --presplash=app/logo1.png \
-          --requirements=python3,kivy,android \
-          --permission WRITE_EXTERNAL_STORAGE \
-          --permission READ_EXTERNAL_STORAGE \
-          --permission INTERNET \
-          --permission ACCESS_NETWORK_STATE \
-          --arch=$ARCH \
-          --sdk_dir=$SDK_DIR \
-          --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=35 \
-          --orientation=portrait \
-          --dist-name=$DIST_NAME \
-          $BUILD_TYPE \
-          $ADD_JARS \
-          --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
-
-        APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
-
-        if [ -z "$APK_PATH" ]; then
-          echo "❌ Aucun APK trouvé !"
-          find . -type f -name "*.apk"
-          exit 1
-        fi
-
-        echo "✅ APK trouvé : $APK_PATH"
-        cp "$APK_PATH" "$FINAL_APK"
-
+        
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          echo "=== Compilation RELEASE ==="
+          ./venv/bin/p4a apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=0.1 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=app/logo1.png \
+            --requirements=python3,kivy,android \
+            --permission WRITE_EXTERNAL_STORAGE \
+            --permission READ_EXTERNAL_STORAGE \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --arch=arm64-v8a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=35 \
+            --orientation=portrait \
+            --dist-name=monapp_release \
+            --release \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
+            --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
+          APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK release trouvé !"
+            find . -type f -name "*.apk"
+            exit 1
+          fi
+          echo "✅ APK release trouvé : $APK_PATH"
+          cp "$APK_PATH" "$FINAL_APK"
           $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
-          FINAL_APK="${FINAL_APK%.apk}-aligned.apk"
-          echo "✅ APK aligné : $FINAL_APK"
+        else
+          echo "=== Compilation DEBUG ==="
+          ./venv/bin/p4a apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=0.1 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=app/logo1.png \
+            --requirements=python3,kivy,android \
+            --permission WRITE_EXTERNAL_STORAGE \
+            --permission READ_EXTERNAL_STORAGE \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --arch=armeabi-v7a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=35 \
+            --orientation=portrait \
+            --dist-name=monapp_debug \
+            --debug \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
+            --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
+          APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK debug trouvé !"
+            find . -type f -name "*.apk"
+            exit 1
+          fi
+          echo "✅ APK debug trouvé : $APK_PATH"
+          cp "$APK_PATH" "$FINAL_APK"
         fi
-    
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
