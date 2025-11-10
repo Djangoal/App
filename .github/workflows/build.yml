@@ -35,7 +35,7 @@ jobs:
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip
         ./venv/bin/pip install cython
-        ./venv/bin/pip install python-for-android==2024.6.0
+        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
  
     - name: Download Android SDK and NDK
       run: |
@@ -99,9 +99,10 @@ jobs:
           --orientation=portrait \
           --dist-name=$DIST_NAME \
           $BUILD_TYPE \
-          --gradle-dependencies="com.google.android.gms:play-services-ads:22.6.0" \
+          --add-jar=app/libs/play-services-basement-18.5.0.aar \
+          --add-jar=app/libs/play-services-tasks-18.3.2.aar \
+          --add-jar=app/libs/play-services-ads-24.3.0.aar \
           --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
-
         APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
 
         if [ -z "$APK_PATH" ]; then
