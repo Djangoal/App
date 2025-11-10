@@ -99,7 +99,7 @@ jobs:
           --orientation=portrait \
           --dist-name=$DIST_NAME \
           $BUILD_TYPE \
-          --android-gradle-dependencies="com.google.android.gms:play-services-ads:22.6.0" \
+          --gradle-dependencies="com.google.android.gms:play-services-ads:22.6.0" \
           --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
         APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
