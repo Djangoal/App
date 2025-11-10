@@ -99,6 +99,7 @@ jobs:
             --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
             --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
             --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
+            --extra-gradle-arg="-Pandroid.enableDexingArtifactTransform=false"
             --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
@@ -136,6 +137,7 @@ jobs:
             --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
             --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
             --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
+            --extra-gradle-arg="-Pandroid.enableDexingArtifactTransform=false"
             --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
           APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
