@@ -122,15 +122,23 @@ jobs:
  
     - name: Verify AdMob presence
       run: |
-        echo "Vérification de la présence de AdMob dans l'APK..."
-        TMP_DIR=$(mktemp -d)
-        unzip -q "$FINAL_APK" -d "$TMP_DIR"
-        if grep -qr "com/google/android/gms/ads" "$TMP_DIR"; then
-          echo "✅ AdMob SDK trouvé dans l'APK."
-        else
-          echo "❌ AdMob SDK NON trouvé !"
-          exit 1
-        fi
+       echo "Vérification de la présence de AdMob dans l'APK..."
+   
+       # Utiliser directement APK_PATH trouvé précédemment
+       if [ -z "$APK_PATH" ]; then
+       echo "❌ Aucun APK trouvé pour la vérification !"
+        exit 1
+       fi
+
+       TMP_DIR=$(mktemp -d)
+       unzip -q "$APK_PATH" -d "$TMP_DIR"
+
+       if grep -qr "com/google/android/gms/ads" "$TMP_DIR"; then
+        echo "✅ AdMob SDK trouvé dans l'APK."
+       else
+        echo "❌ AdMob SDK NON trouvé !"
+        exit 1
+       fi
  
     - name: Upload APK
       uses: actions/upload-artifact@v4
