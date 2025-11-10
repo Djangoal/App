@@ -90,7 +90,7 @@ jobs:
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
             --name="Mon budget perso" \
-            --version=0.1 \
+            --version=1.0 \
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
@@ -126,7 +126,7 @@ jobs:
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
             --name="Mon budget perso" \
-            --version=0.1 \
+            --version=1.0 \
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
