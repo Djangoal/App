@@ -22,6 +22,9 @@ android.accept_sdk_license = True
 android.accept_sdk_ndk_license = True
 android.accept_all_sdk_licenses = True
 
+# Ajouter les dépendances Android natives (Google Play services ads)
+android.gradle_dependencies = com.google.android.gms:play-services-ads:22.6.0
+
 log_level = 2
 
 [buildozer]
