@@ -96,9 +96,9 @@ jobs:
             --orientation=portrait \
             --dist-name=monapp_release \
             --release \
-            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
-            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
-            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
+            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
+            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
+            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
             --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
@@ -133,9 +133,9 @@ jobs:
             --orientation=portrait \
             --dist-name=monapp_debug \
             --debug \
-            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
-            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
-            --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
+            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
+            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
+            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
             --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
           APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
