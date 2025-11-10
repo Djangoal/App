@@ -78,48 +78,14 @@ jobs:
           ARCH="armeabi-v7a"
         fi
 
+        echo "=== Préparation du manifeste personnalisé ==="
+        mkdir -p ~/.local/share/python-for-android/templates/
+        cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
+
         echo "=== Building APK with AdMob ==="
         ./venv/bin/p4a apk \
           --private "$GITHUB_WORKSPACE/app" \
-          --package=org.example.monapp \
-          --name="Mon budget perso" \
-          --version=0.1 \
-          --bootstrap=sdl2 \
-          --icon=logo.png \
-          --presplash=app/logo1.png \
-          --requirements=python3,kivy,android \
-          --permission WRITE_EXTERNAL_STORAGE \
-          --permission READ_EXTERNAL_STORAGE \
-          --permission INTERNET \
-          --permission ACCESS_NETWORK_STATE \
-          --arch=$ARCH \
-          --sdk_dir=$SDK_DIR \
-          --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=35 \
-          --orientation=portrait \
-          --dist-name=$DIST_NAME \
-          --manifest=app/templates/AndroidManifest.tmpl.xml \
-          $BUILD_TYPE \
-          --add-aar=app/libs/play-services-basement-18.5.0.aar \
-          --add-aar=app/libs/play-services-tasks-18.3.2.aar \
-          --add-aar=app/libs/play-services-ads-24.3.0.aar
-
-        APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
-
-        if [ -z "$APK_PATH" ]; then
-          echo "❌ Aucun APK trouvé !"
-          find . -type f -name "*.apk"
-          exit 1
-        fi
-
-        echo "✅ APK trouvé : $APK_PATH"
-        cp "$APK_PATH" "$FINAL_APK"
-
-        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
-          FINAL_APK="${FINAL_APK%.apk}-aligned.apk"
-          echo "✅ APK aligné : $FINAL_APK"
-        fi
+          --package=org.example
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
