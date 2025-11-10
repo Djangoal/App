@@ -103,10 +103,10 @@ jobs:
           --orientation=portrait \
           --dist-name=$DIST_NAME \
           $BUILD_TYPE \
-          --add-aar=app/libs/play-services-basement-18.5.0.aar \
-          --add-aar=app/libs/play-services-tasks-18.3.2.aar \
-          --add-aar=app/libs/play-services-ads-24.3.0.aar
-
+          --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
+          --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
+          --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
+        
         APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
 
         if [ -z "$APK_PATH" ]; then
