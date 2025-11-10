@@ -58,8 +58,8 @@ class AdMobBanner(BoxLayout):
 
         ad_view = AdView(activity)
         ad_view.setAdSize(AdSize.BANNER)
-       # ad_view.setAdUnitId("ca-app-pub-3940256099942544/6300978111")  # ✅ ID test officiel
-        ad_view.setAdUnitId("ca-app-pub-6034346911104431/2475013658")
+        ad_view.setAdUnitId("ca-app-pub-3940256099942544/6300978111")  # ✅ ID test officiel
+        #ad_view.setAdUnitId("ca-app-pub-6034346911104431/2475013658")
 
         ad_request = AdRequest.Builder().build()
         ad_view.loadAd(ad_request)
