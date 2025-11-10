@@ -94,6 +94,7 @@ jobs:
           --orientation=portrait \
           --dist-name=monapp_release \
           --release
+          $BUILD_TYPE \
           --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
           --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
           --add-jar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
