@@ -96,7 +96,7 @@ jobs:
           --permission READ_EXTERNAL_STORAGE \
           --permission INTERNET \
           --permission ACCESS_NETWORK_STATE \
-          --arch=$ARCH \
+          --arch=$( [ "${{ github.event.inputs.build_type }}" = "release" ] && echo "arm64-v8a" || echo "armeabi-v7a" ) \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=35 \
