@@ -1,4 +1,4 @@
-name: Build APK (Gradle backend + AdMob full verification)
+name: Build APK (Gradle + AdMob verification)
 
 on:
   workflow_dispatch:
@@ -28,13 +28,14 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+        sudo apt-get install -y build-essential openjdk-17-jdk zip unzip curl python3-pip
 
     - name: Setup Python & python-for-android
       run: |
         python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip cython
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+        source venv/bin/activate
+        pip install --upgrade pip cython
+        pip install git+https://github.com/kivy/python-for-android.git
 
     - name: Download Android SDK & NDK
       run: |
@@ -51,113 +52,115 @@ jobs:
           "build-tools;35.0.0" \
           "ndk;25.2.9519653"
 
-    - name: Cleanup previous builds
-      run: |
-        echo "Cleaning old builds..."
-        rm -rf .buildozer dist build bin
-        ./venv/bin/p4a clean_builds || true
-        rm -rf ~/.local/share/python-for-android/dists/monapp_gradle
-        echo "Environment ready"
-
-    - name: Build APK (Gradle backend)
+    - name: Prepare P4A build
       run: |
         source venv/bin/activate
-
-        echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
-        cd "$GITHUB_WORKSPACE"
-
-        echo "=== Vérification des .aar ==="
-        ls -l app/libs/*.aar || { echo "❌ Les fichiers .aar sont introuvables !"; exit 1; }
-
-        echo "=== Copie du manifest personnalisé ==="
-        mkdir -p ~/.local/share/python-for-android/templates/
-        cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
-
-        echo "=== Génération du projet Gradle avec python-for-android ==="
-        ./venv/bin/p4a create \
+        echo "=== Préparation des libs Python-for-Android ==="
+        p4a create \
+          --private app \
           --package=org.example.monapp \
           --name="Mon budget perso" \
-          --version=1.2 \
+          --version=1.3 \
           --bootstrap=sdl2 \
           --requirements=python3,kivy,android \
-          --orientation=portrait \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=35 \
           --arch=arm64-v8a \
-          --dist-name=monapp_gradle \
-          --private=app \
-          --copy-libs \
-          --add-jar=app/libs/play-services-basement-18.5.0.aar \
-          --add-jar=app/libs/play-services-tasks-18.3.2.aar \
-          --add-jar=app/libs/play-services-ads-24.3.0.aar \
-          --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713 \
-          --gradle
+          --orientation=portrait \
+          --dist-name=p4a-libs \
+          --copy-libs
 
-        echo "=== Compilation avec Gradle ==="
-        cd ~/.local/share/python-for-android/dists/monapp_gradle
-        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          ./gradlew assembleRelease
-        else
-          ./gradlew assembleDebug
-        fi
+        mkdir -p android/p4a-libs/libs
+        cp -r ~/.local/share/python-for-android/dists/p4a-libs/libs/* android/p4a-libs/libs/
 
-        echo "=== Recherche du fichier APK ==="
-        APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
-        if [ -z "$APK_PATH" ]; then
-          echo "❌ Aucun APK trouvé après compilation Gradle."
-          find . -type f -name "*.apk"
-          exit 1
-        fi
+    - name: Create Gradle project
+      run: |
+        mkdir -p android/app/src/main/java/org/example/monapp
+        mkdir -p android/app/src/main/res
+        mkdir -p android/app/libs
+        mkdir -p android/gradle/wrapper
+        cd android
 
-        FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_${{ github.event.inputs.build_type }}.apk"
-        cp "$APK_PATH" "$FINAL_APK"
-        echo "✅ APK trouvé et copié : $FINAL_APK"
+        gradle init --type basic
+        echo "rootProject.name = 'MonBudgetPerso'" > settings.gradle
+
+        cat <<EOF > build.gradle
+        plugins {
+            id 'com.android.application' version '8.7.0' apply true
+        }
+
+        android {
+            namespace "org.example.monapp"
+            compileSdk 35
+
+            defaultConfig {
+                applicationId "org.example.monapp"
+                minSdk 21
+                targetSdk 35
+                versionCode 1
+                versionName "1.3"
+            }
+
+            buildTypes {
+                release {
+                    minifyEnabled false
+                }
+                debug {
+                    debuggable true
+                }
+            }
+
+            sourceSets {
+                main.java.srcDirs += 'src/main/java'
+                main.assets.srcDirs += '../app'
+                main.jniLibs.srcDirs += '../p4a-libs/libs'
+            }
+        }
+
+        dependencies {
+            implementation files('../app/libs/play-services-ads-24.3.0.aar')
+            implementation files('../app/libs/play-services-basement-18.5.0.aar')
+            implementation files('../app/libs/play-services-tasks-18.3.2.aar')
+        }
+        EOF
+
+    - name: Build APK with Gradle
+      run: |
+        cd android
+        ./gradlew assemble${{ github.event.inputs.build_type == 'release' && 'Release' || 'Debug' }}
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ./mon_budget_perso_${{ github.event.inputs.build_type }}.apk
+        path: android/app/build/outputs/apk/**/*.apk
 
-    - name: Verify AdMob SDK presence
+    - name: Verify AdMob presence
       run: |
-        echo "=== Vérification de la présence du SDK AdMob dans l'APK ==="
-        APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
-        TMP_DIR=$(mktemp -d)
-        unzip -q "$APK_PATH" -d "$TMP_DIR"
-        if grep -qr "com/google/android/gms/ads" "$TMP_DIR"; then
-          echo "✅ SDK AdMob détecté dans l'APK."
-        else
-          echo "❌ SDK AdMob manquant."
+        echo "=== Vérification des classes AdMob spécifiques dans l'APK ==="
+        APK_PATH=$(find android/app/build/outputs/apk -type f -name "*.apk" | head -n 1)
+        if [ -z "$APK_PATH" ]; then
+          echo "❌ Aucun APK trouvé pour vérification."
           exit 1
         fi
-
-    - name: Verify AdMob classes
-      run: |
-        echo "=== Vérification des classes AdMob essentielles ==="
-        APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
+        echo "→ APK trouvé : $APK_PATH"
         TMP_DIR=$(mktemp -d)
         unzip -q "$APK_PATH" -d "$TMP_DIR"
-        CLASSES=(
-          "AdView.class"
-          "AdRequest.class"
-          "AdListener.class"
-          "MobileAds.class"
-        )
+
+        declare -a CLASSES=("AdView" "AdRequest" "AdListener" "MobileAds" "InterstitialAd")
         MISSING=0
-        for cls in "${CLASSES[@]}"; do
-          if ! grep -qr "$cls" "$TMP_DIR"; then
-            echo "❌ Classe manquante : $cls"
+        for CLASS in "${CLASSES[@]}"; do
+          if ! grep -qr "$CLASS" "$TMP_DIR"; then
+            echo "❌ Classe manquante : ${CLASS}.class"
             MISSING=1
           else
-            echo "✅ Classe trouvée : $cls"
+            echo "✅ Classe trouvée : ${CLASS}.class"
           fi
         done
-        rm -rf "$TMP_DIR"
         if [ $MISSING -eq 1 ]; then
           echo "⚠️ Certaines classes AdMob sont absentes de l'APK !"
           exit 1
         else
-          echo "✅ Toutes les classes AdMob nécessaires sont présentes, y compris MobileAds."
+          echo "🎉 Toutes les classes AdMob nécessaires sont présentes."
         fi
