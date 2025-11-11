@@ -30,6 +30,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential openjdk-17-jdk zip unzip curl python3-pip
 
+    - name: Install missing build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y autoconf automake libtool pkg-config cmake zlib1g-dev libffi-dev libssl-dev
+        
     - name: Setup Python & python-for-android
       run: |
         python3 -m venv venv
