@@ -74,6 +74,14 @@ jobs:
         mkdir -p android/p4a-libs/libs
         cp -r ~/.local/share/python-for-android/dists/p4a-libs/libs/* android/p4a-libs/libs/
 
+    - name: Clean Gradle directory
+      run: |
+        echo "🧹 Suppression du dossier android existant..."
+        rm -rf android
+        mkdir android
+        cd android
+        gradle init --type basic --dsl groovy --project-name monapp --package org.example.monapp
+
     - name: Create Gradle project
       run: |
         mkdir -p android/app/src/main/java/org/example/monapp
@@ -125,14 +133,7 @@ jobs:
         }
         EOF
 
-    - name: Clean Gradle directory
-      run: |
-        echo "🧹 Suppression du dossier android existant..."
-        rm -rf android
-        mkdir android
-        cd android
-        gradle init --type basic --dsl groovy --project-name monapp --package org.example.monapp
-
+    
     - name: Build APK with Gradle
       run: |
         cd android
