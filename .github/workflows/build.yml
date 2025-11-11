@@ -125,6 +125,14 @@ jobs:
         }
         EOF
 
+    - name: Clean Gradle directory
+      run: |
+        echo "🧹 Suppression du dossier android existant..."
+        rm -rf android
+        mkdir android
+        cd android
+        gradle init --type basic --dsl groovy --project-name monapp --package org.example.monapp
+
     - name: Build APK with Gradle
       run: |
         cd android
