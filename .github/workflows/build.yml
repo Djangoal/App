@@ -105,12 +105,12 @@ jobs:
             --orientation=portrait \
             --dist-name=monapp_release \
             --release \
-            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
-            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
-            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
-            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-ads-lite-22.6.0.aar" \
-            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-base-18.5.0.aar" \
-            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-identity-18.0.1.aar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/jars/play-services-basement-18.5.0/classes.jar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/jars/play-services-tasks-18.3.2/classes.jar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/jars/play-services-ads-24.3.0/classes.jar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/jars/play-services-ads-lite-22.6.0/classes.jar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/jars/play-services-base-18.5.0/classes.jar" \
+            --add-jar="$GITHUB_WORKSPACE/app/libs/jars/play-services-identity-18.0.1/classes.jar" \
             --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
