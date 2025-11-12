@@ -22,164 +22,191 @@ jobs:
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-    - name: Setup Python & python-for-android
-      run: |
-        python3 -m venv venv
-        source venv/bin/activate
-        pip install --upgrade pip cython
-        pip install git+https://github.com/kivy/python-for-android.git
+      - name: Setup Python & python-for-android
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip cython
+          pip install git+https://github.com/kivy/python-for-android.git
 
-    - name: Download Android SDK & NDK
-      run: |
-        mkdir -p $SDK_DIR
-        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d $SDK_DIR
-        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
-        mkdir -p $SDK_DIR/cmdline-tools/latest
-        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
-        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
-        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
-          "platform-tools" \
-          "platforms;android-35" \
-          "build-tools;35.0.0" \
-          "ndk;25.2.9519653"
+      - name: Download Android SDK & NDK
+        run: |
+          mkdir -p $SDK_DIR
+          curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d $SDK_DIR
+          mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
+          mkdir -p $SDK_DIR/cmdline-tools/latest
+          mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
+          yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+          $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;25.2.9519653"
 
-    - name: Prepare P4A build
-      run: |
-        source venv/bin/activate
-        echo "=== Préparation des libs Python-for-Android ==="
-        p4a create \
-          --private app \
-          --package=org.example.monapp \
-          --name="Mon budget perso" \
-          --version=1.3 \
-          --bootstrap=sdl2 \
-          --requirements=python3,kivy,android \
-          --sdk_dir=$SDK_DIR \
-          --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=35 \
-          --arch=arm64-v8a \
-          --orientation=portrait \
-          --dist-name=p4a-libs \
-          --copy-libs
-        mkdir -p android/p4a-libs/libs
-        cp -r ~/.local/share/python-for-android/dists/p4a-libs/libs/* android/p4a-libs/libs/
+      - name: Prepare P4A build
+        run: |
+          source venv/bin/activate
+          echo "=== Préparation des libs Python-for-Android ==="
+          p4a create \
+            --private app \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=1.3 \
+            --bootstrap=sdl2 \
+            --requirements=python3,kivy,android \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=35 \
+            --arch=arm64-v8a \
+            --orientation=portrait \
+            --dist-name=p4a-libs \
+            --copy-libs
+          mkdir -p android/p4a-libs/libs
+          cp -r ~/.local/share/python-for-android/dists/p4a-libs/libs/* android/p4a-libs/libs/
 
-    - name: Clean and recreate Android project
-      run: |
-        echo "🧹 Suppression du dossier android existant..."
-        rm -rf android
-        mkdir -p android/app/src/main/java/org/example/monapp
-        mkdir -p android/app/src/main/res
-        mkdir -p android/app/libs
-        mkdir -p android/gradle/wrapper
-        cd android
-        # settings.gradle avec pluginManagement
-        cat <<EOF > settings.gradle
-        pluginManagement {
-        repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-        }
-        }
-        rootProject.name = "MonBudgetPerso"
-        include(":app")
-        EOF
+      - name: Clean and recreate Android project
+        run: |
+          echo "🧹 Suppression du dossier android existant..."
+          rm -rf android
+          mkdir -p android/app/src/main/java/org/example/monapp
+          mkdir -p android/app/src/main/res
+          mkdir -p android/app/libs
+          mkdir -p android/gradle/wrapper
+          mkdir -p android/src/main
 
-        # build.gradle avec dépôts Google & MavenCentral
-        cat <<EOF > build.gradle
-        plugins {
-        id 'com.android.application' version '8.7.0' apply true
-        }
+          cd android
 
-        android {
-        namespace "org.example.monapp"
-        compileSdk 35
-        defaultConfig {
-        applicationId "org.example.monapp"
-        minSdk 21
-        targetSdk 35
-        versionCode 1
-        versionName "1.3"
-        }
-        buildTypes {
-        release {
+          # settings.gradle avec pluginManagement
+          cat <<EOF > settings.gradle
+          pluginManagement {
+          repositories {
+          google()
+          mavenCentral()
+          gradlePluginPortal()
+          }
+          }
+          rootProject.name = "MonBudgetPerso"
+          include(":app")
+          EOF
+
+          # build.gradle avec dépôts Google & MavenCentral
+          cat <<EOF > build.gradle
+          plugins {
+          id 'com.android.application' version '8.7.0' apply true
+          }
+
+          android {
+          namespace "org.example.monapp"
+          compileSdk 35
+          defaultConfig {
+          applicationId "org.example.monapp"
+          minSdk 21
+          targetSdk 35
+          versionCode 1
+          versionName "1.3"
+          }
+          buildTypes {
+          release {
             minifyEnabled false
-        }
-        debug {
+          }
+          debug {
             debuggable true
-        }
-        }
-        sourceSets {
-        main.java.srcDirs += 'src/main/java'
-        main.assets.srcDirs += '../app'
-        main.jniLibs.srcDirs += '../p4a-libs/libs'
-        }
-        }
+          }
+          }
+          sourceSets {
+          main.java.srcDirs += 'src/main/java'
+          main.assets.srcDirs += '../app'
+          main.jniLibs.srcDirs += '../p4a-libs/libs'
+          }
+          }
 
-        repositories {
-        google()
-        mavenCentral()
-        }
+          repositories {
+          google()
+          mavenCentral()
+          }
 
-        dependencies {
-        implementation files('../app/libs/play-services-ads-24.3.0.aar')
-        implementation files('../app/libs/play-services-basement-18.5.0.aar')
-        implementation files('../app/libs/play-services-tasks-18.3.2.aar')
-        }
-        EOF
+          dependencies {
+          implementation files('../app/libs/play-services-ads-24.3.0.aar')
+          implementation files('../app/libs/play-services-basement-18.5.0.aar')
+          implementation files('../app/libs/play-services-tasks-18.3.2.aar')
+          }
+          EOF
 
-        echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
-        echo "✅ Projet Android initialisé avec succès."
+          echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
 
-    - name: Build APK with Gradle
-      run: |
-        cd android
-        echo "⚙️ Génération du wrapper Gradle..."
-        gradle wrapper --gradle-version 8.11
-        chmod +x gradlew
-        echo "🚀 Lancement du build..."
-        ./gradlew assemble${{ github.event.inputs.build_type == 'release' && 'Release' || 'Debug' }}
+          # Création du manifest minimal
+          cat <<EOF > android/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="org.example.monapp">
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: mon-budget-${{ github.event.inputs.build_type }}
-        path: android/app/build/outputs/apk/**/*.apk
+          <application
+          android:label="Mon budget perso"
+          android:icon="@mipmap/ic_launcher"
+          android:allowBackup="true"
+          android:supportsRtl="true">
+          <activity android:name=".MainActivity"
+            android:exported="true"
+            android:label="Mon budget perso">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+          </activity>
+          </application>
 
-    - name: Verify AdMob presence
-      run: |
-        echo "=== Vérification des classes AdMob spécifiques dans l'APK ==="
-        APK_PATH=$(find android/app/build/outputs/apk -type f -name "*.apk" | head -n 1)
-        if [ -z "$APK_PATH" ]; then
-          echo "❌ Aucun APK trouvé pour vérification."
-          exit 1
-        fi
-        echo "→ APK trouvé : $APK_PATH"
-        TMP_DIR=$(mktemp -d)
-        unzip -q "$APK_PATH" -d "$TMP_DIR"
-        declare -a CLASSES=("AdView" "AdRequest" "AdListener" "MobileAds" "InterstitialAd")
-        MISSING=0
-        for CLASS in "${CLASSES[@]}"; do
-          if ! grep -qr "$CLASS" "$TMP_DIR"; then
-            echo "❌ Classe manquante : ${CLASS}.class"
-            MISSING=1
-          else
-            echo "✅ Classe trouvée : ${CLASS}.class"
+          </manifest>
+          EOF
+
+          echo "✅ Projet Android initialisé avec succès."
+
+      - name: Build APK with Gradle
+        run: |
+          cd android
+          echo "⚙️ Génération du wrapper Gradle..."
+          gradle wrapper --gradle-version 8.11
+          chmod +x gradlew
+          echo "🚀 Lancement du build..."
+          ./gradlew assemble${{ github.event.inputs.build_type == 'release' && 'Release' || 'Debug' }}
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mon-budget-${{ github.event.inputs.build_type }}
+          path: android/app/build/outputs/apk/**/*.apk
+
+      - name: Verify AdMob presence
+        run: |
+          echo "=== Vérification des classes AdMob spécifiques dans l'APK ==="
+          APK_PATH=$(find android/app/build/outputs/apk -type f -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK trouvé pour vérification."
+            exit 1
           fi
-        done
-        if [ $MISSING -eq 1 ]; then
-          echo "⚠️ Certaines classes AdMob sont absentes de l'APK !"
-          exit 1
-        else
-          echo "🎉 Toutes les classes AdMob nécessaires sont présentes."
-        fi
+          echo "→ APK trouvé : $APK_PATH"
+          TMP_DIR=$(mktemp -d)
+          unzip -q "$APK_PATH" -d "$TMP_DIR"
+          declare -a CLASSES=("AdView" "AdRequest" "AdListener" "MobileAds" "InterstitialAd")
+          MISSING=0
+          for CLASS in "${CLASSES[@]}"; do
+            if ! grep -qr "$CLASS" "$TMP_DIR"; then
+              echo "❌ Classe manquante : ${CLASS}.class"
+              MISSING=1
+            else
+              echo "✅ Classe trouvée : ${CLASS}.class"
+            fi
+          done
+          if [ $MISSING -eq 1 ]; then
+            echo "⚠️ Certaines classes AdMob sont absentes de l'APK !"
+            exit 1
+          else
+            echo "🎉 Toutes les classes AdMob nécessaires sont présentes."
+          fi
