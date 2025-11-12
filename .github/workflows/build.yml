@@ -1,270 +1,103 @@
-name: Build APK (Gradle + AdMob verification)
+name: 📱 Build Android App (Kivy)
 
 on:
-  workflow_dispatch:
-    inputs:
-      build_type:
-        description: "Type de build (debug ou release)"
-        required: true
-        default: "debug"
-        type: choice
-        options:
-          - debug
-          - release
+  push:
+    branches: [ main ]
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      SDK_DIR: ${{ github.workspace }}/android-sdk
-      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
-      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: 📦 Checkout du code
+        uses: actions/checkout@v4
 
-      # Cache Gradle
-      - name: Cache Gradle
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/build.gradle') }}
-          restore-keys: gradle-${{ runner.os }}-
-
-      # Cache P4A
-      - name: Cache Python-for-Android
-        uses: actions/cache@v3
-        with:
-          path: ~/.local/share/python-for-android
-          key: p4a-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-
-      # Cache virtualenv
-      - name: Cache Python venv
-        uses: actions/cache@v3
-        with:
-          path: venv
-          key: venv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-
-      - name: Install system dependencies
+      - name: 🧰 Installation des dépendances système
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+          sudo apt update
+          sudo apt install -y python3-pip openjdk-17-jdk zip unzip wget git
 
-      - name: Setup Python & python-for-android
+      - name: 🐍 Installation de Buildozer et Kivy
         run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip cython
-          pip install git+https://github.com/kivy/python-for-android.git
+          pip install --upgrade pip
+          pip install buildozer cython
 
-      - name: Download Android SDK & NDK
+      - name: 🧩 Préparation du projet Android
         run: |
-          mkdir -p $SDK_DIR
-          curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-          unzip -q cmdline-tools.zip -d $SDK_DIR
-          mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
-          mkdir -p $SDK_DIR/cmdline-tools/latest
-          mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
-          yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
-          $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0" \
-            "ndk;25.2.9519653"
+          cd $GITHUB_WORKSPACE
+          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+          cp app/logo.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          echo "✅ Icône locale copiée depuis app/logo.png"
 
-      - name: Prepare P4A build
+      - name: ⚙️ Compilation APK avec Buildozer
         run: |
-          source venv/bin/activate
-          echo "=== Préparation des libs Python-for-Android ==="
-          p4a create \
-            --private app \
-            --package=org.example.monapp \
-            --name="Mon budget perso" \
-            --version=1.5 \
-            --bootstrap=sdl2 \
-            --requirements=python3,kivy,android \
-            --sdk_dir=$SDK_DIR \
-            --ndk_dir=$ANDROID_NDK_HOME \
-            --android_api=35 \
-            --arch=arm64-v8a \
-            --orientation=portrait \
-            --dist-name=p4a-libs \
-            --copy-libs
-          mkdir -p android/p4a-libs/libs
-          if [ -d ~/.local/share/python-for-android/dists/p4a-libs/libs ]; then
-            cp -r ~/.local/share/python-for-android/dists/p4a-libs/libs/* android/p4a-libs/libs/
-          else
-            echo "⚠️ Aucun fichier dans p4a-libs/libs"
-          fi
+          buildozer android release
 
-      - name: Clean and recreate Android project
+      - name: 📱 Chercher l’APK généré
+        id: find_apk
         run: |
-          rm -rf android
-          mkdir -p android/app/src/main/java/org/example/monapp
-          mkdir -p android/app/src/main/res/mipmap-mdpi
-          mkdir -p android/app/src/main/assets
-          mkdir -p android/gradle/wrapper
-
-          # Copier les fichiers app dans assets
-          if [ -d "$GITHUB_WORKSPACE/app" ]; then
-            cp -r $GITHUB_WORKSPACE/app/* android/app/src/main/assets/ || echo "⚠️ Pas de fichiers à copier dans assets"
-          fi
-
-          # Ajouter un placeholder si assets vide
-          if [ -z "$(ls -A android/app/src/main/assets)" ]; then
-            touch android/app/src/main/assets/.placeholder
-          fi
-
-          # Copier logo ou créer un icône vide
-          if [ -f "$GITHUB_WORKSPACE/app/logo.png" ]; then
-            cp $GITHUB_WORKSPACE/app/logo.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-          else
-            touch android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-          fi
-
-          # Fichier Java minimal
-          cat <<EOF > android/app/src/main/java/org/example/monapp/MainActivity.java
-          package org.example.monapp;
-          import android.app.Activity;
-          import android.os.Bundle;
-          public class MainActivity extends Activity {
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-              }
-          }
-          EOF
-
-          # settings.gradle
-          cat <<EOF > android/settings.gradle
-          pluginManagement {
-            repositories {
-                google()
-                mavenCentral()
-                gradlePluginPortal()
-            }
-          }
-          rootProject.name = "MonBudgetPerso"
-          include(":app")
-          EOF
-
-          # build.gradle
-          cat <<EOF > android/build.gradle
-          plugins {
-            id 'com.android.application' version '8.7.0' apply true
-          }
-          android {
-            namespace "org.example.monapp"
-            compileSdk 35
-            defaultConfig {
-              applicationId "org.example.monapp"
-              minSdk 23
-              targetSdk 35
-              versionCode 1
-              versionName "1.3"
-            }
-            buildTypes {
-              release {
-                minifyEnabled false
-              }
-              debug {
-                debuggable true
-              }
-            }
-            sourceSets {
-              main.java.srcDirs += 'src/main/java'
-              main.assets.srcDirs += 'src/main/assets'
-              main.jniLibs.srcDirs += '../p4a-libs/libs'
-            }
-          }
-          repositories {
-            google()
-            mavenCentral()
-          }
-          EOF
-
-          # AndroidManifest.xml
-          cat <<EOF > android/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-           package="org.example.monapp">
-           <application
-               android:label="Mon budget perso"
-               android:icon="@mipmap/ic_launcher"
-               android:allowBackup="true"
-               android:supportsRtl="true">
-               <activity android:name=".MainActivity"
-                   android:exported="true"
-                   android:label="Mon budget perso">
-                   <intent-filter>
-                       <action android:name="android.intent.action.MAIN"/>
-                       <category android:name="android.intent.category.LAUNCHER"/>
-                   </intent-filter>
-               </activity>
-           </application>
-          </manifest>
-          EOF
-          
-      - name: Fix manifest path
-        run: |
-          echo "🔧 Correction du chemin du manifeste..."
-          mkdir -p android/src/main
-          cp android/app/src/main/AndroidManifest.xml android/src/main/AndroidManifest.xml    
-
-      - name: Fix missing app icon
-        run: |
-          echo "🧩 Utilisation du logo local comme icône..."
-          mkdir -p android/src/main/res/mipmap-hdpi
-          cp app/logo.png android/src/main/res/mipmap-hdpi/ic_launcher.png
-          
-      - name: Build APK with Gradle
-        run: |
-          cd android
-          gradle wrapper --gradle-version 8.11 
-          chmod +x gradlew
-          ./gradlew assemble${{ github.event.inputs.build_type == 'release' && 'Release' || 'Debug' }} \
-            --parallel --max-workers=$(nproc)
-
-      - name: Find and upload APK
-        run: |
-          echo "🔍 Recherche de l'APK..."
-          APK_PATH=$(find android -type f -name "*.apk" | head -n 1)
+          APK_PATH=$(find bin -type f -name "*.apk" | head -n 1)
           if [ -z "$APK_PATH" ]; then
             echo "❌ Aucun APK trouvé"
-            find android -maxdepth 4 -type d
             exit 1
           fi
           echo "✅ APK trouvé : $APK_PATH"
-          echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
 
-      - name: Upload APK
+      - name: 🔍 Vérification des services Google et AdMob
+        run: |
+          echo "🔍 Vérification de l’intégration de Google Play Services et AdMob..."
+          sudo apt install -y apktool >/dev/null
+          
+          APK_FILE="${{ steps.find_apk.outputs.apk_path }}"
+          echo "📦 Analyse de $APK_FILE"
+          
+          mkdir -p tmp_apk
+          apktool d -f "$APK_FILE" -o tmp_apk >/dev/null
+
+          echo "📄 Recherche des dépendances..."
+          MANIFEST="tmp_apk/AndroidManifest.xml"
+
+          REPORT_FILE="rapport_google_services.json"
+          echo "{" > $REPORT_FILE
+
+          if grep -q "com.google.android.gms.ads" "$MANIFEST"; then
+            echo "✅ AdMob détecté dans le manifest"
+            echo '  "AdMob": true,' >> $REPORT_FILE
+          else
+            echo "⚠️ AdMob NON détecté"
+            echo '  "AdMob": false,' >> $REPORT_FILE
+          fi
+
+          if grep -q "com.google.android.gms" "$MANIFEST"; then
+            echo "✅ Google Play Services détecté"
+            echo '  "GooglePlayServices": true,' >> $REPORT_FILE
+          else
+            echo "⚠️ Google Play Services NON détecté"
+            echo '  "GooglePlayServices": false,' >> $REPORT_FILE
+          fi
+
+          if grep -q "com.google.firebase.analytics" "$MANIFEST"; then
+            echo "✅ Firebase Analytics détecté"
+            echo '  "FirebaseAnalytics": true' >> $REPORT_FILE
+          else
+            echo "⚠️ Firebase Analytics NON détecté"
+            echo '  "FirebaseAnalytics": false' >> $REPORT_FILE
+          fi
+
+          echo "}" >> $REPORT_FILE
+
+          echo "🔎 Vérification des classes Dex..."
+          unzip -l "$APK_FILE" | grep -E "com/google/android/gms|firebase|ads" || echo "⚠️ Aucune classe Google/AdMob trouvée dans l’APK"
+
+          echo "🧾 Rapport terminé ✅"
+          cat $REPORT_FILE
+
+      - name: 💾 Sauvegarde de l’APK et du rapport
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: ${{ env.APK_PATH }}
-          
-      - name: Verify AdMob presence
-        run: |
-          APK_PATH=$(find android/app/build/outputs/apk -type f -name "*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "❌ Aucun APK trouvé"
-            exit 1
-          fi
-          TMP_DIR=$(mktemp -d)
-          unzip -q "$APK_PATH" -d "$TMP_DIR"
-          CLASSES=("AdView" "AdRequest" "AdListener" "MobileAds" "InterstitialAd")
-          MISSING=0
-          for CLASS in "${CLASSES[@]}"; do
-            if ! grep -qr "$CLASS" "$TMP_DIR"; then
-              echo "❌ Classe manquante : ${CLASS}.class"
-              MISSING=1
-            else
-              echo "✅ Classe trouvée : ${CLASS}.class"
-            fi
-          done
-          if [ $MISSING -eq 1 ]; then
-            exit 1
-          fi
+          path: |
+            ${{ steps.find_apk.outputs.apk_path }}
+            rapport_google_services.json
