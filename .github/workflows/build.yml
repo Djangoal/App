@@ -207,6 +207,12 @@ jobs:
            </application>
           </manifest>
           EOF
+          
+      - name: Fix manifest path
+        run: |
+          echo "🔧 Correction du chemin du manifeste..."
+          mkdir -p android/src/main
+          cp android/app/src/main/AndroidManifest.xml android/src/main/AndroidManifest.xml    
 
       - name: Build APK with Gradle
         run: |
