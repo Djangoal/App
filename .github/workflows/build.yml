@@ -72,7 +72,7 @@ jobs:
             --copy-libs
           mkdir -p android/p4a-libs/libs
           cp -r ~/.local/share/python-for-android/dists/p4a-libs/libs/* android/p4a-libs/libs/
-
+    
       - name: Clean and recreate Android project
         run: |
           echo "🧹 Suppression du dossier android existant..."
@@ -81,8 +81,6 @@ jobs:
           mkdir -p android/app/src/main/res
           mkdir -p android/app/libs
           mkdir -p android/gradle/wrapper
-          mkdir -p android/src/main
-
           cd android
 
           # settings.gradle avec pluginManagement
@@ -141,13 +139,15 @@ jobs:
           }
           EOF
 
+          # Propriétés Gradle
           echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
 
-          # Création du manifest minimal
-          cat <<EOF > android/src/main/AndroidManifest.xml
+          # Création du manifest minimal (correct après cd android)
+          mkdir -p src/main
+          cat <<EOF > src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.example.monapp">
-
+ 
           <application
           android:label="Mon budget perso"
           android:icon="@mipmap/ic_launcher"
@@ -165,9 +165,8 @@ jobs:
 
           </manifest>
           EOF
-
           echo "✅ Projet Android initialisé avec succès."
-
+      
       - name: Build APK with Gradle
         run: |
           cd android
