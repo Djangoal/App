@@ -139,13 +139,13 @@ jobs:
           }
           EOF
 
-          # Copie de l’icône vers mipmap
+          # --- 🔧 Copie de l’icône dans toutes les densités ---
           echo "🧩 Copie de l’icône vers mipmap..."
-          mkdir -p app/src/main/res/mipmap-mdpi
-          cp ../app/logo.png app/src/main/res/mipmap-mdpi/ic_launcher.png || echo "⚠️ Aucune icône logo.png trouvée dans app/, étape ignorée."
-          # Propriétés Gradle
-          echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
-
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p app/src/main/res/mipmap-$density
+            cp $GITHUB_WORKSPACE/app/logo.png app/src/main/res/mipmap-$density/ic_launcher.png || echo "⚠️ logo.png introuvable"
+          done
+          
           # Création du manifest minimal (correct après cd android)
           mkdir -p src/main
           cat <<EOF > src/main/AndroidManifest.xml
