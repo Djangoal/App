@@ -25,7 +25,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # ===== Cache Gradle =====
+      # Cache Gradle
       - name: Cache Gradle
         uses: actions/cache@v3
         with:
@@ -33,17 +33,16 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/build.gradle') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
+          restore-keys: gradle-${{ runner.os }}-
 
-      # ===== Cache Python-for-Android =====
+      # Cache P4A
       - name: Cache Python-for-Android
         uses: actions/cache@v3
         with:
           path: ~/.local/share/python-for-android
           key: p4a-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
 
-      # ===== Cache virtualenv =====
+      # Cache virtualenv
       - name: Cache Python venv
         uses: actions/cache@v3
         with:
@@ -96,25 +95,31 @@ jobs:
             --dist-name=p4a-libs \
             --copy-libs
           mkdir -p android/p4a-libs/libs
-          cp -r ~/.local/share/python-for-android/dists/p4a-libs/libs/* android/p4a-libs/libs/
+          if [ -d ~/.local/share/python-for-android/dists/p4a-libs/libs ]; then
+            cp -r ~/.local/share/python-for-android/dists/p4a-libs/libs/* android/p4a-libs/libs/
+          else
+            echo "⚠️ Aucun fichier dans p4a-libs/libs"
+          fi
 
       - name: Clean and recreate Android project
         run: |
-          echo "🧹 Suppression du dossier android existant..."
           rm -rf android
-
-          echo "⚙️ Création de la structure du projet Android..."
           mkdir -p android/app/src/main/java/org/example/monapp
           mkdir -p android/app/src/main/res/mipmap-mdpi
           mkdir -p android/app/src/main/assets
           mkdir -p android/gradle/wrapper
 
-          # Copier tous les fichiers de l'app dans assets
+          # Copier les fichiers app dans assets
           if [ -d "$GITHUB_WORKSPACE/app" ]; then
             cp -r $GITHUB_WORKSPACE/app/* android/app/src/main/assets/ || echo "⚠️ Pas de fichiers à copier dans assets"
           fi
 
-          # Copier le logo ou créer un icône par défaut
+          # Ajouter un placeholder si assets vide
+          if [ -z "$(ls -A android/app/src/main/assets)" ]; then
+            touch android/app/src/main/assets/.placeholder
+          fi
+
+          # Copier logo ou créer un icône vide
           if [ -f "$GITHUB_WORKSPACE/app/logo.png" ]; then
             cp $GITHUB_WORKSPACE/app/logo.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
           else
@@ -206,10 +211,8 @@ jobs:
       - name: Build APK with Gradle
         run: |
           cd android
-          echo "⚙️ Génération du wrapper Gradle..."
           gradle wrapper --gradle-version 8.11 --gradle-distribution-type all
           chmod +x gradlew
-          echo "🚀 Lancement du build..."
           ./gradlew assemble${{ github.event.inputs.build_type == 'release' && 'Release' || 'Debug' }} \
             --parallel --max-workers=$(nproc)
 
@@ -221,16 +224,14 @@ jobs:
 
       - name: Verify AdMob presence
         run: |
-          echo "=== Vérification des classes AdMob spécifiques dans l'APK ==="
           APK_PATH=$(find android/app/build/outputs/apk -type f -name "*.apk" | head -n 1)
           if [ -z "$APK_PATH" ]; then
-            echo "❌ Aucun APK trouvé pour vérification."
+            echo "❌ Aucun APK trouvé"
             exit 1
           fi
-          echo "→ APK trouvé : $APK_PATH"
           TMP_DIR=$(mktemp -d)
           unzip -q "$APK_PATH" -d "$TMP_DIR"
-          declare -a CLASSES=("AdView" "AdRequest" "AdListener" "MobileAds" "InterstitialAd")
+          CLASSES=("AdView" "AdRequest" "AdListener" "MobileAds" "InterstitialAd")
           MISSING=0
           for CLASS in "${CLASSES[@]}"; do
             if ! grep -qr "$CLASS" "$TMP_DIR"; then
@@ -241,8 +242,5 @@ jobs:
             fi
           done
           if [ $MISSING -eq 1 ]; then
-            echo "⚠️ Certaines classes AdMob sont absentes de l'APK !"
             exit 1
-          else
-            echo "🎉 Toutes les classes AdMob nécessaires sont présentes."
           fi
