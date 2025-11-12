@@ -25,7 +25,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # ===== Cache pour Gradle =====
+      # ===== Cache Gradle =====
       - name: Cache Gradle
         uses: actions/cache@v3
         with:
@@ -36,14 +36,14 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
-      # ===== Cache pour Python-for-Android =====
+      # ===== Cache Python-for-Android =====
       - name: Cache Python-for-Android
         uses: actions/cache@v3
         with:
           path: ~/.local/share/python-for-android
           key: p4a-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
 
-      # ===== Cache pour virtualenv =====
+      # ===== Cache virtualenv =====
       - name: Cache Python venv
         uses: actions/cache@v3
         with:
@@ -109,7 +109,7 @@ jobs:
           mkdir -p android/app/src/main/assets
           mkdir -p android/gradle/wrapper
 
-          # Copier les fichiers app dans assets
+          # Copier tous les fichiers de l'app dans assets
           if [ -d "$GITHUB_WORKSPACE/app" ]; then
             cp -r $GITHUB_WORKSPACE/app/* android/app/src/main/assets/ || echo "⚠️ Pas de fichiers à copier dans assets"
           fi
