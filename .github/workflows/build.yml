@@ -139,12 +139,10 @@ jobs:
           }
           EOF
 
+          # Copie de l’icône vers mipmap
           echo "🧩 Copie de l’icône vers mipmap..."
           mkdir -p app/src/main/res/mipmap-mdpi
           cp ../app/logo.png app/src/main/res/mipmap-mdpi/ic_launcher.png || echo "⚠️ Aucune icône logo.png trouvée dans app/, étape ignorée."
-
-          echo "✅ Projet Android initialisé avec succès."
-
           # Propriétés Gradle
           echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
 
