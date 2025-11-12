@@ -60,7 +60,7 @@ jobs:
             --private app \
             --package=org.example.monapp \
             --name="Mon budget perso" \
-            --version=1.3 \
+            --version=1.5 \
             --bootstrap=sdl2 \
             --requirements=python3,kivy,android \
             --sdk_dir=$SDK_DIR \
@@ -107,7 +107,7 @@ jobs:
           compileSdk 35
           defaultConfig {
           applicationId "org.example.monapp"
-          minSdk 21
+          minSdk 23
           targetSdk 35
           versionCode 1
           versionName "1.3"
