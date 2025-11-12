@@ -216,9 +216,9 @@ jobs:
 
       - name: Fix missing app icon
         run: |
-          echo "🧩 Ajout d'une icône par défaut..."
+          echo "🧩 Utilisation du logo local comme icône..."
           mkdir -p android/src/main/res/mipmap-hdpi
-          wget -O android/src/main/res/mipmap-hdpi/ic_launcher.png https://upload.wikimedia.org/wikipedia/commons/3/3c/Kivy_logo.png
+          cp app/logo.png android/src/main/res/mipmap-hdpi/ic_launcher.png
           
       - name: Build APK with Gradle
         run: |
