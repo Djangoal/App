@@ -218,7 +218,7 @@ jobs:
         run: |
           echo "🧩 Ajout d'une icône par défaut..."
           mkdir -p android/src/main/res/mipmap-hdpi
-          wget -O android/src/main/res/mipmap-hdpi/ic_launcher.png https://raw.githubusercontent.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex-image/trex-icon.png
+          wget -O android/src/main/res/mipmap-hdpi/ic_launcher.png https://upload.wikimedia.org/wikipedia/commons/3/3c/Kivy_logo.png
           
       - name: Build APK with Gradle
         run: |
