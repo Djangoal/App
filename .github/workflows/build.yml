@@ -228,14 +228,24 @@ jobs:
           ./gradlew assemble${{ github.event.inputs.build_type == 'release' && 'Release' || 'Debug' }} \
             --parallel --max-workers=$(nproc)
 
+      - name: Find and upload APK
+        run: |
+          echo "🔍 Recherche de l'APK..."
+          APK_PATH=$(find android -type f -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK trouvé"
+            find android -maxdepth 4 -type d
+            exit 1
+          fi
+          echo "✅ APK trouvé : $APK_PATH"
+          echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: |
-            android/app/build/outputs/apk/**/*.apk
-            android/build/outputs/apk/**/*.apk
-            
+          path: ${{ env.APK_PATH }}
+          
       - name: Verify AdMob presence
         run: |
           APK_PATH=$(find android/app/build/outputs/apk -type f -name "*.apk" | head -n 1)
