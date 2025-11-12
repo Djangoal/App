@@ -79,10 +79,40 @@ jobs:
          rm -rf android
 
          echo "⚙️ Création de la structure du projet Android..."
-         # Créer les dossiers de base
          mkdir -p android/app/src/main/java/org/example/monapp
          mkdir -p android/app/src/main/res/mipmap-mdpi
+         mkdir -p android/app/src/main/assets
          mkdir -p android/gradle/wrapper
+
+         # Copier tous les fichiers de l'app dans assets
+         if [ -d "$GITHUB_WORKSPACE/app" ]; then
+         cp -r $GITHUB_WORKSPACE/app/* android/app/src/main/assets/ || echo "⚠️ Pas de fichiers à copier dans assets"
+         else
+         echo "⚠️ Dossier app non trouvé"
+         fi
+
+         # Copier le logo ou créer un fichier vide par défaut
+         if [ -f "$GITHUB_WORKSPACE/app/logo.png" ]; then
+         cp $GITHUB_WORKSPACE/app/logo.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+         else
+         echo "⚠️ Logo non trouvé, création d'un icône par défaut"
+         touch android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+         fi
+
+         # Créer un fichier Java minimal pour que Gradle ne râle pas
+         cat <<EOF > android/app/src/main/java/org/example/monapp/MainActivity.java
+         package org.example.monapp;
+
+         import android.app.Activity;
+         import android.os.Bundle;
+
+         public class MainActivity extends Activity {
+         @Override
+         protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+         }
+         }
+         EOF
 
          # Créer settings.gradle
          echo "⚙️ Création du fichier settings.gradle..."
@@ -94,18 +124,18 @@ jobs:
               gradlePluginPortal()
           }
           }
-         rootProject.name = "MonBudgetPerso"
-         include(":app")
-         EOF
+          rootProject.name = "MonBudgetPerso"
+          include(":app")
+          EOF
 
-         # Créer build.gradle
-         echo "⚙️ Création du fichier build.gradle..."
-         cat <<EOF > android/build.gradle
-         plugins {
+          # Créer build.gradle
+          echo "⚙️ Création du fichier build.gradle..."
+          cat <<EOF > android/build.gradle
+          plugins {
           id 'com.android.application' version '8.7.0' apply true
-         }
+          }
 
-         android {
+          android {
           namespace "org.example.monapp"
           compileSdk 35
 
@@ -128,19 +158,16 @@ jobs:
 
           sourceSets {
               main.java.srcDirs += 'src/main/java'
-              main.assets.srcDirs += '../app'
+              main.assets.srcDirs += 'src/main/assets'
               main.jniLibs.srcDirs += '../p4a-libs/libs'
           }
-          }
+         }
 
-          repositories {
+         repositories {
           google()
           mavenCentral()
          }
          EOF
-
-         # Copier l'icône
-         cp $GITHUB_WORKSPACE/app/logo.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
 
          # Créer AndroidManifest.xml
          echo "⚙️ Création du manifeste Android..."
@@ -165,6 +192,7 @@ jobs:
 
          </manifest>
          EOF
+          
           
       - name: Build APK with Gradle
         run: |
