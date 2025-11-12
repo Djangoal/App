@@ -143,18 +143,16 @@ jobs:
           }
           EOF
 
-          echo "⚙️ Copie de l’icône dans les ressources Android..."
-          mkdir -p src/main/res/mipmap-mdpi
-          if [ -f ../app/logo.png ]; then
-              cp ../app/logo.png src/main/res/mipmap-mdpi/ic_launcher.png
-              echo "✅ Icône copiée : src/main/res/mipmap-mdpi/ic_launcher.png"
-          else
-              echo "⚠️ Aucune icône logo.png trouvée dans app/, étape ignorée."
-          fi
+          # Créer dossier app et hiérarchie
+          mkdir -p android/app/src/main/java/org/example/monapp
+          mkdir -p android/app/src/main/res/mipmap-mdpi
+          mkdir -p android/gradle/wrapper
 
-          echo "⚙️ Création du manifeste Android..."
-          mkdir -p src/main
-          cat <<EOF > src/main/AndroidManifest.xml
+          # Copier l'icône
+          cp $GITHUB_WORKSPACE/app/logo.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+
+          # Créer le manifeste
+          cat <<EOF > android/app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.example.monapp">
 
@@ -175,12 +173,6 @@ jobs:
 
           </manifest>
           EOF
-
-          echo "🧱 Configuration Gradle..."
-          echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
-
-          echo "✅ Projet Android initialisé avec succès."
-          
       - name: Build APK with Gradle
         run: |
           cd android
