@@ -75,104 +75,97 @@ jobs:
     
       - name: Clean and recreate Android project
         run: |
-          echo "🧹 Suppression du dossier android existant..."
-          rm -rf android
+         echo "🧹 Suppression du dossier android existant..."
+         rm -rf android
 
-          # Création de la structure du projet Android
-          mkdir -p android/src/main/java/org/example/monapp
-          mkdir -p android/src/main/res
-          mkdir -p android/gradle/wrapper
-          cd android
+         echo "⚙️ Création de la structure du projet Android..."
+         # Créer les dossiers de base
+         mkdir -p android/app/src/main/java/org/example/monapp
+         mkdir -p android/app/src/main/res/mipmap-mdpi
+         mkdir -p android/gradle/wrapper
 
-          echo "⚙️ Création du fichier settings.gradle..."
-          cat <<EOF > settings.gradle
-          pluginManagement {
+         # Créer settings.gradle
+         echo "⚙️ Création du fichier settings.gradle..."
+         cat <<EOF > android/settings.gradle
+         pluginManagement {
           repositories {
-          google()
-          mavenCentral()
-          gradlePluginPortal()
+              google()
+              mavenCentral()
+              gradlePluginPortal()
           }
           }
-          rootProject.name = "MonBudgetPerso"
-          include(":app")
-          EOF
+         rootProject.name = "MonBudgetPerso"
+         include(":app")
+         EOF
 
-          echo "⚙️ Création du fichier build.gradle..."
-          cat <<EOF > build.gradle
-          plugins {
+         # Créer build.gradle
+         echo "⚙️ Création du fichier build.gradle..."
+         cat <<EOF > android/build.gradle
+         plugins {
           id 'com.android.application' version '8.7.0' apply true
-          }
+         }
 
-          android {
+         android {
           namespace "org.example.monapp"
           compileSdk 35
 
           defaultConfig {
-          applicationId "org.example.monapp"
-          minSdk 23
-          targetSdk 35
-          versionCode 1
-          versionName "1.3"
+              applicationId "org.example.monapp"
+              minSdk 23
+              targetSdk 35
+              versionCode 1
+              versionName "1.3"
           }
 
           buildTypes {
-          release {
-            minifyEnabled false
-          }
-          debug {
-            debuggable true
-          }
+              release {
+                  minifyEnabled false
+              }
+              debug {
+                  debuggable true
+              }
           }
 
           sourceSets {
-          main.java.srcDirs += 'src/main/java'
-          main.assets.srcDirs += '../app'
-          main.jniLibs.srcDirs += '../p4a-libs/libs'
+              main.java.srcDirs += 'src/main/java'
+              main.assets.srcDirs += '../app'
+              main.jniLibs.srcDirs += '../p4a-libs/libs'
           }
           }
 
           repositories {
           google()
           mavenCentral()
-          }
+         }
+         EOF
 
-          dependencies {
-          implementation files('../app/libs/play-services-ads-24.3.0.aar')
-          implementation files('../app/libs/play-services-basement-18.5.0.aar')
-          implementation files('../app/libs/play-services-tasks-18.3.2.aar')
-          }
-          EOF
+         # Copier l'icône
+         cp $GITHUB_WORKSPACE/app/logo.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
 
-          # Créer dossier app et hiérarchie
-          mkdir -p android/app/src/main/java/org/example/monapp
-          mkdir -p android/app/src/main/res/mipmap-mdpi
-          mkdir -p android/gradle/wrapper
-
-          # Copier l'icône
-          cp $GITHUB_WORKSPACE/app/logo.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-
-          # Créer le manifeste
-          cat <<EOF > android/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+         # Créer AndroidManifest.xml
+         echo "⚙️ Création du manifeste Android..."
+         cat <<EOF > android/app/src/main/AndroidManifest.xml
+         <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.example.monapp">
 
           <application
-          android:label="Mon budget perso"
-          android:icon="@mipmap/ic_launcher"
-          android:allowBackup="true"
-          android:supportsRtl="true">
-          <activity android:name=".MainActivity"
-            android:exported="true"
-            android:label="Mon budget perso">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-          </activity>
+              android:label="Mon budget perso"
+              android:icon="@mipmap/ic_launcher"
+              android:allowBackup="true"
+              android:supportsRtl="true">
+              <activity android:name=".MainActivity"
+                  android:exported="true"
+                  android:label="Mon budget perso">
+                  <intent-filter>
+                      <action android:name="android.intent.action.MAIN"/>
+                      <category android:name="android.intent.category.LAUNCHER"/>
+                  </intent-filter>
+              </activity>
           </application>
 
-          </manifest>
-          EOF
+         </manifest>
+         EOF
+          
       - name: Build APK with Gradle
         run: |
           cd android
