@@ -18,6 +18,7 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
+      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
@@ -28,7 +29,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
-    
+
     - name: Setup Python & python-for-android
       run: |
         python3 -m venv venv
@@ -73,30 +74,21 @@ jobs:
         mkdir -p android/p4a-libs/libs
         cp -r ~/.local/share/python-for-android/dists/p4a-libs/libs/* android/p4a-libs/libs/
 
-    - name: Clean and re-init Gradle
+    - name: Clean and recreate Android project
       run: |
         echo "🧹 Suppression du dossier android existant..."
         rm -rf android
-        mkdir android
+        mkdir -p android/app/src/main/java/org/example/monapp
+        mkdir -p android/app/src/main/res
+        mkdir -p android/app/libs
+        mkdir -p android/gradle/wrapper
+
         cd android
-        gradle init --type basic --dsl groovy --project-name monapp --package org.example.monapp --overwrite
+        echo "rootProject.name = 'MonBudgetPerso'" > settings.gradle
 
-    - name: Create Gradle project files
-      run: |
-        cd android
-        mkdir -p app/src/main/java/org/example/monapp
-        mkdir -p app/src/main/res
-        mkdir -p app/libs
-        mkdir -p gradle/wrapper
-
-        cat <<EOF > settings.gradle
-        rootProject.name = "MonBudgetPerso"
-        include(":app")
-        EOF
-
-        cat <<EOF > app/build.gradle
+        cat <<EOF > build.gradle
         plugins {
-            id 'com.android.application'
+            id 'com.android.application' version '8.7.0' apply true
         }
 
         android {
@@ -122,29 +114,19 @@ jobs:
 
             sourceSets {
                 main.java.srcDirs += 'src/main/java'
-                main.assets.srcDirs += '../../app'
-                main.jniLibs.srcDirs += '../../p4a-libs/libs'
+                main.assets.srcDirs += '../app'
+                main.jniLibs.srcDirs += '../p4a-libs/libs'
             }
         }
 
         dependencies {
-            implementation files('../../app/libs/play-services-ads-24.3.0.aar')
-            implementation files('../../app/libs/play-services-basement-18.5.0.aar')
-            implementation files('../../app/libs/play-services-tasks-18.3.2.aar')
+            implementation files('../app/libs/play-services-ads-24.3.0.aar')
+            implementation files('../app/libs/play-services-basement-18.5.0.aar')
+            implementation files('../app/libs/play-services-tasks-18.3.2.aar')
         }
         EOF
 
-        cat <<EOF > build.gradle
-        allprojects {
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-        EOF
-
-        gradle wrapper
-        chmod +x gradlew
+        echo "✅ Projet Android initialisé avec succès."
 
     - name: Build APK with Gradle
       run: |
