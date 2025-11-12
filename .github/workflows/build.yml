@@ -18,7 +18,6 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
@@ -80,22 +79,24 @@ jobs:
         rm -rf android
         mkdir android
         cd android
-        gradle init --type basic --dsl groovy --project-name monapp --package org.example.monapp
-        
-    - name: Create Gradle project
+        gradle init --type basic --dsl groovy --project-name monapp --package org.example.monapp --overwrite
+
+    - name: Create Gradle project files
       run: |
-        mkdir -p android/app/src/main/java/org/example/monapp
-        mkdir -p android/app/src/main/res
-        mkdir -p android/app/libs
-        mkdir -p android/gradle/wrapper
         cd android
+        mkdir -p app/src/main/java/org/example/monapp
+        mkdir -p app/src/main/res
+        mkdir -p app/libs
+        mkdir -p gradle/wrapper
 
-        gradle init --type basic
-        echo "rootProject.name = 'MonBudgetPerso'" > settings.gradle
+        cat <<EOF > settings.gradle
+        rootProject.name = "MonBudgetPerso"
+        include(":app")
+        EOF
 
-        cat <<EOF > build.gradle
+        cat <<EOF > app/build.gradle
         plugins {
-            id 'com.android.application' version '8.7.0' apply true
+            id 'com.android.application'
         }
 
         android {
@@ -121,19 +122,30 @@ jobs:
 
             sourceSets {
                 main.java.srcDirs += 'src/main/java'
-                main.assets.srcDirs += '../app'
-                main.jniLibs.srcDirs += '../p4a-libs/libs'
+                main.assets.srcDirs += '../../app'
+                main.jniLibs.srcDirs += '../../p4a-libs/libs'
             }
         }
 
         dependencies {
-            implementation files('../app/libs/play-services-ads-24.3.0.aar')
-            implementation files('../app/libs/play-services-basement-18.5.0.aar')
-            implementation files('../app/libs/play-services-tasks-18.3.2.aar')
+            implementation files('../../app/libs/play-services-ads-24.3.0.aar')
+            implementation files('../../app/libs/play-services-basement-18.5.0.aar')
+            implementation files('../../app/libs/play-services-tasks-18.3.2.aar')
         }
         EOF
 
-    
+        cat <<EOF > build.gradle
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        EOF
+
+        gradle wrapper
+        chmod +x gradlew
+
     - name: Build APK with Gradle
       run: |
         cd android
