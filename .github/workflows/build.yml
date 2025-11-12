@@ -231,9 +231,11 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: mon-budget-${{ github.event.inputs.build_type }}
-          path: android/app/build/outputs/apk/**/*.apk
-
+          name: app-release
+          path: |
+            android/app/build/outputs/apk/**/*.apk
+            android/build/outputs/apk/**/*.apk
+            
       - name: Verify AdMob presence
         run: |
           APK_PATH=$(find android/app/build/outputs/apk -type f -name "*.apk" | head -n 1)
