@@ -77,13 +77,14 @@ jobs:
         run: |
           echo "🧹 Suppression du dossier android existant..."
           rm -rf android
-          mkdir -p android/app/src/main/java/org/example/monapp
-          mkdir -p android/app/src/main/res
-          mkdir -p android/app/libs
+
+          # Création de la structure du projet Android
+          mkdir -p android/src/main/java/org/example/monapp
+          mkdir -p android/src/main/res
           mkdir -p android/gradle/wrapper
           cd android
 
-          # settings.gradle avec pluginManagement
+          echo "⚙️ Création du fichier settings.gradle..."
           cat <<EOF > settings.gradle
           pluginManagement {
           repositories {
@@ -96,7 +97,7 @@ jobs:
           include(":app")
           EOF
 
-          # build.gradle avec dépôts Google & MavenCentral
+          echo "⚙️ Création du fichier build.gradle..."
           cat <<EOF > build.gradle
           plugins {
           id 'com.android.application' version '8.7.0' apply true
@@ -105,6 +106,7 @@ jobs:
           android {
           namespace "org.example.monapp"
           compileSdk 35
+
           defaultConfig {
           applicationId "org.example.monapp"
           minSdk 23
@@ -112,6 +114,7 @@ jobs:
           versionCode 1
           versionName "1.3"
           }
+
           buildTypes {
           release {
             minifyEnabled false
@@ -120,6 +123,7 @@ jobs:
             debuggable true
           }
           }
+
           sourceSets {
           main.java.srcDirs += 'src/main/java'
           main.assets.srcDirs += '../app'
@@ -139,19 +143,21 @@ jobs:
           }
           EOF
 
-          # --- 🔧 Copie de l’icône dans toutes les densités ---
-          echo "🧩 Copie de l’icône vers mipmap..."
-          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
-            mkdir -p app/src/main/res/mipmap-$density
-            cp $GITHUB_WORKSPACE/app/logo.png app/src/main/res/mipmap-$density/ic_launcher.png || echo "⚠️ logo.png introuvable"
-          done
-          
-          # Création du manifest minimal (correct après cd android)
+          echo "⚙️ Copie de l’icône dans les ressources Android..."
+          mkdir -p src/main/res/mipmap-mdpi
+          if [ -f ../app/logo.png ]; then
+              cp ../app/logo.png src/main/res/mipmap-mdpi/ic_launcher.png
+              echo "✅ Icône copiée : src/main/res/mipmap-mdpi/ic_launcher.png"
+          else
+              echo "⚠️ Aucune icône logo.png trouvée dans app/, étape ignorée."
+          fi
+
+          echo "⚙️ Création du manifeste Android..."
           mkdir -p src/main
           cat <<EOF > src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.example.monapp">
- 
+
           <application
           android:label="Mon budget perso"
           android:icon="@mipmap/ic_launcher"
@@ -169,8 +175,12 @@ jobs:
 
           </manifest>
           EOF
+
+          echo "🧱 Configuration Gradle..."
+          echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
+
           echo "✅ Projet Android initialisé avec succès."
-      
+          
       - name: Build APK with Gradle
         run: |
           cd android
