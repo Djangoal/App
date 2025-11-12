@@ -84,59 +84,59 @@ jobs:
         cd android
         # settings.gradle avec pluginManagement
         cat <<EOF > settings.gradle
-pluginManagement {
-    repositories {
+        pluginManagement {
+        repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
-    }
-}
-rootProject.name = "MonBudgetPerso"
-include(":app")
-EOF
+        }
+        }
+        rootProject.name = "MonBudgetPerso"
+        include(":app")
+        EOF
 
         # build.gradle avec dépôts Google & MavenCentral
         cat <<EOF > build.gradle
-plugins {
-    id 'com.android.application' version '8.7.0' apply true
-}
+        plugins {
+        id 'com.android.application' version '8.7.0' apply true
+        }
 
-android {
-    namespace "org.example.monapp"
-    compileSdk 35
-    defaultConfig {
+        android {
+        namespace "org.example.monapp"
+        compileSdk 35
+        defaultConfig {
         applicationId "org.example.monapp"
         minSdk 21
         targetSdk 35
         versionCode 1
         versionName "1.3"
-    }
-    buildTypes {
+        }
+        buildTypes {
         release {
             minifyEnabled false
         }
         debug {
             debuggable true
         }
-    }
-    sourceSets {
+        }
+        sourceSets {
         main.java.srcDirs += 'src/main/java'
         main.assets.srcDirs += '../app'
         main.jniLibs.srcDirs += '../p4a-libs/libs'
-    }
-}
+        }
+        }
 
-repositories {
-    google()
-    mavenCentral()
-}
+        repositories {
+        google()
+        mavenCentral()
+        }
 
-dependencies {
-    implementation files('../app/libs/play-services-ads-24.3.0.aar')
-    implementation files('../app/libs/play-services-basement-18.5.0.aar')
-    implementation files('../app/libs/play-services-tasks-18.3.2.aar')
-}
-EOF
+        dependencies {
+        implementation files('../app/libs/play-services-ads-24.3.0.aar')
+        implementation files('../app/libs/play-services-basement-18.5.0.aar')
+        implementation files('../app/libs/play-services-tasks-18.3.2.aar')
+        }
+        EOF
 
         echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
         echo "✅ Projet Android initialisé avec succès."
