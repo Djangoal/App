@@ -100,8 +100,8 @@ jobs:
           --android_api=35 \
           --orientation=portrait \
           $ADD_AARS \
-          --extra-manifest-xml=$GITHUB_WORKSPACE/app/extra_manifest.xml \
-          --use-androidx"
+          --extra-manifest-xml=$GITHUB_WORKSPACE/app/extra_manifest.xml"
+          
 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           echo "=== Compilation RELEASE ==="
