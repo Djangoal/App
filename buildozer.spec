@@ -51,9 +51,7 @@ fullscreen = 0
 android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
 # (ajout des AAR Google Play Services)
-android.add_aar = app/libs/play-services-basement-18.5.0.aar
-android.add_aar = app/libs/play-services-tasks-18.3.2.aar
-android.add_aar = app/libs/play-services-ads-24.3.0.aar
+android.add_aar = app/libs/play-services-basement-18.5.0.aar, app/libs/play-services-tasks-18.3.2.aar, app/libs/play-services-ads-24.3.0.aar
 
 # (si tu veux inclure un manifeste personnalisé)
 android.manifest = app/templates/AndroidManifest.tmpl.xml
