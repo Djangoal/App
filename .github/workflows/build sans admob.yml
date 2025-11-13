@@ -1,4 +1,4 @@
-name: Build APK (unsigned)
+name: Build APK sans admob(unsigned)
 
 on:
   workflow_dispatch:
