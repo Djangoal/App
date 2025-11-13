@@ -72,10 +72,10 @@ android.enable_legacy_external_storage = True
 # (support des écrans)
 android.presplash_color = #FFFFFF
 
-
 [buildozer]
 android.sdk_path = ~/.buildozer/android/platform/android-sdk
 android.ndk_path = ~/.buildozer/android/platform/android-sdk/ndk/25.2.9519653
+android.cmdline_tools = ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
 
 # (acceptation des licences Android)
 android.accept_sdk_license = True
