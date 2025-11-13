@@ -44,9 +44,6 @@ android.ndk = 25b
 # (nom du répertoire de distribution p4a)
 dist_name = monapp
 
-# (nom de la fenêtre sur desktop, facultatif)
-fullscreen = 0
-
 # (métadonnée AdMob)
 android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
@@ -66,9 +63,6 @@ android.allow_backup = True
 # (version du NDK explicitement utilisée)
 android.ndk_path = ~/android-sdk/ndk/25.2.9519653
 
-# (nom d’affichage)
-title = Mon budget perso
-
 # (exécution du code principal)
 entrypoint = main.py
 
@@ -86,20 +80,15 @@ android.sdk_path = ~/android-sdk
 # (chemin du NDK)
 android.ndk_path = ~/android-sdk/ndk/25.2.9519653
 
-# (répertoire du SDK tools)
+# (acceptation des licences Android)
 android.accept_sdk_license = True
 
-# (outil de compilation)
+# (niveau de log)
 log_level = 2
 
-# (répertoires temporaires)
+# (répertoires de build)
 build_dir = .buildozer
 bin_dir = bin
 
-# (utiliser le mode release ou debug)
-# buildozer android debug
-# ou
-# buildozer android release
-
-# (auto)
+# (avertir si exécuté en root)
 warn_on_root = 1
