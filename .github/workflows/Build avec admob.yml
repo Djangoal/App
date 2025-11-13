@@ -62,9 +62,16 @@ jobs:
 
     - name: Install local AdMob recipe
       run: |
-        echo "=== Installation de la recipe AdMob ==="
+        echo "=== Copie de la recipe AdMob vers le dossier global p4a ==="
         mkdir -p ~/.local/share/python-for-android/recipes
-        cp -r app/recipes/admob ~/.local/share/python-for-android/recipes/
+        cp -r recipes/admob ~/.local/share/python-for-android/recipes/
+        echo "=== Contenu du dossier AdMob ==="
+        ls -l ~/.local/share/python-for-android/recipes/admob
+
+    - name: Vérification de la recipe AdMob
+      run: |
+        echo "=== Vérification de la présence de la variable 'recipe' ==="
+        python3 -c "import pythonforandroid.recipes.admob; print('recipe' in dir(pythonforandroid.recipes.admob))"
 
     - name: Build APK
       run: |
@@ -78,7 +85,6 @@ jobs:
         cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "=== Compilation RELEASE ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -106,7 +112,6 @@ jobs:
           cp "$APK_PATH" "$FINAL_APK"
           $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
         else
-          echo "=== Compilation DEBUG ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
