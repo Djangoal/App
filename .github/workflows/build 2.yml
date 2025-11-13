@@ -76,17 +76,32 @@ jobs:
 
       - name: Add AdMob Gradle dependency
         run: |
-          echo "Ajout du service AdMob dans le projet Gradle..."
+          echo "🔧 Ajout d'AdMob proprement dans build.gradle..."
           DIST_PATH="$HOME/.local/share/python-for-android/dists/monapp_release"
           BUILD_GRADLE="$DIST_PATH/build.gradle"
-          if [ -f "$BUILD_GRADLE" ]; then
-            echo "🔧 Insertion propre de la dépendance dans le bloc dependencies..."
-            sed -i "/dependencies {/a\    implementation 'com.google.android.gms:play-services-ads:24.3.0'" "$BUILD_GRADLE"
-            echo "✅ Dépendance ajoutée avec succès."
-          else
+
+          if [ ! -f "$BUILD_GRADLE" ]; then
             echo "❌ build.gradle introuvable !"
             exit 1
           fi
+
+          # Vérifie si la dépendance est déjà là
+          if grep -q "play-services-ads" "$BUILD_GRADLE"; then
+            echo "✅ Dépendance déjà présente."
+          else
+            echo "📦 Injection dans le bloc dependencies..."
+            awk '
+              /dependencies *{/ {
+                print;
+                print "    implementation '\''com.google.android.gms:play-services-ads:24.3.0'\''";
+                next
+              }
+              { print }
+            ' "$BUILD_GRADLE" > "$BUILD_GRADLE.tmp" && mv "$BUILD_GRADLE.tmp" "$BUILD_GRADLE"
+          fi
+
+          echo "🔍 Vérification du build.gradle :"
+          head -n 20 "$BUILD_GRADLE"
 
       - name: Build release APK with Gradle
         run: |
