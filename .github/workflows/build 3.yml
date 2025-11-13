@@ -54,12 +54,12 @@ jobs:
 
     - name: Cleanup previous builds
       run: |
-        echo "Cleaning old builds..."
-        rm -rf .buildozer dist build bin
-        ./venv/bin/p4a clean_builds || true
-        rm -rf ~/.local/share/python-for-android/dists/monapp_release
-        rm -rf ~/.local/share/python-for-android/dists/monapp_debug
-        echo "Environment ready"
+       echo "Cleaning old builds..."
+       rm -rf .buildozer dist build bin
+       ./venv/bin/p4a clean_builds || true
+       rm -rf ~/.local/share/python-for-android/dists/monapp_release
+       rm -rf ~/.local/share/python-for-android/dists/monapp_debug
+       echo "Environment ready"
 
     - name: Build APK
       run: |
