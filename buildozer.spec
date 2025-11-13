@@ -74,8 +74,8 @@ android.presplash_color = #FFFFFF
 
 
 [buildozer]
-# (chemin du SDK)
-android.sdk_path = ~/android-sdk
+android.sdk_path = ~/.buildozer/android/platform/android-sdk
+android.ndk_path = ~/.buildozer/android/platform/android-sdk/ndk/25.2.9519653
 
 # (chemin du NDK)
 android.ndk_path = ~/android-sdk/ndk/25.2.9519653
