@@ -20,6 +20,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+       python-version: "3.10"
+    
     - name: Install system dependencies
       run: |
         sudo apt-get update
@@ -34,10 +39,6 @@ jobs:
           libtool libtool-bin \
           automake autoconf pkg-config m4
 
-    - name: Install distutils for Python 3.12+
-      run: |
-       pip install setuptools
-       pip install distutils-py
     
     - name: Install Buildozer
       run: |
