@@ -39,7 +39,25 @@ jobs:
           libtool libtool-bin \
           automake autoconf pkg-config m4
 
-    
+    - name: Install Android SDK Command-line Tools
+      run: |
+       ANDROID_SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
+       mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+       curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+       unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
+       mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+       rm cmdline-tools.zip
+
+       # Accept licenses
+       yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses
+
+       # Install required SDK packages
+      "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" \
+      "platform-tools" \
+      "platforms;android-35" \
+      "build-tools;35.0.0" \
+      "ndk;25.2.9519653"
+      
     - name: Install Buildozer
       run: |
         python3 -m venv venv
