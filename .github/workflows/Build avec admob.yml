@@ -60,11 +60,17 @@ jobs:
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
         echo "Environment ready"
 
+    - name: Install local AdMob recipe
+      run: |
+        echo "=== Installation de la recipe AdMob ==="
+        mkdir -p ~/.local/share/python-for-android/recipes
+        cp -r app/recipes/admob ~/.local/share/python-for-android/recipes/
+
     - name: Build APK
       run: |
         source venv/bin/activate
         cd "$GITHUB_WORKSPACE"
-        
+
         echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
         
         echo "=== Copie du manifest personnalisé ==="
