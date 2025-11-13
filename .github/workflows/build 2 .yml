@@ -85,7 +85,7 @@ jobs:
 
         COMMON_ARGS="--private $GITHUB_WORKSPACE/app \
           --package=org.example.monapp \
-          --name='Mon budget perso' \
+          --name='Mon_budget_perso' \
           --version=1.0 \
           --bootstrap=sdl2 \
           --icon=logo.png \
