@@ -1,0 +1,28 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Permissions nécessaires pour AdMob et accès fichiers -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+    <!-- Déclaration de features optionnelles -->
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="false"/>
+
+    <application>
+        <!-- Meta-data pour AdMob -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
+
+        <!-- Activité AdMob -->
+        <activity
+            android:name="com.google.android.gms.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize"/>
+
+        <!-- Définir l’orientation de l’application -->
+        <activity
+            android:name="org.libsdl.app.SDLActivity"
+            android:screenOrientation="portrait"/>
+    </application>
+</manifest>
