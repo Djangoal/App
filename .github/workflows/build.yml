@@ -79,8 +79,8 @@ jobs:
         echo "✅ Nettoyage effectué"
         
     - name: Prepare NDK folder
-  run: |
-    mkdir -p /home/runner/android-sdk/ndk
+      run: |
+       mkdir -p /home/runner/android-sdk/ndk
     
     - name: Build APK
       run: |
