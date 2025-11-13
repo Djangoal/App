@@ -1,4 +1,4 @@
-name: 📱 Build Android App (Kivy)
+name: Build APK with Buildozer
 
 on:
   workflow_dispatch:
@@ -11,124 +11,99 @@ on:
         options:
           - debug
           - release
-  push:
-    branches: [ main ]
-  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Checkout du code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: 🧰 Installation des dépendances système
-        run: |
-          sudo apt update
-          sudo apt install -y python3-pip openjdk-17-jdk zip unzip wget git
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          libltdl-dev \
+          zip unzip \
+          openjdk-17-jdk \
+          python3-pip \
+          python3-venv \
+          libncurses-dev \
+          libtool libtool-bin \
+          automake autoconf pkg-config m4
 
-      - name: 🐍 Installation de Buildozer et Kivy
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython
+    - name: Install Buildozer
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install cython buildozer
 
-      - name: 🧩 Préparation du projet Android (icône)
-        run: |
-          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
-          if [ -f "app/logo.png" ]; then
-            cp app/logo.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-            echo "✅ Icône locale copiée depuis app/logo.png"
-          else
-            echo "⚠️ Aucun logo trouvé dans app/logo.png — création d'un placeholder"
-            mkdir -p app
-            touch app/logo.png
-            cp app/logo.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-          fi
+    - name: Initialize Android SDK/NDK
+      run: |
+        mkdir -p ~/.buildozer/android/platform/android-sdk
+        mkdir -p ~/.buildozer/android/platform/android-ndk
+        echo "SDK/NDK paths ready"
 
-      - name: ⚙️ Compilation APK avec Buildozer (debug/release)
-        run: |
-          BUILD_TYPE="${{ github.event.inputs.build_type }}"
-          if [ -z "$BUILD_TYPE" ]; then
-            BUILD_TYPE="debug"
-          fi
-          echo "🛠️ Build type: $BUILD_TYPE"
-          if [ "$BUILD_TYPE" = "release" ]; then
-            buildozer android release || { echo "❌ buildozer release failed"; exit 1; }
-          else
-            buildozer android debug || { echo "❌ buildozer debug failed"; exit 1; }
-          fi
+    - name: Verify project structure
+      run: |
+        echo "=== Vérification de la structure ==="
+        ls -R
+        test -f buildozer.spec || { echo "❌ buildozer.spec introuvable !"; exit 1; }
+        test -d app/libs || { echo "❌ Dossier app/libs introuvable !"; exit 1; }
+        test -f app/libs/play-services-ads-24.3.0.aar || { echo "❌ Les fichiers .aar sont manquants !"; exit 1; }
 
-      - name: 📱 Chercher l’APK généré
-        id: find_apk
-        run: |
-          # buildozer places apks in bin/ by default; try common locations
-          echo "🔍 Recherche d'APK..."
-          APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "❌ Aucun APK trouvé — listing des dossiers bin/ et ."
-            find bin -maxdepth 2 -type f -name "*.apk" || true
-            find . -maxdepth 4 -type f -name "*.apk" || true
-            exit 1
-          fi
-          echo "✅ APK trouvé : $APK_PATH"
-          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+    - name: Clean previous builds
+      run: |
+        rm -rf .buildozer bin
+        echo "✅ Nettoyage effectué"
 
-      - name: 🔍 Vérification des services Google et AdMob
-        run: |
-          echo "🔍 Vérification de l’intégration de Google Play Services et AdMob..."
-          sudo apt update
-          sudo apt install -y apktool >/dev/null
-          
-          APK_FILE="${{ steps.find_apk.outputs.apk_path }}"
-          echo "📦 Analyse de $APK_FILE"
-          
-          rm -rf tmp_apk || true
-          mkdir -p tmp_apk
-          apktool d -f "$APK_FILE" -o tmp_apk >/dev/null || { echo "❌ apktool failed"; exit 1; }
+    - name: Build APK
+      run: |
+        source venv/bin/activate
+        echo "=== Type de build : ${{ github.event.inputs.build_type }} ==="
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          buildozer android release
+        else
+          buildozer android debug
+        fi
 
-          echo "📄 Recherche des dépendances dans le manifest..."
-          MANIFEST="tmp_apk/AndroidManifest.xml"
+    - name: Locate APK
+      id: locate_apk
+      run: |
+        APK_PATH=$(find bin/ -type f -name "*.apk" | head -n 1)
+        if [ -z "$APK_PATH" ]; then
+          echo "❌ Aucun APK généré !"
+          exit 1
+        fi
+        echo "✅ APK généré : $APK_PATH"
+        echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
 
-          REPORT_FILE="rapport_google_services.json"
-          echo "{" > $REPORT_FILE
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: ${{ steps.locate_apk.outputs.apk_path }}
 
-          if grep -q "com.google.android.gms.ads" "$MANIFEST"; then
-            echo "✅ AdMob détecté dans le manifest"
-            echo '  "AdMob": true,' >> $REPORT_FILE
-          else
-            echo "⚠️ AdMob NON détecté"
-            echo '  "AdMob": false,' >> $REPORT_FILE
-          fi
-
-          if grep -q "com.google.android.gms" "$MANIFEST"; then
-            echo "✅ Google Play Services détecté"
-            echo '  "GooglePlayServices": true,' >> $REPORT_FILE
-          else
-            echo "⚠️ Google Play Services NON détecté"
-            echo '  "GooglePlayServices": false,' >> $REPORT_FILE
-          fi
-
-          if grep -q "com.google.firebase.analytics" "$MANIFEST"; then
-            echo "✅ Firebase Analytics détecté"
-            echo '  "FirebaseAnalytics": true' >> $REPORT_FILE
-          else
-            echo "⚠️ Firebase Analytics NON détecté"
-            echo '  "FirebaseAnalytics": false' >> $REPORT_FILE
-          fi
-
-          echo "}" >> $REPORT_FILE
-
-          echo "🔎 Vérification des classes DEX et assets..."
-          unzip -l "$APK_FILE" | grep -E "com/google/android/gms|firebase|ads" || echo "⚠️ Aucune classe Google/AdMob trouvée dans l’APK"
-
-          echo "🧾 Rapport généré : $REPORT_FILE"
-          cat $REPORT_FILE
-
-      - name: 💾 Sauvegarde de l’APK et du rapport
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-${{ github.event.inputs.build_type }}
-          path: |
-            ${{ steps.find_apk.outputs.apk_path }}
-            rapport_google_services.json
+    - name: Verify AdMob and Google Services presence
+      run: |
+        echo "=== Vérification du contenu de l'APK ==="
+        APK="${{ steps.locate_apk.outputs.apk_path }}"
+        TMP_DIR=$(mktemp -d)
+        unzip -q "$APK" -d "$TMP_DIR"
+        echo "🕵️ Recherche de AdMob et Google Play Services..."
+        if grep -qr "com/google/android/gms/ads" "$TMP_DIR"; then
+          echo "✅ AdMob SDK détecté."
+        else
+          echo "❌ AdMob SDK manquant !"
+          exit 1
+        fi
+        if grep -qr "com/google/android/gms/common" "$TMP_DIR"; then
+          echo "✅ Google Play Services détecté."
+        else
+          echo "❌ Google Play Services manquants !"
+          exit 1
+        fi
+        echo "=== Vérification terminée avec succès ✅ ==="
