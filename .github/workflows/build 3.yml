@@ -55,10 +55,13 @@ jobs:
     - name: Cleanup previous builds
       run: |
        echo "Cleaning old builds..."
-       rm -rf .buildozer dist build bin
+       # Supprime les builds partiels de python-for-android
        ./venv/bin/p4a clean_builds || true
+       # Supprime les anciens dist pour release et debug
        rm -rf ~/.local/share/python-for-android/dists/monapp_release
        rm -rf ~/.local/share/python-for-android/dists/monapp_debug
+       # Supprime les dossiers de build locaux
+       rm -rf .buildozer dist build bin
        echo "Environment ready"
 
     - name: Build APK
@@ -85,7 +88,7 @@ jobs:
 
         COMMON_ARGS="--private $GITHUB_WORKSPACE/app \
           --package=org.example.monapp \
-          --name='Mon_budget_perso' \
+          --name='Monbudgetperso' \
           --version=1.0 \
           --bootstrap=sdl2 \
           --icon=logo.png \
