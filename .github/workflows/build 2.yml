@@ -80,9 +80,9 @@ jobs:
           DIST_PATH="$HOME/.local/share/python-for-android/dists/monapp_release"
           BUILD_GRADLE="$DIST_PATH/build.gradle"
           if [ -f "$BUILD_GRADLE" ]; then
-            echo "dependencies {" >> "$BUILD_GRADLE"
-            echo "    implementation 'com.google.android.gms:play-services-ads:24.3.0'" >> "$BUILD_GRADLE"
-            echo "}" >> "$BUILD_GRADLE"
+            echo "🔧 Insertion propre de la dépendance dans le bloc dependencies..."
+            sed -i "/dependencies {/a\    implementation 'com.google.android.gms:play-services-ads:24.3.0'" "$BUILD_GRADLE"
+            echo "✅ Dépendance ajoutée avec succès."
           else
             echo "❌ build.gradle introuvable !"
             exit 1
@@ -92,21 +92,7 @@ jobs:
         run: |
           DIST_PATH="$HOME/.local/share/python-for-android/dists/monapp_release"
           cd "$DIST_PATH"
-          ./gradlew assembleRelease
-
-          APK_PATH=$(find "$DIST_PATH" -type f -name "*release*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "❌ Aucun APK release trouvé !"
-            exit 1
-          fi
-          echo "✅ APK trouvé : $APK_PATH"
-
-          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
-
-          echo "=== Alignement APK ==="
-          $SDK_DIR/build-tools/35.0.0/zipalign -v 4 \
-            "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk" \
-            "$GITHUB_WORKSPACE/mon_budget_perso_release_aligned.apk"
+          ./gradlew assembleRelease --stacktrace --warning-mode all
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
