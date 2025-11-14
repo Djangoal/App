@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     container:
       image: kivy/buildozer:latest  # Image officielle Buildozer avec SDK/NDK
+      options: --user 1000:1000      # optionnel, permet d’éviter les problèmes root
 
     steps:
       - name: Checkout code
@@ -36,11 +37,11 @@ jobs:
           export ANDROIDMINAPI=21
           echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
 
-          # Build et capture complète du log
+          # Build debug ou release avec --no-root
           if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-            buildozer -v android release > build.log 2>&1 || (tail -n 1000 build.log && exit 1)
+            buildozer -v android release --no-root > build.log 2>&1 || (tail -n 1000 build.log && exit 1)
           else
-            buildozer -v android debug > build.log 2>&1 || (tail -n 1000 build.log && exit 1)
+            buildozer -v android debug --no-root > build.log 2>&1 || (tail -n 1000 build.log && exit 1)
           fi
 
       - name: Upload APK
