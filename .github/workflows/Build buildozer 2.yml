@@ -52,17 +52,19 @@ jobs:
 
       - name: Build APK (Buildozer)
         run: |
+          # Export variables pour cette step uniquement
           export ANDROIDNDK=$HOME/.buildozer/android/platform/ndk
           export ANDROIDSDK=$HOME/.buildozer/android/platform/sdk
           export ANDROIDAPI=33
           export ANDROIDMINAPI=21
 
+          echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
+
+          # Redirige le log complet dans build.log
           if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-            echo "🚀 BUILD RELEASE"
-            yes | buildozer android release
+            yes | buildozer -v android release > build.log 2>&1 || (cat build.log && exit 1)
           else
-            echo "🐍 BUILD DEBUG"
-            yes | buildozer android debug
+            yes | buildozer -v android debug > build.log 2>&1 || (cat build.log && exit 1)
           fi
 
       - name: Upload APK
@@ -70,3 +72,9 @@ jobs:
         with:
           name: mon-budget-${{ github.event.inputs.build_type }}
           path: bin/*.apk
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ github.event.inputs.build_type }}
+          path: build.log
