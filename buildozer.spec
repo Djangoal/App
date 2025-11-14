@@ -19,7 +19,7 @@ presplash.auto_scale = True
 
 requirements = python3,kivy,android,google-play-services,play-services-ads
 android.permissions = INTERNET,ACCESS_NETWORK_STATE
-android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
+android.meta_data = com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
 android.api = 33
 android.minapi = 21
