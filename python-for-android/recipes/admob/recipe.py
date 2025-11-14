@@ -1,12 +1,14 @@
 from pythonforandroid.recipe import Recipe
 
-class AdmobRecipe(Recipe):
-    version = '24.3.0'
+class AdMobWrapperRecipe(Recipe):
+    version = '1.0'
     url = None
     depends = ['android']
+
+    # Indiquer que le Java doit être compilé
+    java_src = ['AdMobBridge.java']
 
     def get_build_dir(self, arch):
         return self.get_recipe_dir()
 
-# ⚠️ Il faut créer cette instance pour que p4a la trouve
-recipe = AdmobRecipe()
+recipe = AdMobWrapperRecipe()
