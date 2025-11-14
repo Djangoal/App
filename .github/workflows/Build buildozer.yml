@@ -1,0 +1,54 @@
+name: Build APK avec Buildozer + AdMob
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Type de build"
+        required: true
+        default: "debug"
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install system dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          python3-pip python3-setuptools python3-kivy \
+          openjdk-17-jdk zip unzip \
+          libstdc++6 git
+
+    - name: Install Buildozer + Cython
+      run: |
+        pip install --upgrade pip
+        pip install buildozer cython
+
+    - name: Cleanup previous buildozer state
+      run: |
+        rm -rf .buildozer bin build dist
+
+    - name: Build APK (Buildozer)
+      run: |
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          echo "🚀 BUILD RELEASE"
+          yes | buildozer android release
+        else
+          echo "🐍 BUILD DEBUG"
+          yes | buildozer android debug
+        fi
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: bin/*.apk
