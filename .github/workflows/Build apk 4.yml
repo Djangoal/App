@@ -108,4 +108,4 @@ jobs:
         path: ${{ env.APK }}
 
     - name: Vérification post-build AdMob
-  run: bash tools/check_post_build.sh dist/*.apk
+      run: bash tools/check_post_build.sh dist/*.apk
