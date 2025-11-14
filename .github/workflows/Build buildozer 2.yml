@@ -16,15 +16,17 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     container:
-      image: kivy/buildozer:latest  # Image officielle Buildozer avec SDK/NDK
-      options: --user 1000:1000      # optionnel, permet d’éviter les problèmes root
+      image: kivy/buildozer:latest  # Image officielle Buildozer
+      options: --user 1000:1000      # Utilisateur non-root pour éviter EACCES
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Cleanup previous builds
-        run: rm -rf .buildozer bin build dist
+      - name: Prepare build directories
+        run: |
+          mkdir -p .buildozer bin dist
+          chmod -R 777 .buildozer bin dist
 
       - name: Install Python dependencies (optionnel)
         run: |
