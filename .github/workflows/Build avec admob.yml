@@ -60,24 +60,11 @@ jobs:
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
         echo "Environment ready"
 
-    - name: Install local AdMob recipe
-      run: |
-        echo "=== Copie de la recipe AdMob vers le dossier global p4a ==="
-        mkdir -p ~/.local/share/python-for-android/recipes
-        cp -r recipes/admob ~/.local/share/python-for-android/recipes/
-        echo "=== Contenu du dossier AdMob ==="
-        ls -l ~/.local/share/python-for-android/recipes/admob
-
-    - name: Vérification de la recipe AdMob
-      run: |
-        echo "=== Vérification de la présence de la variable 'recipe' ==="
-        python3 -c "import pythonforandroid.recipes.admob; print('recipe' in dir(pythonforandroid.recipes.admob))"
-
     - name: Build APK
       run: |
         source venv/bin/activate
         cd "$GITHUB_WORKSPACE"
-
+        
         echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
         
         echo "=== Copie du manifest personnalisé ==="
@@ -85,6 +72,7 @@ jobs:
         cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          echo "=== Compilation RELEASE ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -109,9 +97,16 @@ jobs:
 
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK release trouvé !"
+            find . -type f -name "*.apk"
+            exit 1
+          fi
+          echo "✅ APK release trouvé : $APK_PATH"
           cp "$APK_PATH" "$FINAL_APK"
           $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
         else
+          echo "=== Compilation DEBUG ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -136,6 +131,12 @@ jobs:
 
           APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Aucun APK debug trouvé !"
+            find . -type f -name "*.apk"
+            exit 1
+          fi
+          echo "✅ APK debug trouvé : $APK_PATH"
           cp "$APK_PATH" "$FINAL_APK"
         fi
 
