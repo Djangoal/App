@@ -1,4 +1,4 @@
-name: Build APK avec Buildozer + AdMob 2
+name: Build APK avec Buildozer + AdMob (Docker)
 
 on:
   workflow_dispatch:
@@ -15,56 +15,32 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    container:
+      image: kivy/buildozer:latest  # Image officielle Buildozer avec SDK/NDK
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y python3-pip python3-setuptools python3-kivy openjdk-17-jdk zip unzip libstdc++6 git build-essential libffi-dev libssl-dev libsqlite3-dev libjpeg-dev zlib1g-dev libncurses5-dev libtinfo5
-
-      - name: Install Buildozer + Cython
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython virtualenv
-
-      - name: Setup Android SDK & NDK manually
-        run: |
-          mkdir -p ~/.buildozer/android/platform
-          cd ~/.buildozer/android/platform
-
-          # SDK
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O sdktools.zip
-          unzip -q sdktools.zip -d sdk
-          export ANDROIDSDK=$HOME/.buildozer/android/platform/sdk
-          yes | $ANDROIDSDK/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROIDSDK "platform-tools" "platforms;android-33" "build-tools;33.0.2"
-
-          # NDK r23b
-          wget https://dl.google.com/android/repository/android-ndk-r23b-linux.zip -O ndk.zip
-          unzip -q ndk.zip
-          mv android-ndk-r23b ndk
-          export ANDROIDNDK=$HOME/.buildozer/android/platform/ndk
-
-      - name: Cleanup previous buildozer state
+      - name: Cleanup previous builds
         run: rm -rf .buildozer bin build dist
 
-      - name: Build APK (Buildozer)
+      - name: Install Python dependencies (optionnel)
         run: |
-          # Export variables pour cette step uniquement
-          export ANDROIDNDK=$HOME/.buildozer/android/platform/ndk
-          export ANDROIDSDK=$HOME/.buildozer/android/platform/sdk
+          pip install --upgrade pip
+          pip install cython
+
+      - name: Build APK
+        run: |
           export ANDROIDAPI=33
           export ANDROIDMINAPI=21
-
           echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
 
-          # Redirige le log complet dans build.log
+          # Build et capture complète du log
           if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-            yes | buildozer -v android release > build.log 2>&1 || (cat build.log && exit 1)
+            buildozer -v android release > build.log 2>&1 || (tail -n 1000 build.log && exit 1)
           else
-            yes | buildozer -v android debug > build.log 2>&1 || (cat build.log && exit 1)
+            buildozer -v android debug > build.log 2>&1 || (tail -n 1000 build.log && exit 1)
           fi
 
       - name: Upload APK
