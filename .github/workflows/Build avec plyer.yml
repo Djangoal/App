@@ -48,7 +48,12 @@ jobs:
       run: |
         python3 -m venv venv
         source venv/bin/activate
-        pip install --upgrade pip cython
+        
+        # Installer Cython avant jnius
+        pip install --upgrade pip
+        pip install cython
+
+        # Installer python-for-android et modules requis
         pip install git+https://github.com/kivy/python-for-android.git
         pip install plyer jnius
 
