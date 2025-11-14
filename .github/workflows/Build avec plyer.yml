@@ -29,24 +29,28 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-        python3-dev \
-        openjdk-17-jdk \
-        swig \
-        libffi-dev \
-        libssl-dev \
-        build-essential \
-        libncurses-dev \
-        libtool \
-        automake \
-        autoconf \
-        pkg-config
-  
+          build-essential \
+          python3-dev \
+          openjdk-17-jdk \
+          swig \
+          libffi-dev \
+          libssl-dev \
+          libncurses-dev \
+          libtool \
+          libtool-bin \
+          automake \
+          autoconf \
+          pkg-config \
+          zip \
+          unzip
+
     - name: Setup Python & python-for-android
       run: |
         python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip cython
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
-        ./venv/bin/pip install plyer jnius
+        source venv/bin/activate
+        pip install --upgrade pip cython
+        pip install git+https://github.com/kivy/python-for-android.git
+        pip install plyer jnius
 
     - name: Download Android SDK & NDK
       run: |
