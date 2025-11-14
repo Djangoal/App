@@ -20,7 +20,12 @@ from views.charges_fixes_screen import ChargesFixesScreen
 from views.depenses_screen import DepenseScreen
 from views.configuration_screen import ConfigurationScreen
 from views.epargne_screen import EpargneScreen
+from jnius import autoclass
 
+PythonActivity = autoclass('org.kivy.android.PythonActivity')
+AdMobBridge = autoclass('org.example.admobwrapper.AdMobBridge')
+
+AdMobBridge.init(PythonActivity.mActivity)
 # ---------------- CONFIG SDL2 ----------------
 Config.set('graphics', 'multisamples', '0')  # désactive anti-aliasing
 Config.set('graphics', 'fullscreen', '0')
