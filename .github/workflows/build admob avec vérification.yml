@@ -138,7 +138,7 @@ jobs:
         name: mon-budget-${{ github.event.inputs.build_type }}
         path: |
           ./mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
-Update Build avec admob.yml · Djangoal/App@91e2456
+          Update Build avec admob.yml · Djangoal/App@91e2456
 
     - name: Verify AdMob & Google Play Services
       run: |
