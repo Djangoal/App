@@ -1,11 +1,55 @@
-<application>
-    <!-- ID d’application AdMob -->
-    <meta-data
-        android:name="com.google.android.gms.ads.APPLICATION_ID"
-        android:value="ca-app-pub-3940256099942544~3347511713" />
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="{{ args.package }}"
+    android:versionCode="{{ args.numeric_version }}"
+    android:versionName="{{ args.version }}">
 
-    <!-- Activité utilisée par les annonces AdMob -->
-    <activity
-        android:name="com.google.android.gms.ads.AdActivity"
-        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
-</application>
+    <!-- Permissions nécessaires -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
+    <application
+        android:name="org.kivy.android.PythonApplication"
+        android:label="{{ app_name }}"
+        android:icon="@mipmap/icon"
+        android:allowBackup="true"
+        android:usesCleartextTraffic="true">
+
+        <!-- ID de ton compte AdMob -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
+        <!-- Provider nécessaire au SDK AdMob -->
+        <provider
+            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+            android:authorities="${applicationId}.ads.mobileadsinitprovider"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Activité principale Kivy -->
+        <activity
+            android:name="org.kivy.android.PythonActivity"
+            android:label="{{ app_name }}"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|navigation">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Service Python -->
+        <service
+            android:name="org.kivy.android.PythonService"
+            android:exported="false" />
+
+    </application>
+
+</manifest>
