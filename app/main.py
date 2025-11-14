@@ -20,16 +20,14 @@ from views.charges_fixes_screen import ChargesFixesScreen
 from views.depenses_screen import DepenseScreen
 from views.configuration_screen import ConfigurationScreen
 from views.epargne_screen import EpargneScreen
+
+from plyer import notification
 from jnius import autoclass
 
+# Initialisation AdMob via Plyer wrapper
 PythonActivity = autoclass('org.kivy.android.PythonActivity')
-AdMobBridge = autoclass('org.example.admobwrapper.AdMobBridge')
-
-AdMobBridge.init(PythonActivity.mActivity)
-# ---------------- CONFIG SDL2 ----------------
-Config.set('graphics', 'multisamples', '0')  # désactive anti-aliasing
-Config.set('graphics', 'fullscreen', '0')
-Config.set('kivy', 'exit_on_escape', '0')
+# Si le wrapper expose une fonction init
+# AdMob.init(PythonActivity.mActivity)
 # Window.softinput_mode = 'below_target'  # à activer après le lancement si nécessaire
 
 # ---------------- Gestion des exceptions ----------------
