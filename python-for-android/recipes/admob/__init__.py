@@ -7,15 +7,14 @@ class AdMobRecipe(Recipe):
     name = "admob"
     depends = ["python3", "kivy", "android"]
 
-    # Si tu as des AAR dans libs/, P4A les prendra automatiquement
+    # Inclure les AAR automatiquement depuis libs/
     def get_recipe_env(self, arch):
         env = super().get_recipe_env(arch)
         return env
 
-    # Optionnel : inclure des fichiers supplémentaires (manifest, res)
+    # Optionnel : dossier de build propre
     def get_build_dir(self, arch):
-        # build_dir spécifique à la recipe
         return os.path.join(self.get_build_container_dir(arch), "admob_build")
 
-# ⚠ La variable 'recipe' est obligatoire pour que P4A reconnaisse la recipe
+# ⚠ Obligatoire pour P4A
 recipe = AdMobRecipe()
