@@ -92,7 +92,6 @@ jobs:
             --android_api=35 \
             --orientation=portrait \
             --dist-name=monapp_release \
-            --recipe-dir=recipes \
             --release \
             --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
@@ -127,7 +126,6 @@ jobs:
             --android_api=35 \
             --orientation=portrait \
             --dist-name=monapp_debug \
-            --recipe-dir=recipes \
             --debug \
             --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
