@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     container:
       image: kivy/buildozer:latest  # Image officielle Buildozer
-      options: --user 1000:1000      # Utilisateur non-root pour éviter EACCES
+      # options: --user 1000:1000  <-- NE PAS utiliser, cause EACCES checkout
 
     steps:
       - name: Checkout code
