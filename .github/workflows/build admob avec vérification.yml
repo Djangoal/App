@@ -140,35 +140,24 @@ jobs:
           ./mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
           Update Build avec admob.yml · Djangoal/App@91e2456
 
-    - name: Verify AdMob & Google Play Services
+    - name: Verify AdMob AAR in APK
       run: |
-        echo "=== Vérification de la présence de AdMob et Google Play Services dans l'APK ==="
-        # Récupère le premier APK (debug ou release)
-        APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
-        if [ -z "$APK_PATH" ]; then
-          echo "❌ Aucun APK trouvé pour vérification !"
-          exit 1
-        fi
+       APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
+       if [ -z "$APK_PATH" ]; then
+       echo "❌ Aucun APK trouvé pour vérification !"
+       exit 1
+       fi
 
-        # Création d'un répertoire temporaire pour extraire l'APK
-        TMP_DIR=$(mktemp -d)
-        unzip -q "$APK_PATH" -d "$TMP_DIR"
+       if unzip -l "$APK_PATH" | grep -q "play-services-ads"; then
+       echo "✅ AdMob AAR trouvé dans l'APK."
+       else
+       echo "❌ AdMob AAR NON trouvé dans l'APK !"
+       exit 1
+       fi
 
-        # Vérification d’AdMob
-        if grep -qr "com/google/android/gms/ads" "$TMP_DIR"; then
-          echo "✅ AdMob SDK trouvé dans l'APK."
-        else
-          echo "❌ AdMob SDK NON trouvé !"
-          exit 1
-        fi
-
-        # Vérification des Google Play Services
-        if grep -qr "com/google/android/gms" "$TMP_DIR"; then
-          echo "✅ Google Play Services trouvé dans l'APK."
-        else
-          echo "❌ Google Play Services NON trouvé !"
-          exit 1
-        fi
-
-        # Nettoyage
-        rm -rf "$TMP_DIR"
+       if unzip -p "$APK_PATH" "AndroidManifest.xml" | grep -q "com.google.android.gms.ads.APPLICATION_ID"; then
+       echo "✅ Meta-data AdMob présente."
+       else
+       echo "❌ Meta-data AdMob NON trouvée !"
+       exit 1
+       fi
