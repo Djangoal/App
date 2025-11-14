@@ -5,8 +5,10 @@ class AdmobRecipe(Recipe):
     url = None
     depends = ['android']
 
+    # Indique à p4a que ton AAR doit être inclus
+    android_libs = ['play-services-ads-24.3.0.aar']
+
     def get_build_dir(self, arch):
         return self.get_recipe_dir()
 
-# ⚠️ Il faut créer cette instance pour que p4a la trouve
 recipe = AdmobRecipe()
