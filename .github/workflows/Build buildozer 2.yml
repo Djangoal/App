@@ -1,4 +1,4 @@
-name: Build APK avec Buildozer + AdMob
+name: Build APK avec Buildozer + AdMob 2
 
 on:
   workflow_dispatch:
