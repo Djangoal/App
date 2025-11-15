@@ -93,7 +93,16 @@ jobs:
           --dist-name=mon_budget_perso_release \
           $BUILD_MODE
 
-    
+    - name: Find APK
+      run: |
+        APK=$(find bin -type f -name "*.apk" | head -n 1)
+        echo "📦 APK trouvé : $APK"
+        if [ -z "$APK" ]; then
+          echo "❌ Aucun APK trouvé !"
+          exit 1
+        fi
+        echo "APK=$APK" >> $GITHUB_ENV
+        
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
