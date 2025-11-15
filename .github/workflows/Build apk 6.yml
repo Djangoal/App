@@ -1,4 +1,4 @@
-name: Build APK sans aar(unsigned)
+name: Build APK incluant aar(unsigned)
 
 on:
   workflow_dispatch:
