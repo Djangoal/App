@@ -26,8 +26,8 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libtool libtool-bin automake autoconf pkg-config m4 zip unzip libncurses-dev python3-pip openjdk-17-jdk
-
+        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+        
     - name: Setup Python & p4a
       run: |
         python3 -m venv venv
