@@ -92,8 +92,8 @@ jobs:
 
     - name: Find APK
       run: |
-        # Trouver l'APK généré par p4a dans le dossier bin
-        APK=$(find bin -type f -name "mon_budget_perso-*.apk" | head -n 1)
+        # Trouver l'APK généré par p4a dans le dossier dist
+        APK=$(find dist -type f -name "mon_budget_perso-*.apk" | head -n 1)
         if [ -z "$APK" ]; then
           echo "❌ Aucun APK trouvé !"
           exit 1
