@@ -56,6 +56,12 @@ jobs:
         rm -rf ~/.local/share/python-for-android/dists/monapp_release
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
         echo "Environment ready"
+
+    - name: Copy IncludeAAR recipe
+      run: |
+       echo "=== Copie de la recette include_aar pour P4A ==="
+       mkdir -p ~/.local/share/python-for-android/recipes/include_aar
+       cp -r python-for-android/recipes/include_aar/* ~/.local/share/python-for-android/recipes/include_aar/
     
     - name: Build APK
       run: |
