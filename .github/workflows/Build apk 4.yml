@@ -94,7 +94,7 @@ jobs:
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=35 \
           --orientation=portrait \
-          --dist-name=$DIST_NAME \
+          --dist-name=mon_budget_perso_release \
           $BUILD_MODE
 
     - name: Find APK
