@@ -97,21 +97,25 @@ jobs:
           --dist-name=mon_budget_perso_release \
           $BUILD_MODE
 
-    - name: Check for AAR files in APK
-      run: |
-        echo "🔍 Liste des fichiers .aar dans l'APK :"
-        unzip -l dist/mon_budget_perso_release.apk | grep .aar || echo "⚠️ Aucun AAR trouvé !"
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: apk-${{ github.event.inputs.build_type }}
+        path: ${{ env.APK }}
 
     - name: Find APK
       run: |
         APK=$(find . -type f -name "*.apk" | head -n 1)
         echo "APK=$APK" >> $GITHUB_ENV
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: apk-${{ github.event.inputs.build_type }}
-        path: ${{ env.APK }}
+    - name: Check for AAR files in APK
+      run: |
+       APK=$(find bin -type f -name "*.apk" | head -n 1)
+       echo "📦 APK détecté : $APK"
+
+       echo "🔍 Liste des fichiers .aar dans l'APK :"
+       unzip -l "$APK" | grep .aar || echo "⚠️ Aucun AAR trouvé !"
 
     - name: Make script executable
       run: chmod +x tools/check_post_build.sh
