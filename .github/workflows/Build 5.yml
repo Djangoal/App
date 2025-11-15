@@ -90,6 +90,11 @@ jobs:
           --dist-name=mon_budget_perso \
           $BUILD_MODE
 
+    - name: Lister dist
+      run: |
+       echo "🔍 Contenu du dossier dist :"
+       ls -R dist
+    
     - name: Find APK
       run: |
         # Trouver l'APK généré par p4a dans le dossier dist
