@@ -16,7 +16,6 @@ jobs:
 
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
-      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
 
     steps:
@@ -70,10 +69,8 @@ jobs:
 
         if [ "${{ github.event.inputs.build_type }}" == "release" ]; then
           BUILD_MODE="--release"
-          DIST_NAME="monapp_release"
         else
           BUILD_MODE="--debug"
-          DIST_NAME="monapp_debug"
         fi
 
         ./venv/bin/p4a apk \
@@ -87,38 +84,37 @@ jobs:
           --requirements=python3,kivy,android,pyjnius,admob \
           --permission INTERNET \
           --permission ACCESS_NETWORK_STATE \
-          --permission READ_EXTERNAL_STORAGE \
-          --permission WRITE_EXTERNAL_STORAGE \
           --arch=arm64-v8a \
           --sdk_dir=$SDK_DIR \
           --ndk_dir=$ANDROID_NDK_HOME \
           --android_api=35 \
           --orientation=portrait \
-          --dist-name=mon_budget_perso_release \
+          --dist-name=mon_budget_perso \
           $BUILD_MODE
 
-    
+    - name: Find APK
+      run: |
+        APK=$(find bin -type f -name "*.apk" | head -n 1)
+        echo "📦 APK trouvé : $APK"
+        if [ -z "$APK" ]; then
+          echo "❌ Aucun APK trouvé !"
+          exit 1
+        fi
+        echo "APK=$APK" >> $GITHUB_ENV
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: apk-${{ github.event.inputs.build_type }}
         path: ${{ env.APK }}
 
-    - name: Find APK
-      run: |
-        APK=$(find . -type f -name "*.apk" | head -n 1)
-        echo "APK=$APK" >> $GITHUB_ENV
-
     - name: Check for AAR files in APK
       run: |
-       APK=$(find bin -type f -name "*.apk" | head -n 1)
-       echo "📦 APK détecté : $APK"
-
-       echo "🔍 Liste des fichiers .aar dans l'APK :"
-       unzip -l "$APK" | grep .aar || echo "⚠️ Aucun AAR trouvé !"
+        echo "🔍 Vérification des AAR dans: ${{ env.APK }}"
+        unzip -l "${{ env.APK }}" | grep .aar || echo "⚠️ Aucun AAR trouvé !"
 
     - name: Make script executable
       run: chmod +x tools/check_post_build.sh
 
     - name: Vérification post-build
-      run: bash tools/check_post_build.sh mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
+      run: bash tools/check_post_build.sh "${{ env.APK }}"
