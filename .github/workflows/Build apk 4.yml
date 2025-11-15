@@ -107,5 +107,8 @@ jobs:
         name: apk-${{ github.event.inputs.build_type }}
         path: ${{ env.APK }}
 
-    - name: Vérification post-build AdMob
-      run: bash tools/check_post_build.sh dist/*.apk
+    - name: Make script executable
+      run: chmod +x tools/check_post_build.sh
+
+    - name: Vérification post-build
+      run: bash tools/check_post_build.sh mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
