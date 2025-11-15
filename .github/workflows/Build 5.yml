@@ -41,9 +41,7 @@ jobs:
         mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
         mkdir -p $SDK_DIR/cmdline-tools/latest
         mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
-
         yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
-
         $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" \
           "platforms;android-35" \
@@ -62,19 +60,17 @@ jobs:
 
     - name: Clean previous builds
       run: |
-        rm -rf .buildozer dist build
+        rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
 
     - name: Build APK
       run: |
         source venv/bin/activate
-
         if [ "${{ github.event.inputs.build_type }}" == "release" ]; then
           BUILD_MODE="--release"
         else
           BUILD_MODE="--debug"
         fi
-
         ./venv/bin/p4a apk \
           --private "$GITHUB_WORKSPACE/app" \
           --package=org.example.monapp \
@@ -94,16 +90,30 @@ jobs:
           --dist-name=mon_budget_perso \
           $BUILD_MODE
 
-    - name: Check for AAR files in APK
-      run: |
-        echo "🔍 Liste des fichiers .aar dans l'APK :"
-        unzip -l dist/mon_budget_perso_release.apk | grep .aar || echo "⚠️ Aucun AAR trouvé !"
     - name: Find APK
       run: |
-        APK=$(find . -type f -name "*.apk" | head -n 1)
+        # Trouver l'APK généré par p4a dans le dossier bin
+        APK=$(find bin -type f -name "mon_budget_perso-*.apk" | head -n 1)
+        if [ -z "$APK" ]; then
+          echo "❌ Aucun APK trouvé !"
+          exit 1
+        fi
+        echo "📦 APK trouvé : $APK"
         echo "APK=$APK" >> $GITHUB_ENV
+
+    - name: Check for AAR files in APK
+      run: |
+        echo "🔍 Vérification des fichiers .aar dans l'APK : ${{ env.APK }}"
+        unzip -l "${{ env.APK }}" | grep .aar || echo "⚠️ Aucun AAR trouvé !"
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: apk-${{ github.event.inputs.build_type }}
         path: ${{ env.APK }}
+
+    - name: Make script executable
+      run: chmod +x tools/check_post_build.sh
+
+    - name: Vérification post-build
+      run: bash tools/check_post_build.sh "${{ env.APK }}"
