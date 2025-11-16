@@ -39,16 +39,6 @@ jobs:
         pip install --upgrade git+https://github.com/kivy/python-for-android.git@master
         pip install buildozer
 
-    - name: Verify sdl2_gradle bootstrap
-      run: |
-        source venv/bin/activate
-        BOOTSTRAP_DIR=$(ls -d venv/lib/python3.*/site-packages/pythonforandroid/bootstraps/sdl2_gradle 2>/dev/null || true)
-        if [ -z "$BOOTSTRAP_DIR" ]; then
-          echo "❌ sdl2_gradle bootstrap non trouvé !"
-          exit 1
-        fi
-        echo "✅ sdl2_gradle bootstrap présent : $BOOTSTRAP_DIR"
-
     - name: Download Android SDK & NDK
       run: |
         mkdir -p $SDK_DIR
@@ -90,7 +80,7 @@ jobs:
             --package=org.example.monapp \
             --name="Mon budget perso" \
             --version=1.0 \
-            --bootstrap=sdl2_gradle \
+            --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
             --requirements=python3,kivy,kivmob,android \
@@ -125,7 +115,7 @@ jobs:
             --package=org.example.monapp \
             --name="Mon budget perso" \
             --version=1.0 \
-            --bootstrap=sdl2_gradle \
+            --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
             --requirements=python3,kivy,kivmob,android \
