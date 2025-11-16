@@ -1,4 +1,4 @@
-name: Build originale sans pub test
+name: Build originale sans pub 
 
 on:
   workflow_dispatch:
