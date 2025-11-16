@@ -1,0 +1,83 @@
+name: Build Kivy Android App
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            python3-pip python3-setuptools python3-wheel \
+            openjdk-17-jdk unzip zip \
+            libffi-dev libssl-dev libncurses5
+
+      - name: Install Buildozer & Cython
+        run: |
+          pip install --upgrade pip
+          pip install cython buildozer python-for-android
+
+      - name: Install Android SDK + NDK
+        run: |
+          mkdir -p $HOME/.buildozer/android/platform
+          cd $HOME/.buildozer/android/platform
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip commandlinetools-linux-*.zip -d cmdline-tools
+          mkdir -p android-sdk/cmdline-tools/latest
+          mv cmdline-tools/* android-sdk/cmdline-tools/latest/
+
+          yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          android-sdk/cmdline-tools/latest/bin/sdkmanager --install \
+              "platform-tools" \
+              "platforms;android-33" \
+              "build-tools;33.0.2" \
+              "ndk;25.2.9519653"
+
+      - name: Prepare buildozer
+        run: |
+          buildozer android clean
+
+      # *** PATCH : Injection automatique des AAR ***
+      - name: Inject AAR modules manually
+        run: |
+          echo "=== Injection des AAR ==="
+
+          mkdir -p app/src/main/libs
+          cp app/libs/*.aar app/src/main/libs/ || true
+
+          echo "AAR copiés:"
+          ls -l app/src/main/libs || true
+
+          mkdir -p .buildozer/android/platform/build-armeabi-v7a/dists/*/libs || true
+          cp app/libs/*.aar .buildozer/android/platform/build-armeabi-v7a/dists/*/libs/ || true
+
+      - name: Build Android APK
+        env:
+          ANDROIDSDK: $HOME/.buildozer/android/platform/android-sdk
+          ANDROIDNDK: $HOME/.buildozer/android/platform/android-sdk/ndk/25.2.9519653
+        run: |
+          export PATH=$ANDROIDSDK/platform-tools:$PATH
+          buildozer android release
+
+      - name: List AAR inside APK
+        run: |
+          echo "=== Listing des AAR dans l'APK ==="
+          APK=$(find . -type f -name "*.apk" | head -n 1)
+          unzip -l "$APK" | grep ".aar" || echo "⚠️ Aucun .aar trouvé"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Android-APK
+          path: bin/*.apk
