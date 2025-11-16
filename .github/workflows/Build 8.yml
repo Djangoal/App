@@ -60,7 +60,7 @@ jobs:
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug || true
 
     # --- IMPORTANT: ensure your .aar are in app/libs/ in the repo ---
-    - name: Debug: list local AARs
+    - name:  liste AARs
       run: |
         echo ">>> AAR locaux dans app/libs:"
         ls -la app/libs || true
