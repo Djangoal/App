@@ -1,4 +1,4 @@
-name: Build originale avec add aar
+name: Build APK avec AdMob
 
 on:
   workflow_dispatch:
@@ -35,7 +35,7 @@ jobs:
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip cython
         ./venv/bin/pip install --upgrade git+https://github.com/kivy/python-for-android.git
-        
+
     - name: Download Android SDK & NDK
       run: |
         mkdir -p $SDK_DIR
@@ -63,7 +63,6 @@ jobs:
       run: |
         source venv/bin/activate
         cd "$GITHUB_WORKSPACE"
-
         echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
 
         echo "=== Copie du manifest personnalisé ==="
@@ -71,7 +70,7 @@ jobs:
         cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "=== Compilation RELEASE (sans pub) ==="
+          echo "=== Compilation RELEASE avec AdMob ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -80,7 +79,7 @@ jobs:
             --bootstrap=sdl2_gradle \
             --icon=logo.png \
             --presplash=app/logo1.png \
-            --requirements=python3,kivy,android \
+            --requirements=python3,kivy,kivmob,android \
             --permission WRITE_EXTERNAL_STORAGE \
             --permission READ_EXTERNAL_STORAGE \
             --permission INTERNET \
@@ -94,21 +93,19 @@ jobs:
             --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
             --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
             --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
+            --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713 \
             --release
 
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
-
           if [ -z "$APK_PATH" ]; then
             echo "❌ Aucun APK release trouvé !"
             exit 1
           fi
-
           cp "$APK_PATH" "$FINAL_APK"
           $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
-
         else
-          echo "=== Compilation DEBUG (sans pub) ==="
+          echo "=== Compilation DEBUG avec AdMob ==="
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
@@ -117,7 +114,7 @@ jobs:
             --bootstrap=sdl2_gradle \
             --icon=logo.png \
             --presplash=app/logo1.png \
-            --requirements=python3,kivy,android \
+            --requirements=python3,kivy,kivmob,android \
             --permission WRITE_EXTERNAL_STORAGE \
             --permission READ_EXTERNAL_STORAGE \
             --permission INTERNET \
@@ -128,16 +125,18 @@ jobs:
             --android_api=35 \
             --orientation=portrait \
             --dist-name=monapp_debug \
+            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-basement-18.5.0.aar" \
+            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-tasks-18.3.2.aar" \
+            --add-aar="$GITHUB_WORKSPACE/app/libs/play-services-ads-24.3.0.aar" \
+            --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713 \
             --debug
 
           APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
-
           if [ -z "$APK_PATH" ]; then
             echo "❌ Aucun APK debug trouvé !"
             exit 1
           fi
-
           cp "$APK_PATH" "$FINAL_APK"
         fi
 
@@ -145,4 +144,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ./mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
+        path: |
+          ./mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
