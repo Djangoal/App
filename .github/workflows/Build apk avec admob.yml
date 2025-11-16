@@ -33,8 +33,15 @@ jobs:
     - name: Setup Python & python-for-android
       run: |
         python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip cython
-        ./venv/bin/pip install --upgrade git+https://github.com/kivy/python-for-android.git
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install --upgrade cython
+        pip install --upgrade git+https://github.com/kivy/python-for-android.git@master
+
+    - name: Verify bootstrap
+      run: |
+        source venv/bin/activate
+        python -c "import pythonforandroid.bootstraps; print('Bootstraps disponibles:', pythonforandroid.bootstraps.available_bootstraps)"
 
     - name: Download Android SDK & NDK
       run: |
@@ -55,6 +62,7 @@ jobs:
       run: |
         echo "Cleaning old builds..."
         rm -rf .buildozer dist build bin
+        source venv/bin/activate
         ./venv/bin/p4a clean_builds || true
         rm -rf ~/.local/share/python-for-android/dists/monapp_release
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
