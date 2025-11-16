@@ -37,11 +37,17 @@ jobs:
         pip install --upgrade pip
         pip install --upgrade cython
         pip install --upgrade git+https://github.com/kivy/python-for-android.git@master
+        pip install buildozer
 
-    #- name: Verify bootstrap
-      #run: |
-        #source venv/bin/activate
-        #python -c "import pythonforandroid.bootstraps; print('Bootstraps disponibles:', pythonforandroid.bootstraps.available_bootstraps)"
+    - name: Verify sdl2_gradle bootstrap
+      run: |
+        source venv/bin/activate
+        BOOTSTRAP_DIR=$(ls -d venv/lib/python3.*/site-packages/pythonforandroid/bootstraps/sdl2_gradle 2>/dev/null || true)
+        if [ -z "$BOOTSTRAP_DIR" ]; then
+          echo "❌ sdl2_gradle bootstrap non trouvé !"
+          exit 1
+        fi
+        echo "✅ sdl2_gradle bootstrap présent : $BOOTSTRAP_DIR"
 
     - name: Download Android SDK & NDK
       run: |
