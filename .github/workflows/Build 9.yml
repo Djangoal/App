@@ -1,83 +1,179 @@
-name: Build Kivy Android App 1
+name: Build APK incluant AAR et vérifications (unsigned)
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Type de build (debug ou release)"
+        required: true
+        default: "debug"
+        type: choice
+        options:
+          - debug
+          - release
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      SDK_DIR: ${{ github.workspace }}/android-sdk
+      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            python3-pip python3-setuptools python3-wheel \
-            openjdk-17-jdk unzip zip \
-            libffi-dev libssl-dev libncurses5
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-      - name: Install Buildozer & Cython
-        run: |
-          pip install --upgrade pip
-          pip install cython buildozer python-for-android
+    - name: Setup Python & python-for-android
+      run: |
+        python3 -m venv venv
+        ./venv/bin/pip install --upgrade pip cython
+        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
 
-      - name: Install Android SDK + NDK
-        run: |
-          mkdir -p $HOME/.buildozer/android/platform
-          cd $HOME/.buildozer/android/platform
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip commandlinetools-linux-*.zip -d cmdline-tools
-          mkdir -p android-sdk/cmdline-tools/latest
-          mv cmdline-tools/* android-sdk/cmdline-tools/latest/
+    - name: Download Android SDK & NDK
+      run: |
+        mkdir -p $SDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d $SDK_DIR
+        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp || true
+        mkdir -p $SDK_DIR/cmdline-tools/latest
+        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest || true
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+          "platform-tools" \
+          "platforms;android-35" \
+          "build-tools;35.0.0" \
+          "ndk;25.2.9519653"
 
-          yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-          android-sdk/cmdline-tools/latest/bin/sdkmanager --install \
-              "platform-tools" \
-              "platforms;android-33" \
-              "build-tools;33.0.2" \
-              "ndk;25.2.9519653"
+    - name: Cleanup previous builds
+      run: |
+        rm -rf .buildozer dist build bin
+        ./venv/bin/p4a clean_builds || true
+        rm -rf ~/.local/share/python-for-android/dists/monapp_release || true
+        rm -rf ~/.local/share/python-for-android/dists/monapp_debug || true
 
-      - name: Prepare buildozer
-        run: |
-          buildozer android clean
+    - name: Liste des AAR locaux
+      run: |
+        echo ">>> AAR locaux dans app/libs:"
+        ls -la app/libs || true
+        echo ">>> fichiers .aar:"
+        ls -la app/libs/*.aar || echo "Aucun .aar trouvé dans app/libs/"
 
-      # *** PATCH : Injection automatique des AAR ***
-      - name: Inject AAR modules manually
-        run: |
-          echo "=== Injection des AAR ==="
+    - name: Build APK (include AAR via classes.jar)
+      run: |
+        source venv/bin/activate
+        cd "$GITHUB_WORKSPACE"
 
-          mkdir -p app/src/main/libs
-          cp app/libs/*.aar app/src/main/libs/ || true
+        # Vérification des AAR
+        ls -la app/libs/*.aar || { echo "❌ Les fichiers .aar sont introuvables dans app/libs/"; exit 1; }
 
-          echo "AAR copiés:"
-          ls -l app/src/main/libs || true
+        # Extraction classes.jar
+        mkdir -p app/libs/jars
+        for aar in app/libs/*.aar; do
+          unzip -qo "$aar" classes.jar -d app/libs/jars/ || true
+        done
 
-          mkdir -p .buildozer/android/platform/build-armeabi-v7a/dists/*/libs || true
-          cp app/libs/*.aar .buildozer/android/platform/build-armeabi-v7a/dists/*/libs/ || true
+        ADD_JARS=""
+        for jar in app/libs/jars/*.jar; do
+          ADD_JARS="$ADD_JARS --add-jar=$GITHUB_WORKSPACE/$jar"
+        done
 
-      - name: Build Android APK
-        env:
-          ANDROIDSDK: $HOME/.buildozer/android/platform/android-sdk
-          ANDROIDNDK: $HOME/.buildozer/android/platform/android-sdk/ndk/25.2.9519653
-        run: |
-          export PATH=$ANDROIDSDK/platform-tools:$PATH
-          buildozer android release
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          MODE="--release"
+          DIST_NAME="monapp_release"
+        else
+          MODE="--debug"
+          DIST_NAME="monapp_debug"
+        fi
 
-      - name: List AAR inside APK
-        run: |
-          echo "=== Listing des AAR dans l'APK ==="
-          APK=$(find . -type f -name "*.apk" | head -n 1)
-          unzip -l "$APK" | grep ".aar" || echo "⚠️ Aucun .aar trouvé"
+        ./venv/bin/p4a apk \
+          --private "$GITHUB_WORKSPACE/app" \
+          --package=org.example.monapp \
+          --name="Mon budget perso" \
+          --version=1.0 \
+          --bootstrap=sdl2 \
+          --icon=logo.png \
+          --presplash=app/logo1.png \
+          --requirements=python3,kivy,android,pyjnius \
+          --permission WRITE_EXTERNAL_STORAGE \
+          --permission READ_EXTERNAL_STORAGE \
+          --permission INTERNET \
+          --permission ACCESS_NETWORK_STATE \
+          --arch=arm64-v8a \
+          --sdk_dir=$SDK_DIR \
+          --ndk_dir=$ANDROID_NDK_HOME \
+          --android_api=35 \
+          --orientation=portrait \
+          --dist-name=${DIST_NAME} \
+          $MODE \
+          $ADD_JARS \
+          --meta-data=com.google.android.gms.ads.APPLICATION_ID=ca-app-pub-3940256099942544~3347511713
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: Android-APK
-          path: bin/*.apk
+        APK_PATH=$(find . -type f -name "*${DIST_NAME}*.apk" | head -n 1)
+        if [ -z "$APK_PATH" ]; then
+          echo "❌ Aucun APK trouvé après build !"
+          find . -maxdepth 6 -type f -name "*.apk" || true
+          exit 1
+        fi
+        echo "✅ APK trouvé : $APK_PATH"
+
+        # Copier avec nom fixe
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+        else
+          FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+        fi
+        cp "$APK_PATH" "$FINAL_APK"
+        echo "APK final copié : $FINAL_APK"
+        echo "APK_PATH=$FINAL_APK" >> $GITHUB_ENV
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: ${{ env.APK_PATH }}
+
+    - name: Vérification AAR dans l'APK
+      run: |
+        echo "=== Vérification des AAR dans l'APK ==="
+        APK_PATH="${{ env.APK_PATH }}"
+        TMP_DIR=$(mktemp -d)
+        unzip -q "$APK_PATH" -d "$TMP_DIR"
+
+        # classes.jar extraits
+        echo ">>> Vérification classes.jar des AAR"
+        AAR_CLASSES=$(find "$TMP_DIR" -type f -name "classes.jar")
+        if [ -n "$AAR_CLASSES" ]; then
+          echo "✅ classes.jar des AAR trouvés dans l'APK :"
+          echo "$AAR_CLASSES"
+        else
+          echo "⚠️ Aucun classes.jar des AAR trouvé dans l'APK"
+        fi
+
+        # .aar stockés
+        echo ">>> Vérification .aar stockés tels quels"
+        AARS_IN_APK=$(find "$TMP_DIR" -type f -name "*.aar")
+        if [ -n "$AARS_IN_APK" ]; then
+          echo "✅ AAR trouvés dans l'APK :"
+          echo "$AARS_IN_APK"
+        else
+          echo "⚠️ Aucun .aar trouvé dans l'APK"
+        fi
+
+    - name: Vérification AdMob dans l'APK
+      run: |
+        echo "=== Vérification présence AdMob dans l'APK ==="
+        TMP_DIR=$(mktemp -d)
+        unzip -q "${{ env.APK_PATH }}" -d "$TMP_DIR"
+        if grep -qr "com/google/android/gms/ads" "$TMP_DIR"; then
+          echo "✅ Classes AdMob trouvées dans l'APK."
+        else
+          echo "⚠️ Classes AdMob NON trouvées dans l'APK !"
+          exit 1
+        fi
