@@ -151,7 +151,7 @@ jobs:
         name: mon-budget-${{ github.event.inputs.build_type }}
         path: ${{ env.APK_PATH }}
 
-    - name: Debug: list APKs and APK content top
+    - name: list APKs and APK content top
       run: |
         echo ">>> APK path used: ${{ env.APK_PATH }}"
         if [ ! -f "${{ env.APK_PATH }}" ]; then
