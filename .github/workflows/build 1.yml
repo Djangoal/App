@@ -1,4 +1,4 @@
-name: Build APK (unsigned)
+name: Build originale sans pub
 
 on:
   workflow_dispatch:
