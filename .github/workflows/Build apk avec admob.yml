@@ -38,10 +38,10 @@ jobs:
         pip install --upgrade cython
         pip install --upgrade git+https://github.com/kivy/python-for-android.git@master
 
-    - name: Verify bootstrap
-      run: |
-        source venv/bin/activate
-        python -c "import pythonforandroid.bootstraps; print('Bootstraps disponibles:', pythonforandroid.bootstraps.available_bootstraps)"
+    #- name: Verify bootstrap
+      #run: |
+        #source venv/bin/activate
+        #python -c "import pythonforandroid.bootstraps; print('Bootstraps disponibles:', pythonforandroid.bootstraps.available_bootstraps)"
 
     - name: Download Android SDK & NDK
       run: |
