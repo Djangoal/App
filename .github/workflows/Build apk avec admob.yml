@@ -63,6 +63,13 @@ jobs:
         rm -rf ~/.local/share/python-for-android/dists/monapp_release
         rm -rf ~/.local/share/python-for-android/dists/monapp_debug
 
+    - name: Fix pyjnius version
+      run: |
+       pip install --upgrade pip
+       pip uninstall -y pyjnius
+       pip install pyjnius==1.5.0
+       pip freeze
+    
     - name: Build APK
       run: |
         source venv/bin/activate
