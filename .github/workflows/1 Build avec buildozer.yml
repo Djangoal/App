@@ -1,4 +1,4 @@
-name: Build Android (Buildozer/P4A)
+name: 1 Build Android (Buildozer/P4A)
 
 on:
   workflow_dispatch:
