@@ -1,10 +1,10 @@
-name: 1 Build Android (Buildozer/P4A)
+name: Build avec vérification 6
 
 on:
   workflow_dispatch:
     inputs:
       build_type:
-        description: "Choisir le type de build"
+        description: "Type de build (debug ou release)"
         required: true
         default: "debug"
         type: choice
@@ -13,131 +13,81 @@ on:
           - release
 
 jobs:
-  build:
+  build_android:
     runs-on: ubuntu-latest
 
-    env:
-      SDK_DIR: ${{ github.workspace }}/android-sdk
-      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
-
     steps:
-    # ----------------------------
-    # CHECKOUT
-    # ----------------------------
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - name: 🧩 Checkout repo
+      uses: actions/checkout@v4
 
-    # ----------------------------
-    # SYSTEM DEPENDENCIES
-    # ----------------------------
-    - name: Install system dependencies
+    - name: ▶️ Display selected build type
+      run: |
+       echo "Selected build type: ${{ github.event.inputs.build_type }}"
+
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: 📦 Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk \
-        python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-    # ----------------------------
-    # PYTHON + P4A
-    # ----------------------------
-    - name: Setup Python & python-for-android
+    - name: 🔧 Install Buildozer
       run: |
-        python3 -m venv venv
-        ./venv/bin/pip install --upgrade pip setuptools cython
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+        python -m pip install --upgrade pip setuptools cython==0.29.33
+        pip install buildozer
 
-    # ----------------------------
-    # ANDROID SDK + NDK
-    # ----------------------------
-    - name: Download Android SDK & NDK
+    - name: 📱 Install Android SDK + Build tools
       run: |
-        mkdir -p $SDK_DIR
-        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d $SDK_DIR
-        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
-        mkdir -p $SDK_DIR/cmdline-tools/latest
-        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
-        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
-        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+        mkdir -p $HOME/Android/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O cmdline-tools.zip
+        unzip cmdline-tools.zip -d $HOME/Android/cmdline-tools
+        yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
+        $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
           "platform-tools" \
-          "platforms;android-35" \
-          "build-tools;35.0.0" \
-          "ndk;25.2.9519653"
+          "platforms;android-33" \
+          "build-tools;33.0.2"
 
-    # ----------------------------
-    # CLEAN BUILDS
-    # ----------------------------
-    - name: Cleanup previous builds
+    - name: Install apktool
       run: |
-        rm -rf .buildozer dist build bin
-        ./venv/bin/p4a clean_builds || true
+        sudo apt-get update
+        sudo apt-get install -y apktool
 
-    # ----------------------------
-    # COPY MANIFEST CUSTOM
-    # ----------------------------
-    - name: Import custom AndroidManifest template
+    - name: 🔧 Configure Android env
       run: |
-        mkdir -p ~/.local/share/python-for-android/templates/
-        cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
+        echo "ANDROID_SDK_ROOT=$HOME/Android" >> $GITHUB_ENV
+        echo "PATH=$HOME/Android/cmdline-tools/cmdline-tools/bin:$HOME/Android/platform-tools:$PATH" >> $GITHUB_ENV
 
-    # ----------------------------
-    # BUILD APK
-    # ----------------------------
-    - name: Build APK
+    - name: 🏗️ Build APK with Buildozer
       run: |
-        source venv/bin/activate
-
-        echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
-
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          ARCH="arm64-v8a"
-          DIST="monapp_release"
-          FLAGS="--release"
+          echo "Building RELEASE..."
+          buildozer --verbose android release
         else
-          ARCH="armeabi-v7a"
-          DIST="monapp_debug"
-          FLAGS="--debug"
+          echo "Building DEBUG..."
+          buildozer --verbose android debug
         fi
-
-        ./venv/bin/p4a apk \
-          --private "$GITHUB_WORKSPACE/app" \
-          --package=org.example.monapp \
-          --name="Mon budget perso" \
-          --version=1.0 \
-          --bootstrap=sdl2 \
-          --icon=logo.png \
-          --presplash=app/logo1.png \
-          --requirements=python3,kivy,android \
-          --permission WRITE_EXTERNAL_STORAGE \
-          --permission READ_EXTERNAL_STORAGE \
-          --permission INTERNET \
-          --permission ACCESS_NETWORK_STATE \
-          --arch=$ARCH \
-          --sdk_dir=$SDK_DIR \
-          --ndk_dir=$ANDROID_NDK_HOME \
-          --android_api=35 \
-          --orientation=portrait \
-          --dist-name=$DIST \
-          $FLAGS
-
-    # ----------------------------
-    # FIND APK
-    # ----------------------------
-    - name: Locate built APK
+    
+    - name: Find APK (signed or unsigned)
       id: find_apk
       run: |
-        APK_FILE=$(find . -type f -name "*.apk" | head -n 1)
-        if [ -z "$APK_FILE" ]; then
-          echo "❌ No APK found!"
-          exit 1
-        fi
-        echo "APK found: $APK_FILE"
-        echo "apk_path=$APK_FILE" >> $GITHUB_OUTPUT
+       echo "Searching for APK..."
+       APK=$(find . -type f -name "*release*.apk" | head -n 1)
+       if [ -z "$APK" ]; then
+       APK=$(find . -type f -name "*debug*.apk" | head -n 1)
+       fi
+       if [ -z "$APK" ]; then
+       echo "❌ No APK found!"
+       exit 1
+       fi
 
-    # ----------------------------
-    # UPLOAD
-    # ----------------------------
+       echo "✓ APK found at: $APK"
+       echo "apk=$APK" >> $GITHUB_OUTPUT
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ${{ steps.find_apk.outputs.apk_path }}
+       name: apk-${{ github.event.inputs.build_type }}
+       path: ${{ steps.find_apk.outputs.apk }}
