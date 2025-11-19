@@ -51,8 +51,7 @@ android.release_keyalias_pass =
 # AndroidX
 android.enable_androidx = True
 
-# Empêche les conflits de compression
-android.allow_backup = False
+
 
 # Accept all SDK licenses automatically
 android.accept_sdk_license = True
