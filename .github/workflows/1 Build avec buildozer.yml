@@ -74,5 +74,5 @@ jobs:
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-       name: apk-${{ github.event.inputs.build_type }}
-       path: ${{ steps.find_apk.outputs.apk }}
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: ./mon_budget_perso_${{ github.event.inputs.build_type }}*.apk
