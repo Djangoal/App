@@ -70,22 +70,7 @@ jobs:
           buildozer --verbose android debug
         fi
     
-    - name: Find APK (signed or unsigned)
-      id: find_apk
-      run: |
-       echo "Searching for APK..."
-       APK=$(find . -type f -name "*release*.apk" | head -n 1)
-       if [ -z "$APK" ]; then
-       APK=$(find . -type f -name "*debug*.apk" | head -n 1)
-       fi
-       if [ -z "$APK" ]; then
-       echo "❌ No APK found!"
-       exit 1
-       fi
-
-       echo "✓ APK found at: $APK"
-       echo "apk=$APK" >> $GITHUB_OUTPUT
-
+    
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
