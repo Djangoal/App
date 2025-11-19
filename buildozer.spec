@@ -18,7 +18,7 @@ presplash.filename = app/logo1.png
 version = 1.0
 
 # App requirements
-requirements = python3,kivy,android
+requirements = python3, kivy==2.2.1, android, jnius, https://github.com/MichaelStott/KivMob/archive/refs/heads/master.zip
 
 # Bootstrap (tu l'utilises déjà)
 bootstrap = sdl2
@@ -30,11 +30,11 @@ orientation = portrait
 android.permissions = WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, INTERNET, ACCESS_NETWORK_STATE
 
 # API, SDK, NDK
-android.api = 35
+android.api = 33
 android.minapi = 21
-android.sdk = 35
+android.sdk = 33
 android.ndk = 25b
-android.ndk_path = ./android-sdk/ndk/25.2.9519653
+android.ndk_api = 21
 
 # ARCH (debug utilise armeabi-v7a, release arm64 — ton workflow gère ça)
 # buildozer.spec doit accepter les deux
@@ -48,7 +48,14 @@ android.release_keystore =
 android.release_keystore_pass =
 android.release_keyalias =
 android.release_keyalias_pass =
+# AndroidX
+android.enable_androidx = True
 
+# Empêche les conflits de compression
+android.allow_backup = False
+
+# Accept all SDK licenses automatically
+android.accept_sdk_license = True
 # Options supplémentaires python-for-android
 android.allow_backup = False
 android.compile_options = release
@@ -57,9 +64,9 @@ android.compile_options = release
 android.dist_name = monapp
 
 # Pas d’ads, pas de modules externes
-android.gradle_dependencies =
+# Firebase Ads
+android.gradle_dependencies = com.google.firebase:firebase-ads:21.4.0
 
-# --- FIN APP CONFIG ---
 
 
 [buildozer]
@@ -67,4 +74,4 @@ android.gradle_dependencies =
 log_level = 2
 
 # Empêche les reconstructions inutiles en local
-warn_on_root = 1
+warn_on_root = 0
