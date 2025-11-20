@@ -70,7 +70,11 @@ jobs:
           echo "Building DEBUG..."
           buildozer --verbose android debug
         fi
-
+    - name: 🔍 List build outputs
+      run: |
+        echo "📁 Contenu du dossier bin :"
+        ls -lh ./bin
+        
     - name: 📤 Upload APK
       uses: actions/upload-artifact@v4
       with:
