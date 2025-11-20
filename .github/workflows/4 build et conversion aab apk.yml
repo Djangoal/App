@@ -142,22 +142,22 @@ jobs:
     - name: 📦 Download bundletool
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
-        wget https://github.com/google/bundletool/releases/download/1.14.0/bundletool-all-1.14.0.jar -O bundletool.jar
+       wget https://github.com/google/bundletool/releases/download/1.14.0/bundletool-all-1.14.0.jar -O bundletool.jar
 
     - name: 🔄 Convert AAB to universal APK
       if: ${{ github.event.inputs.build_type == 'release' }}
       run: |
-        java -jar bundletool.jar build-apks \
-          --bundle=bin/*-release.aab \
-          --output=bin/app.apks \
-          --mode=universal \
-          --ks=release.keystore \
-          --ks-pass=pass:$KEYSTORE_PASSWORD \
-          --key-pass=pass:$KEY_ALIAS_PASSWORD \
-          --ks-key-alias=$KEY_ALIAS
+       java -jar bundletool.jar build-apks \
+       --bundle=bin/*-release.aab \
+       --output=bin/app.apks \
+       --mode=universal \
+       --ks=${{ secrets.KEYSTORE_FILE }} \
+       --ks-pass=pass:$KEYSTORE_PASSWORD \
+       --key-pass=pass:$KEY_ALIAS_PASSWORD \
+       --ks-key-alias=$KEY_ALIAS
 
-        unzip -o bin/app.apks -d bin/apks
-        
+       unzip -o bin/app.apks -d bin/apks
+    
     - name: 🔍 List build outputs
       run: |
         echo "📁 Contenu du dossier bin :"
@@ -166,9 +166,7 @@ jobs:
     - name: 📤 Upload APK / AAB
       uses: actions/upload-artifact@v4
       with:
-        name: mon-budget-${{ github.event.inputs.build_type }}
-        path: |
-          ./bin/*${{ github.event.inputs.build_type }}*.apk
-          ./bin/apks/universal.apk
-          ./bin/*${{ github.event.inputs.build_type }}*.aab
-          ./bin/*unsigned*.apk
+       name: mon-budget-${{ github.event.inputs.build_type }}
+       path: |
+        ./bin/apks/universal.apk
+        ./bin/*-release.aab
