@@ -127,6 +127,10 @@ jobs:
         echo "ANDROID_SDK_ROOT=$HOME/Android" >> $GITHUB_ENV
         echo "PATH=$HOME/Android/cmdline-tools/cmdline-tools/bin:$HOME/Android/platform-tools:$PATH" >> $GITHUB_ENV
 
+    - name: Nettoyer l’ancienne distribution
+      run: |
+       rm -rf .buildozer
+       rm -rf bin
     # -----------------------------------------
     # BUILD APK DIRECT
     # -----------------------------------------
