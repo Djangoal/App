@@ -36,19 +36,14 @@ android.sdk = 33
 android.ndk = 25b
 android.ndk_api = 21
 
-# Architecture (le workflow gère debug/release automatiquement)
-# Pas de commande buildozer ici !
-# buildozer.spec NE DOIT PAS contenir de lignes de terminal
-# (tu avais ajouté : "buildozer android release --arch ..." → supprimé)
-
 # Manifest personnalisé
 android.manifest = app/templates/AndroidManifest.tmpl.xml
 
 # Signature AUTOMATIQUE (compatible GitHub Secrets)
 android.signing_key = release.keystore
-android.signing_key_password = %(env:KEYSTORE_PASSWORD)s
-android.keyalias = %(env:KEY_ALIAS)s
-android.keyalias_password = %(env:KEY_ALIAS_PASSWORD)s
+android.signing_key_password = {env:KEYSTORE_PASSWORD}
+android.keyalias = {env:KEY_ALIAS}
+android.keyalias_password = {env:KEY_ALIAS_PASSWORD}
 
 # Activer AndroidX
 android.enable_androidx = True
