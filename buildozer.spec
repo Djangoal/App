@@ -7,71 +7,69 @@ title = Mon budget perso
 package.name = monapp
 package.domain = org.example
 
-# Chemin des sources Python
+# Chemin vers ton dossier source
 source.dir = app
 
-# Icônes et splash
+# Icone et splash
 icon.filename = logo.png
 presplash.filename = app/logo1.png
 
 # Version
 version = 1.0
 
-# App requirements
+# Dépendances Python
 requirements = python3, kivy==2.2.1, android, jnius, https://github.com/MichaelStott/KivMob/archive/refs/heads/master.zip
 
-# Bootstrap (tu l'utilises déjà)
+# Bootstrap Kivy
 bootstrap = sdl2
 
 # Orientation
 orientation = portrait
 
-# Permissions
+# Permissions Android
 android.permissions = WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, INTERNET, ACCESS_NETWORK_STATE
 
-# API, SDK, NDK
+# SDK / API
 android.api = 33
 android.minapi = 21
 android.sdk = 33
 android.ndk = 25b
 android.ndk_api = 21
 
-# ARCH (debug utilise armeabi-v7a, release arm64 — ton workflow gère ça)
-# buildozer.spec doit accepter les deux
-buildozer android release --arch armeabi-v7a
-buildozer android release --arch arm64-v8a
+# Architecture (le workflow gère debug/release automatiquement)
+# Pas de commande buildozer ici !
+# buildozer.spec NE DOIT PAS contenir de lignes de terminal
+# (tu avais ajouté : "buildozer android release --arch ..." → supprimé)
 
-# Manifest custom → EXACTEMENT ce que ton workflow fait
+# Manifest personnalisé
 android.manifest = app/templates/AndroidManifest.tmpl.xml
 
-# Pas d'autosignature → tu signes toi-même plus tard
-android.release_keystore =
-android.release_keystore_pass =
-android.release_keyalias =
-android.release_keyalias_pass =
-# AndroidX
+# Signature AUTOMATIQUE (compatible GitHub Secrets)
+android.signing_key = release.keystore
+android.signing_key_password = %(env:KEYSTORE_PASSWORD)s
+android.keyalias = %(env:KEY_ALIAS)s
+android.keyalias_password = %(env:KEY_ALIAS_PASSWORD)s
+
+# Activer AndroidX
 android.enable_androidx = True
 
-
-
-# Accept all SDK licenses automatically
+# Accepter licences SDK
 android.accept_sdk_license = True
-# Options supplémentaires python-for-android
+
+# Options supplémentaires
 android.allow_backup = False
 android.compile_options = release
 
-# Nom du dossier dist (p4a override déjà, donc juste neutre)
+# Nom du dossier dist
 android.dist_name = monapp
 
-# Pas d’ads, pas de modules externes
 # Firebase Ads
 android.gradle_dependencies = com.google.firebase:firebase-ads:21.4.0
 
-android.release_artifacts = aab,apk
+# Build final : APK + AAB
+android.release_artifacts = aab, apk
+
 
 [buildozer]
-
 log_level = 2
-
-# Empêche les reconstructions inutiles en local
 warn_on_root = 0
