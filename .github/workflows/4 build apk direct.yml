@@ -17,9 +17,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    
     - name: 🧩 Checkout repo
       uses: actions/checkout@v4
 
+    - name: Vérifier le buildozer.spec utilisé
+      run: |
+       echo "=== CONTENU DU buildozer.spec ==="
+       cat buildozer.spec
+    
     - name: ▶️ Display selected build type
       run: |
         echo "Selected build type: ${{ github.event.inputs.build_type }}"
