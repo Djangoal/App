@@ -75,8 +75,11 @@ jobs:
         echo "📁 Contenu du dossier bin :"
         ls -lh ./bin
         
-    - name: 📤 Upload APK
+    - name: 📤 Upload APK / AAB
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ./bin/*${{ github.event.inputs.build_type }}*.apk
+        path: |
+          ./bin/*${{ github.event.inputs.build_type }}*.apk
+          ./bin/*${{ github.event.inputs.build_type }}*.aab
+          ./bin/*unsigned*.apk
