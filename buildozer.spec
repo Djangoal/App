@@ -39,11 +39,11 @@ android.ndk_api = 21
 # Manifest personnalisé
 android.manifest = app/templates/AndroidManifest.tmpl.xml
 
-# Signature AUTOMATIQUE (compatible GitHub Secrets)
-android.signing_key = release.keystore
-android.signing_key_password = {env:KEYSTORE_PASSWORD}
-android.keyalias = {env:KEY_ALIAS}
-android.keyalias_password = {env:KEY_ALIAS_PASSWORD}
+# ❌ SIGNATURE DÉSACTIVÉE (APK non signé)
+#android.signing_key = release.keystore
+#android.signing_key_password = {env:KEYSTORE_PASSWORD}
+#android.keyalias = {env:KEY_ALIAS}
+#android.keyalias_password = {env:KEY_ALIAS_PASSWORD}
 
 # Activer AndroidX
 android.enable_androidx = True
@@ -61,8 +61,8 @@ android.dist_name = monapp
 # Firebase Ads
 android.gradle_dependencies = com.google.firebase:firebase-ads:21.4.0
 
-# Build final : APK + AAB
-android.release_artifacts = aab, apk
+# ❌ PAS DE AAB → APK UNIQUEMENT
+android.release_artifacts = apk
 
 
 [buildozer]
