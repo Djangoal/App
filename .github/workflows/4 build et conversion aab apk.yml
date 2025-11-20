@@ -1,4 +1,4 @@
-name: 4 build et conversion aab apk
+name: 4 build apk direct
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       build_type:
         description: "Type de build (debug ou release)"
         required: true
-        default: "debug"
+        default: "release"
         type: choice
         options:
           - debug
@@ -23,13 +23,6 @@ jobs:
     - name: ▶️ Display selected build type
       run: |
         echo "Selected build type: ${{ github.event.inputs.build_type }}"
-
-    # 🔑 EXPORT SIGNING SECRETS
-    - name: 🔑 Export signing secrets
-      run: |
-        echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-        echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
-        echo "KEY_ALIAS_PASSWORD=${{ secrets.KEY_ALIAS_PASSWORD }}" >> $GITHUB_ENV
 
     # -----------------------------------------
     # CACHE PIP
@@ -88,6 +81,9 @@ jobs:
         key: ndk-${{ runner.os }}-v1
         restore-keys: ndk-${{ runner.os }}-
 
+    # -----------------------------------------
+    # PYTHON
+    # -----------------------------------------
     - name: 🐍 Set up Python
       uses: actions/setup-python@v5
       with:
@@ -105,7 +101,7 @@ jobs:
         pip install buildozer
 
     # -----------------------------------------
-    # INSTALL SDK ONLY IF CACHE DIDN'T RESTORE
+    # INSTALL SDK ONLY IF CACHE NOT RESTORED
     # -----------------------------------------
     - name: 📱 Install Android SDK + Build tools (only if needed)
       if: steps.cache-android.outputs.cache-hit != 'true'
@@ -120,59 +116,37 @@ jobs:
           "build-tools;33.0.2" \
           "ndk;25.2.9519653"
 
-    - name: Install apktool
-      run: sudo apt-get install -y apktool
-
     - name: 🔧 Configure Android env
       run: |
         echo "ANDROID_SDK_ROOT=$HOME/Android" >> $GITHUB_ENV
         echo "PATH=$HOME/Android/cmdline-tools/cmdline-tools/bin:$HOME/Android/platform-tools:$PATH" >> $GITHUB_ENV
 
     # -----------------------------------------
-    # BUILD APK / AAB
+    # BUILD APK DIRECT
     # -----------------------------------------
-    - name: 🏗️ Build APK with Buildozer
+    - name: 🏗️ Build APK with Buildozer (direct APK)
       run: |
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "Building RELEASE..."
+          echo "📦 Build RELEASE APK (non signé)"
           buildozer --verbose android release
         else
-          echo "Building DEBUG..."
+          echo "📦 Build DEBUG APK"
           buildozer --verbose android debug
         fi
 
     # -----------------------------------------
-    # CONVERT AAB TO UNIVERSAL APK (RELEASE)
+    # LIST OUTPUTS
     # -----------------------------------------
-    - name: 📦 Download bundletool
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        wget https://github.com/google/bundletool/releases/download/1.14.0/bundletool-all-1.14.0.jar -O bundletool.jar
-
-    - name: 🔄 Convert AAB to universal APK
-      if: ${{ github.event.inputs.build_type == 'release' }}
-      run: |
-        java -jar bundletool.jar build-apks \
-          --bundle=bin/*-release.aab \
-          --output=bin/app.apks \
-          --mode=universal \
-          --ks=./${{ secrets.KEYSTORE_FILE }} \
-          --ks-pass=pass:$KEYSTORE_PASSWORD \
-          --key-pass=pass:$KEY_ALIAS_PASSWORD \
-          --ks-key-alias=$KEY_ALIAS
-
-        unzip -o bin/app.apks -d bin/apks
-
-    - name: 🔍 List build outputs
+    - name: 📂 List build outputs
       run: |
         echo "📁 Contenu du dossier bin :"
         ls -lh ./bin
-        ls -lh ./bin/apks
 
-    - name: 📤 Upload APK / AAB
+    # -----------------------------------------
+    # UPLOAD APK
+    # -----------------------------------------
+    - name: 📤 Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: |
-          ./bin/apks/universal.apk
-          ./bin/*-release.aab
+        path: ./bin/*.apk
