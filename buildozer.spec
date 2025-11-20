@@ -66,7 +66,7 @@ android.dist_name = monapp
 # Firebase Ads
 android.gradle_dependencies = com.google.firebase:firebase-ads:21.4.0
 
-
+android.release_artifacts = aab,apk
 
 [buildozer]
 
