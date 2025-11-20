@@ -38,7 +38,8 @@ android.ndk_api = 21
 
 # ARCH (debug utilise armeabi-v7a, release arm64 — ton workflow gère ça)
 # buildozer.spec doit accepter les deux
-android.archs = armeabi-v7a, arm64-v8a
+buildozer android release --arch armeabi-v7a
+buildozer android release --arch arm64-v8a
 
 # Manifest custom → EXACTEMENT ce que ton workflow fait
 android.manifest = app/templates/AndroidManifest.tmpl.xml
