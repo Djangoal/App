@@ -62,7 +62,7 @@ jobs:
        $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
        "platform-tools" \
        "platforms;android-33" \
-       "build-tools;33.0.2" \
+       "build-tools;34.0.0" \
        "ndk;25.2.9519653"
       
     # 8️⃣ Configurer variables d’environnement Android
