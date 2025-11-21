@@ -53,17 +53,18 @@ jobs:
         pip install buildozer==1.4.0
 
     # 7️⃣ Installer SDK Android + Build Tools
-    - name: 📱 Install Android SDK + Build tools
+    - name: 📱 Install Android SDK + Build tools (only if needed)
+      if: steps.cache-android.outputs.cache-hit != 'true'
       run: |
-       mkdir -p $HOME/Android/cmdline-tools
-       wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
-       unzip -o commandlinetools.zip -d $HOME/Android/cmdline-tools
-       yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
-       $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
-       "platform-tools" \
-       "platforms;android-33" \
-       "build-tools;34.0.0" \
-       "ndk;25.2.9519653"
+        mkdir -p $HOME/Android/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
+        unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
+        yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
+        $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.2" \
+          "ndk;25.2.9519653"
       
     # 8️⃣ Configurer variables d’environnement Android
     - name: 🔧 Configure Android env
