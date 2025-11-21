@@ -46,11 +46,11 @@ jobs:
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
     # 6️⃣ Installer Buildozer 1.4.2 et Cython compatible
-    - name: 🔧 Install Buildozer 1.4.2
+    - name: 🔧 Install Buildozer 1.4.0
       run: |
         python -m pip install --upgrade pip setuptools
         pip install cython==0.29.33
-        pip install buildozer==1.4.2
+        pip install buildozer==1.4.0
 
     # 7️⃣ Installer SDK Android + Build Tools
     - name: 📱 Install Android SDK + Build tools
