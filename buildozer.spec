@@ -62,6 +62,7 @@ android.dist_name = monapp
 android.gradle_dependencies = com.google.firebase:firebase-ads:21.4.0
 
 # ❌ PAS DE AAB → APK UNIQUEMENT
+android.bundle = False
 android.release_artifacts = apk
 
 
