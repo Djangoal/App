@@ -28,7 +28,7 @@ orientation = portrait
 
 # Permissions Android
 android.permissions = WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, INTERNET, ACCESS_NETWORK_STATE
-
+android.archs = armeabi-v7a, arm64-v8a
 # SDK / API
 android.api = 33
 android.minapi = 21
