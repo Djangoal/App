@@ -53,12 +53,11 @@ jobs:
         pip install buildozer==1.4.0
 
     # 7️⃣ Installer SDK Android + Build Tools
-    - name: 📱 Install Android SDK + Build tools (only if needed)
-      if: steps.cache-android.outputs.cache-hit != 'true'
+    - name: 📱 Install Android SDK + Build tools
       run: |
         mkdir -p $HOME/Android/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
-        unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
+        unzip -o commandlinetools.zip -d $HOME/Android/cmdline-tools
         yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
         $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
           "platform-tools" \
