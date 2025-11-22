@@ -22,10 +22,12 @@ jobs:
       uses: actions/checkout@v4
 
     - name: 📄 Vérifier buildozer.spec
-      run: cat buildozer.spec
+      run: |
+       cat buildozer.spec
 
     - name: ▶️ Display selected build type
-      run: echo "Selected build type: ${{ github.event.inputs.build_type }}"
+      run: |
+       echo "Selected build type: ${{ github.event.inputs.build_type }}"
 
     - name: 🐍 Set up Python
       uses: actions/setup-python@v5
@@ -80,7 +82,8 @@ jobs:
         fi
 
     - name: 📂 Show outputs
-      run: ls -lh ./bin
+      run: |
+       ls -lh ./bin
 
     - name: 📤 Upload APK
       uses: actions/upload-artifact@v4
