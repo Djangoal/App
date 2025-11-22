@@ -1,4 +1,4 @@
-name: 5 Build APK direct avec acceptation licences
+name: 5 Build APK release direct
 
 on:
   workflow_dispatch:
@@ -21,16 +21,13 @@ jobs:
     - name: 🧩 Checkout repo
       uses: actions/checkout@v4
 
-    # 2️⃣ Vérifier buildozer.spec
+    # 2️⃣ Afficher le buildozer.spec pour vérification
     - name: 📄 Vérifier buildozer.spec
-      run: |
-        echo "=== CONTENU DU buildozer.spec ==="
-        cat buildozer.spec
+      run: cat buildozer.spec
 
     # 3️⃣ Afficher le type de build
     - name: ▶️ Display selected build type
-      run: |
-       echo "Selected build type: ${{ github.event.inputs.build_type }}"
+      run: echo "Selected build type: ${{ github.event.inputs.build_type }}"
 
     # 4️⃣ Setup Python
     - name: 🐍 Set up Python
@@ -45,33 +42,25 @@ jobs:
         sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-    # 6️⃣ Installer Buildozer et Cython
-    - name: 🔧 Install Buildozer
+    # 6️⃣ Installer Buildozer 1.3.3 et Cython compatible
+    - name: 🔧 Install Buildozer 1.3.3
       run: |
         python -m pip install --upgrade pip setuptools
         pip install cython==0.29.33
-        pip install buildozer==1.4.0
+        pip install buildozer==1.3.3
 
-    # 7️⃣ Installer SDK Android + Build Tools + acceptation licences
+    # 7️⃣ Installer SDK Android + Build Tools
     - name: 📱 Install Android SDK + Build tools
       run: |
         mkdir -p $HOME/Android/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
         unzip -o commandlinetools.zip -d $HOME/Android/cmdline-tools
-
-        # Installer tous les packages nécessaires
+        yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
         $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
-          --sdk_root=$HOME/Android \
           "platform-tools" \
           "platforms;android-33" \
           "build-tools;33.0.2" \
-          "ndk;25.2.9519653" << EOF
-           y
-           y
-           y
-           y
-           y
-           EOF
+          "ndk;25.2.9519653"
 
     # 8️⃣ Configurer variables d’environnement Android
     - name: 🔧 Configure Android env
@@ -79,30 +68,28 @@ jobs:
         echo "ANDROID_SDK_ROOT=$HOME/Android" >> $GITHUB_ENV
         echo "PATH=$HOME/Android/cmdline-tools/cmdline-tools/bin:$HOME/Android/platform-tools:$PATH" >> $GITHUB_ENV
 
-    # 9️⃣ Nettoyer builds précédents
+    # 9️⃣ Nettoyer les builds précédents
     - name: 🧹 Clean previous builds
       run: |
         rm -rf .buildozer
         rm -rf bin
 
     # 🔟 Build APK
-    - name: 🏗️ Build APK with Buildozer
+    - name: 🏗️ Build APK with Buildozer (direct APK)
       run: |
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "📦 Build RELEASE APK (non signé)"
-          buildozer android release
+          echo "📦 Build RELEASE APK (non signé) avec Buildozer 1.3.3"
+          buildozer android release --arch armeabi-v7a,arm64-v8a
         else
           echo "📦 Build DEBUG APK"
-          buildozer android debug
+          buildozer android debug --arch armeabi-v7a,arm64-v8a
         fi
 
     # 1️⃣1️⃣ Lister le contenu du dossier bin
     - name: 📂 List build outputs
-      run: |
-        echo "📁 Contenu du dossier bin :"
-        ls -lh ./bin
+      run: ls -lh ./bin
 
-    # 1️⃣2️⃣ Upload APK
+    # 1️⃣2️⃣ Upload APK pour téléchargement
     - name: 📤 Upload APK
       uses: actions/upload-artifact@v4
       with:
