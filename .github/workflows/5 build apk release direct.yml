@@ -1,4 +1,4 @@
-name: Build APK direct avec acceptation licences
+name: 5 Build APK direct avec acceptation licences
 
 on:
   workflow_dispatch:
