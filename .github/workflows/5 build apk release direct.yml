@@ -23,11 +23,13 @@ jobs:
 
     # 2️⃣ Afficher le buildozer.spec pour vérification
     - name: 📄 Vérifier buildozer.spec
-      run: cat buildozer.spec
+      run: |
+       cat buildozer.spec
 
     # 3️⃣ Afficher le type de build
     - name: ▶️ Display selected build type
-      run: echo "Selected build type: ${{ github.event.inputs.build_type }}"
+      run: |
+       echo "Selected build type: ${{ github.event.inputs.build_type }}"
 
     # 4️⃣ Setup Python
     - name: 🐍 Set up Python
@@ -87,7 +89,8 @@ jobs:
 
     # 1️⃣1️⃣ Lister le contenu du dossier bin
     - name: 📂 List build outputs
-      run: ls -lh ./bin
+      run: |
+       ls -lh ./bin
 
     # 1️⃣2️⃣ Upload APK pour téléchargement
     - name: 📤 Upload APK
