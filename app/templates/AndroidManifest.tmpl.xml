@@ -1,37 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest 
+<manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="org.example.monapp"
     android:versionCode="1"
     android:versionName="1.0">
 
-    <!-- Permissions Android -->
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
-    <!-- Obligatoire Android 12+ -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
+    <!-- Compatible API / Cibles -->
+    <uses-sdk
+        android:minSdkVersion="21"
+        android:targetSdkVersion="33"/>
 
-    <!-- Hardware (Kivy) -->
-    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
-
+    <!-- Activité principale -->
     <application
         android:name="org.kivy.android.PythonApplication"
         android:label="Mon budget perso"
         android:icon="@mipmap/icon"
         android:allowBackup="false"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:targetApi="33">
 
-        <!-- ACTIVITY PRINCIPALE -->
+        <!-- Orientation portrait obligatoire -->
         <activity
             android:name="org.kivy.android.PythonActivity"
             android:label="Mon budget perso"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|density"
-            android:launchMode="singleTask"
-            android:exported="true">
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|uiMode">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -39,12 +40,15 @@
             </intent-filter>
         </activity>
 
-        <!-- Firebase Ads (évite les crash en debug) -->
+        <!-- Service Python -->
+        <service
+            android:name="org.kivy.android.PythonService"
+            android:exported="false"/>
+
+        <!-- Google Mobile Ads / Firebase Ads -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
-        <!-- Test ID (safe) -->
-        <!-- Remplace plus tard par ton ID réel pour la release -->
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
 
     </application>
 
