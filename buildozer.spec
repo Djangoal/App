@@ -20,7 +20,7 @@ orientation = portrait
 # Permissions Android
 android.permissions = INTERNET, ACCESS_NETWORK_STATE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE
 
-# ARCHITECTURES (important)
+# ARCHITECTURES
 android.archs = armeabi-v7a, arm64-v8a
 
 # SDK / API
@@ -29,14 +29,17 @@ android.minapi = 21
 android.sdk = 33
 android.ndk = 25b
 android.ndk_api = 21
-android.build_tools_version = 34.0.0
+
+# Build-tools imposés (évite build-tools 36)
+android.build_tools_version = 33.0.2
+
 # Manifest personnalisé
 android.manifest = app/templates/AndroidManifest.tmpl.xml
 
-# AndroidX obligatoire
+# AndroidX obligatoire (Google Ads)
 android.enable_androidx = True
 
-# Firebase Ads (Google Ads)
+# Google Ads (Play Services Ads)
 android.gradle_dependencies = com.google.android.gms:play-services-ads:22.3.0
 
 android.allow_backup = False
@@ -44,7 +47,7 @@ android.compile_options = release
 
 android.dist_name = monapp
 
-# Forcer APK (pas AAB)
+# Forcer APK
 android.bundle = False
 android.release_artifacts = apk
 
