@@ -46,20 +46,22 @@ jobs:
         pip install cython==0.29.33
         pip install buildozer==1.4.0
 
-    - name: 📱 Install Android SDK + Build tools (FORCÉS)
+    - name: 📱 Install Android SDK + Build tools
       run: |
-        mkdir -p $HOME/Android/cmdline-tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
-        unzip -o commandlinetools.zip -d $HOME/Android/cmdline-tools
+       mkdir -p $HOME/Android/cmdline-tools
+       wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
+       unzip -o commandlinetools.zip -d $HOME/Android/cmdline-tools
 
-        yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
+       # Accepter toutes les licences automatiquement
+       yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
 
-        # ⚠️ Installer UNIQUEMENT les versions demandées
-        $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android \
-          "platform-tools" \
-          "platforms;android-33" \
-          "build-tools;33.0.2" \
-          "ndk;25.2.9519653"
+       # Installer tout ce qu'il faut pour Buildozer + aide à AIDL
+       $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
+       "platform-tools" \
+       "platforms;android-33" \
+       "build-tools;36.1.0" \
+       "ndk;25.2.9519653" \
+       "cmdline-tools;latest"
 
     - name: 🔧 Configure Android env
       run: |
