@@ -29,7 +29,8 @@ jobs:
 
     # 3️⃣ Afficher le type de build
     - name: ▶️ Display selected build type
-      run: echo "Selected build type: ${{ github.event.inputs.build_type }}"
+      run: |
+       echo "Selected build type: ${{ github.event.inputs.build_type }}"
 
     # 4️⃣ Setup Python
     - name: 🐍 Set up Python
@@ -65,12 +66,12 @@ jobs:
           "platforms;android-33" \
           "build-tools;33.0.2" \
           "ndk;25.2.9519653" << EOF
-y
-y
-y
-y
-y
-EOF
+           y
+           y
+           y
+           y
+           y
+           EOF
 
     # 8️⃣ Configurer variables d’environnement Android
     - name: 🔧 Configure Android env
