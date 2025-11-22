@@ -1,4 +1,4 @@
-name: 5 Build APK release direct
+name: Build APK direct avec acceptation licences
 
 on:
   workflow_dispatch:
@@ -17,63 +17,75 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
+    # 1️⃣ Checkout repo
     - name: 🧩 Checkout repo
       uses: actions/checkout@v4
 
+    # 2️⃣ Vérifier buildozer.spec
     - name: 📄 Vérifier buildozer.spec
       run: |
-       cat buildozer.spec
+        echo "=== CONTENU DU buildozer.spec ==="
+        cat buildozer.spec
 
+    # 3️⃣ Afficher le type de build
     - name: ▶️ Display selected build type
-      run: |
-       echo "Selected build type: ${{ github.event.inputs.build_type }}"
+      run: echo "Selected build type: ${{ github.event.inputs.build_type }}"
 
+    # 4️⃣ Setup Python
     - name: 🐍 Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
+    # 5️⃣ Installer dépendances système
     - name: 📦 Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip \
           libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
 
-    - name: 🔧 Install Buildozer 1.4.0
+    # 6️⃣ Installer Buildozer et Cython
+    - name: 🔧 Install Buildozer
       run: |
         python -m pip install --upgrade pip setuptools
         pip install cython==0.29.33
         pip install buildozer==1.4.0
 
+    # 7️⃣ Installer SDK Android + Build Tools + acceptation licences
     - name: 📱 Install Android SDK + Build tools
       run: |
-       mkdir -p $HOME/Android/cmdline-tools
-       wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
-       unzip -o commandlinetools.zip -d $HOME/Android/cmdline-tools
+        mkdir -p $HOME/Android/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
+        unzip -o commandlinetools.zip -d $HOME/Android/cmdline-tools
 
-       # Accepter toutes les licences automatiquement
-       yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
+        # Installer tous les packages nécessaires
+        $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
+          --sdk_root=$HOME/Android \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.2" \
+          "ndk;25.2.9519653" << EOF
+y
+y
+y
+y
+y
+EOF
 
-       # Installer tout ce qu'il faut pour Buildozer + aide à AIDL
-       $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
-       "platform-tools" \
-       "platforms;android-33" \
-       "build-tools;36.1.0" \
-       "ndk;25.2.9519653" \
-       "cmdline-tools;latest"
-
+    # 8️⃣ Configurer variables d’environnement Android
     - name: 🔧 Configure Android env
       run: |
         echo "ANDROID_SDK_ROOT=$HOME/Android" >> $GITHUB_ENV
         echo "PATH=$HOME/Android/cmdline-tools/cmdline-tools/bin:$HOME/Android/platform-tools:$PATH" >> $GITHUB_ENV
 
+    # 9️⃣ Nettoyer builds précédents
     - name: 🧹 Clean previous builds
       run: |
         rm -rf .buildozer
         rm -rf bin
 
-    - name: 🏗️ Build APK
+    # 🔟 Build APK
+    - name: 🏗️ Build APK with Buildozer
       run: |
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           echo "📦 Build RELEASE APK (non signé)"
@@ -83,10 +95,13 @@ jobs:
           buildozer android debug
         fi
 
-    - name: 📂 Show outputs
+    # 1️⃣1️⃣ Lister le contenu du dossier bin
+    - name: 📂 List build outputs
       run: |
-       ls -lh ./bin
+        echo "📁 Contenu du dossier bin :"
+        ls -lh ./bin
 
+    # 1️⃣2️⃣ Upload APK
     - name: 📤 Upload APK
       uses: actions/upload-artifact@v4
       with:
