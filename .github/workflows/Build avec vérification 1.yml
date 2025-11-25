@@ -43,34 +43,15 @@ jobs:
 
     - name: 📱 Install Android SDK + Build tools
       run: |
-       # Créer structure
-       mkdir -p $HOME/Android/cmdline-tools
-
-       # Télécharger
-       wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O cmdline-tools.zip
-
-       # Extraire dans cmdline-tools
-       unzip cmdline-tools.zip -d $HOME/Android/cmdline-tools
-
-       # Déplacer vers cmdline-tools/latest
-       mv $HOME/Android/cmdline-tools/cmdline-tools $HOME/Android/cmdline-tools/latest
-
-       # AJOUTER LE PATH AVANT TOUTE UTILISATION DE sdkmanager
-       export ANDROID_SDK_ROOT=$HOME/Android
-       export PATH=$HOME/Android/cmdline-tools/latest/bin:$PATH
-
-       # Vérification que sdkmanager est fonctionnel
-       sdkmanager --version
-
-       # Accepter les licences (OBLIGATOIRE)
-       yes | sdkmanager --licenses --sdk_root=$ANDROID_SDK_ROOT
-
-       # Installer Platform + Build-Tools 36.1.0
-       sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-         "platform-tools" \
-         "platforms;android-34" \
-         "build-tools;36.1.0"
-
+        mkdir -p $HOME/Android/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
+        unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
+        yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
+        $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.2"
+          
     - name: 📦 Install apktool (conservé pour usage futur)
       run: |
         sudo apt-get update
