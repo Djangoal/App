@@ -41,18 +41,29 @@ jobs:
         pip install buildozer
         pip install kivy
 
-    - name: 📱 Install Android SDK + Build tools
+    - name: Download Android SDK & NDK
       run: |
-        mkdir -p $HOME/Android/cmdline-tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
-        unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
-        mv $HOME/Android/cmdline-tools/cmdline-tools $HOME/Android/cmdline-tools/latest
-
-        yes | $HOME/Android/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android --licenses
-        $HOME/Android/cmdline-tools/latest/bin/sdkmanager \
+        mkdir -p $SDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d $SDK_DIR
+        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
+        mkdir -p $SDK_DIR/cmdline-tools/latest
+        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" \
-          "platforms;android-34" \
-          "build-tools;36.1.0"
+          "platforms;android-35" \
+          "build-tools;35.0.0" \
+          "ndk;25.2.9519653"
+          
+    - name: Cleanup previous builds
+      run: |
+        echo "Cleaning old builds..."
+        rm -rf .buildozer dist build bin
+        ./venv/bin/p4a clean_builds || true
+        rm -rf ~/.local/share/python-for-android/dists/monapp_release
+        rm -rf ~/.local/share/python-for-android/dists/monapp_debug
+
 
     - name: 📦 Install apktool (conservé pour usage futur)
       run: |
