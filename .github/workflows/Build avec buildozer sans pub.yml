@@ -17,8 +17,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_HOME: ${{ github.workspace }}/android-sdk
-      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+      ANDROID_HOME: ${{ github.workspace }}/cmdline-tools
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/cmdline-tools
+      PATH: ${{ github.workspace }}/cmdline-tools/bin:$PATH
 
     steps:
     - name: Checkout code
@@ -39,37 +40,19 @@ jobs:
 
     - name: Install Buildozer
       run: |
-        pip install --upgrade pip cython wheel
-        pip install buildozer
+        python3 -m pip install --upgrade pip cython wheel
+        python3 -m pip install buildozer
 
-    - name: Download Android SDK (API 33)
+    - name: Accept licenses and install required SDK packages
       run: |
-       mkdir -p $ANDROID_HOME/cmdline-tools
-       curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o sdk.zip
-       unzip -q sdk.zip -d $ANDROID_HOME/cmdline-tools/temp
+        yes | $ANDROID_HOME/bin/sdkmanager --licenses
+        $ANDROID_HOME/bin/sdkmanager \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.2" \
+          "ndk;25.2.9519653"
 
-       # Crée le dossier latest et déplace le contenu dedans
-       mkdir -p $ANDROID_HOME/cmdline-tools/latest
-       mv $ANDROID_HOME/cmdline-tools/temp/* $ANDROID_HOME/cmdline-tools/latest/
-
-       # Supprime le dossier temporaire
-       rm -rf $ANDROID_HOME/cmdline-tools/temp
-
-       yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-
-       # Installer uniquement les versions correctes
-       $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME \
-         "platform-tools" \
-         "platforms;android-33" \
-         "build-tools;33.0.2" \
-         "ndk;25.2.9519653"
-
-    - name: Prevent Buildozer from updating SDK
-      run: |
-        mkdir -p ~/.buildozer/android/platform
-        echo "sdk.dir=$ANDROID_HOME" > ~/.buildozer/android/platform/android-sdk-dir
-
-    - name: Clean previous builds
+    - name: Clean previous build
       run: |
         rm -rf .buildozer
         rm -rf bin
@@ -77,8 +60,10 @@ jobs:
     - name: Build APK
       run: |
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          echo "=== BUILD RELEASE ==="
           buildozer android release
         else
+          echo "=== BUILD DEBUG ==="
           buildozer android debug
         fi
 
