@@ -1,0 +1,96 @@
+name: 1 build avec buildozer sans pub
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Type de build (debug ou release)"
+        required: true
+        default: "debug"
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      SDK_DIR: ${{ github.workspace }}/android-sdk
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+      ANDROID_HOME: ${{ github.workspace }}/android-sdk
+
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          git \
+          zip unzip \
+          openjdk-17-jdk \
+          python3 python3-pip \
+          libncurses5 libstdc++6
+
+    - name: Install Buildozer
+      run: |
+        pip install --upgrade pip
+        pip install Cython==0.29.36
+        pip install buildozer
+
+    - name: Install Android SDK / NDK
+      run: |
+        mkdir -p $SDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d $SDK_DIR
+        mkdir -p "$SDK_DIR/cmdline-tools/latest"
+        mv "$SDK_DIR/cmdline-tools"/* "$SDK_DIR/cmdline-tools/latest" 2>/dev/null || true
+
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.2" \
+          "ndk;25.2.9519653"
+
+    - name: Cleanup previous builds
+      run: |
+        rm -rf .buildozer build bin dist
+
+    - name: Apply custom Buildozer spec
+      run: |
+        echo "Utilisation du buildozer.spec fourni"
+        cat buildozer.spec
+
+    - name: Build APK with Buildozer
+      run: |
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          echo "===== BUILD RELEASE SANS PUB ====="
+          buildozer android release
+        else
+          echo "===== BUILD DEBUG SANS PUB ====="
+          buildozer android debug
+        fi
+
+    - name: Find generated APK
+      id: find_apk
+      run: |
+        APK=$(find bin/ -name "*.apk" | head -n 1 || true)
+        echo "APK path: $APK"
+        if [ -z "$APK" ]; then
+          echo "Erreur : Aucun APK généré"
+          exit 1
+        fi
+        echo "apk_path=$APK" >> $GITHUB_OUTPUT
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: ${{ steps.find_apk.outputs.apk_path }}
