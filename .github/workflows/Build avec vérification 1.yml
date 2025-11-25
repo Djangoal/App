@@ -20,9 +20,15 @@ jobs:
     - name: 🧩 Checkout repo
       uses: actions/checkout@v4
 
+    - name: 🧹 Clean previous Android SDK / build
+      run: |
+        echo "Suppression des anciens SDK / dossiers de build pour éviter Build-Tools 36..."
+        rm -rf .buildozer/android/platform/android-sdk
+        rm -rf .buildozer/android/platform/build
+
     - name: ▶️ Display selected build type
       run: |
-       echo "Selected build type: ${{ github.event.inputs.build_type }}"
+        echo "Selected build type: ${{ github.event.inputs.build_type }}"
 
     - name: 🐍 Set up Python
       uses: actions/setup-python@v5
@@ -48,14 +54,14 @@ jobs:
         unzip cmdline-tools.zip -d $HOME/Android/cmdline-tools
         mv $HOME/Android/cmdline-tools/cmdline-tools $HOME/Android/cmdline-tools/latest
 
-        # IMPORTANT : utiliser uniquement CE sdkmanager
+        # Utiliser uniquement CE sdkmanager
         export ANDROID_SDK_ROOT=$HOME/Android
         export PATH=$HOME/Android/cmdline-tools/latest/bin:$PATH
 
-        # Accepter les licences sans déclencher de mises à jour
+        # Accepter les licences sans installer d'autres versions
         yes | sdkmanager --licenses --sdk_root=$ANDROID_SDK_ROOT > /dev/null
 
-        # Installer EXACTEMENT API 33 + Build-Tools 33.0.2
+        # Installer uniquement API 33 + Build-Tools 33.0.2
         sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
           "platform-tools" \
           "platforms;android-33" \
