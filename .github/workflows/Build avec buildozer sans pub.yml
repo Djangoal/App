@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_HOME: ${{ github.workspace }}/cmdline-tools
-      ANDROID_SDK_ROOT: ${{ github.workspace }}/cmdline-tools
-      PATH: ${{ github.workspace }}/cmdline-tools/bin:$PATH
+      ANDROID_HOME: ${{ github.workspace }}/android-sdk
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+      PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:$PATH
 
     steps:
     - name: Checkout code
@@ -29,6 +29,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
+          tar \
           build-essential \
           python3-pip \
           python3-setuptools \
@@ -40,19 +41,36 @@ jobs:
 
     - name: Install Buildozer
       run: |
-        python3 -m pip install --upgrade pip cython wheel
-        python3 -m pip install buildozer
+        pip install --upgrade pip cython wheel
+        pip install buildozer
 
-    - name: Accept licenses and install required SDK packages
+    - name: Download Android SDK (API 33)
       run: |
-        yes | $ANDROID_HOME/bin/sdkmanager --licenses
-        $ANDROID_HOME/bin/sdkmanager \
+        mkdir -p $ANDROID_HOME/cmdline-tools
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o sdk.zip
+        unzip -q sdk.zip -d $ANDROID_HOME/cmdline-tools/temp
+
+        # Déplacer correctement le contenu du zip dans latest
+        mkdir -p $ANDROID_HOME/cmdline-tools/latest
+        mv $ANDROID_HOME/cmdline-tools/temp/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+        rm -rf $ANDROID_HOME/cmdline-tools/temp
+
+        # Accepter les licences
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+
+        # Installer uniquement les versions nécessaires
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME \
           "platform-tools" \
           "platforms;android-33" \
           "build-tools;33.0.2" \
           "ndk;25.2.9519653"
 
-    - name: Clean previous build
+    - name: Prevent Buildozer from updating SDK
+      run: |
+        mkdir -p ~/.buildozer/android/platform
+        echo "sdk.dir=$ANDROID_HOME" > ~/.buildozer/android/platform/android-sdk-dir
+
+    - name: Clean previous builds
       run: |
         rm -rf .buildozer
         rm -rf bin
