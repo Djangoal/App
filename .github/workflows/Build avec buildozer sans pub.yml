@@ -16,6 +16,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      ANDROID_HOME: ${{ github.workspace }}/android-sdk
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -31,33 +35,46 @@ jobs:
           git \
           zip \
           unzip \
-          openjdk-17-jdk \
-          libsqlite3-dev \
-          libssl-dev \
-          libffi-dev \
-          libz-dev
+          openjdk-17-jdk
 
     - name: Install Buildozer
       run: |
-        python3 -m pip install --upgrade pip cython wheel
-        python3 -m pip install buildozer
+        pip install --upgrade pip cython wheel
+        pip install buildozer
 
-    - name: Install Android SDK / NDK through Buildozer
+    - name: Download Android SDK (API 33)
       run: |
-        buildozer android debug || true
+        mkdir -p $ANDROID_HOME
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o sdk.zip
+        unzip -q sdk.zip -d $ANDROID_HOME
+
+        mkdir -p $ANDROID_HOME/cmdline-tools/latest
+        mv $ANDROID_HOME/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses
+
+        # Install ONLY API 33 compatible tools
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.2" \
+          "ndk;25.2.9519653"
+
+    - name: Prevent Buildozer from updating SDK
+      run: |
+        mkdir -p ~/.buildozer/android/platform
+        echo "sdk.dir=$ANDROID_HOME" > ~/.buildozer/android/platform/android-sdk-dir
 
     - name: Clean previous builds
       run: |
-        rm -rf .buildozer/build
+        rm -rf .buildozer
         rm -rf bin
 
     - name: Build APK
       run: |
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "=== BUILD RELEASE ==="
           buildozer android release
         else
-          echo "=== BUILD DEBUG ==="
           buildozer android debug
         fi
 
@@ -65,5 +82,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: |
-          bin/*.apk
+        path: bin/*.apk
