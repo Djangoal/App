@@ -51,8 +51,8 @@ jobs:
         yes | $HOME/Android/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android --licenses
         $HOME/Android/cmdline-tools/latest/bin/sdkmanager \
           "platform-tools" \
-          "platforms;android-33" \
-          "build-tools;33.0.2"
+          "platforms;android-34" \
+          "build-tools;36.1.0"
 
     - name: 📦 Install apktool (conservé pour usage futur)
       run: |
