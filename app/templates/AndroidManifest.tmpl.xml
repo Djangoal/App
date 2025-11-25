@@ -2,22 +2,21 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="org.example.monapp"
-    android:versionCode="1"
-    android:versionName="1.0">
+    package="org.example.monapp">
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
-    <!-- Compatible API / Cibles -->
-    <uses-sdk
-        android:minSdkVersion="21"
-        android:targetSdkVersion="33"/>
+    <!-- (OPTIONNEL) Si ton app lit des médias -->
+    <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/> -->
+    <!-- <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/> -->
+    <!-- <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/> -->
 
-    <!-- Activité principale -->
+    <!-- IMPORTANT :
+         Ne pas ajouter <uses-sdk>, Buildozer le génère tout seul.
+    -->
+
     <application
         android:name="org.kivy.android.PythonApplication"
         android:label="Mon budget perso"
@@ -26,7 +25,7 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="33">
 
-        <!-- Orientation portrait obligatoire -->
+        <!-- Activité principale -->
         <activity
             android:name="org.kivy.android.PythonActivity"
             android:label="Mon budget perso"
@@ -40,12 +39,12 @@
             </intent-filter>
         </activity>
 
-        <!-- Service Python -->
+        <!-- (Optionnel) Service Python -->
         <service
             android:name="org.kivy.android.PythonService"
             android:exported="false"/>
 
-        <!-- Google Mobile Ads / Firebase Ads -->
+        <!-- Google Mobile Ads -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713"/>
