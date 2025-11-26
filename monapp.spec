@@ -39,7 +39,7 @@ debug = 1
 # source.include_exts = py,png,jpg,kv,atlas,json
 
 # Pour éviter les erreurs avec certaines dépendances
-android.api = 36
+android.api = 33
 android.minapi = 21
 android.ndk = 25b
 android.ndk_path = ./android-sdk/ndk/25.2.9519653
