@@ -18,7 +18,7 @@ orientation = portrait
 
 android.permissions = INTERNET, ACCESS_NETWORK_STATE
 
-android.archs = armeabi-v7a, arm64-v8a
+android.archs = armeabi-v7a#, arm64-v8a
 
 android.api = 33
 android.minapi = 21
