@@ -27,7 +27,7 @@ android.ndk = 25b
 android.ndk_api = 21
 
 android.build_tools_version = 33.0.2
-
+android.accept_sdk_license = True
 android.manifest = app/templates/AndroidManifest.tmpl.xml
 
 android.enable_androidx = True
