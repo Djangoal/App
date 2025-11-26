@@ -11,7 +11,7 @@ presplash.filename = app/logo1.png
 
 version = 1.0
 
-requirements = kivy==2.2.1, jnius, plyer #https://github.com/MichaelStott/KivMob/archive/refs/heads/master.zip
+requirements = kivy==2.2.1, jnius, plyer, https://github.com/MichaelStott/KivMob/archive/refs/heads/master.zip
 
 bootstrap = sdl2
 orientation = portrait
