@@ -11,7 +11,7 @@ presplash.filename = app/logo1.png
 
 version = 1.0
 
-requirements = kivy==2.2.1, jnius, plyer, https://github.com/MichaelStott/KivMob/archive/refs/heads/master.zip
+requirements = kivy==2.2.1, jnius, plyer #https://github.com/MichaelStott/KivMob/archive/refs/heads/master.zip
 
 bootstrap = sdl2
 orientation = portrait
@@ -31,7 +31,7 @@ android.accept_sdk_license = True
 android.manifest = app/templates/AndroidManifest.tmpl.xml
 
 android.enable_androidx = True
-android.gradle_dependencies = com.google.android.gms:play-services-ads:22.3.0
+#android.gradle_dependencies = com.google.android.gms:play-services-ads:22.3.0
 
 android.allow_backup = False
 
