@@ -1,18 +1,17 @@
 import json
 import os
+from kivy.resources import resource_find
 from logger import logger
 
 
 class AppConfig:
-    """
-    Classe de gestion de la configuration de l'application.
-    Charge, sauvegarde et fournit les préférences utilisateur.
-    """
 
     def __init__(self, config_path="config.json"):
         self.config_path = config_path
 
-        # Valeurs par défaut
+        # Chemin local Android
+        self.local_path = os.path.join(os.getcwd(), self.config_path)
+
         self.defaults = {
             "activer_pin": False,
             "show_total_revenus": True,
@@ -21,34 +20,51 @@ class AppConfig:
             "show_restant_a_payer": True
         }
 
+        # Valeurs en mémoire
         self.data = self.defaults.copy()
+
+        # Charger correctement
         self.load()
 
     # -------------------- Chargement --------------------
     def load(self):
-        """Charge la configuration depuis le fichier JSON"""
-        if os.path.exists(self.config_path):
+        """Charge ou crée un fichier local depuis la ressource APK"""
+        if os.path.exists(self.local_path):
+            # 📌 Fichier déjà créé → lecture normale
             try:
-                with open(self.config_path, "r", encoding="utf-8") as f:
+                with open(self.local_path, "r", encoding="utf-8") as f:
                     contenu = json.load(f)
-                # Met à jour les valeurs existantes sans supprimer les nouvelles clés
                 self.data.update(contenu)
-                logger.info("Configuration chargée avec succès.")
+                logger.info("Configuration locale chargée.")
             except Exception as e:
-                logger.error(f"Erreur lors du chargement de la configuration : {e}")
+                logger.error(f"Erreur lecture config locale : {e}")
         else:
-            logger.warning("Aucun fichier de configuration trouvé. Utilisation des valeurs par défaut.")
+            # 📌 Le fichier n'existe pas → on copie celui intégré dans l’APK
+            logger.warning("Config locale absente → création à partir de l’APK")
+            src = resource_find(self.config_path)
+
+            if src:
+                try:
+                    with open(src, "r", encoding="utf-8") as f:
+                        contenu = json.load(f)
+                    self.data.update(contenu)
+                except Exception as e:
+                    logger.error(f"Erreur lecture config intégrée dans l’APK : {e}")
+            else:
+                logger.warning("Aucune config intégrée trouvée → utilisation des valeurs par défaut.")
+
+            # Sauvegarde du fichier local
             self.save()
 
     # -------------------- Sauvegarde --------------------
     def save(self):
-        """Sauvegarde la configuration actuelle dans le fichier JSON"""
+        """Sauvegarde la configuration actuelle dans un fichier local"""
         try:
-            with open(self.config_path, "w", encoding="utf-8") as f:
+            with open(self.local_path, "w", encoding="utf-8") as f:
                 json.dump(self.data, f, indent=4, ensure_ascii=False)
-            logger.info("Configuration sauvegardée avec succès.")
+            logger.info("Configuration sauvegardée localement.")
         except Exception as e:
-            logger.error(f"Erreur lors de la sauvegarde de la configuration : {e}")
+            logger.error(f"Erreur sauvegarde config : {e}")
 
     # -------------------- Accès simplifié --------------------
     def __getitem__(self, key):
@@ -60,11 +76,10 @@ class AppConfig:
 
     # -------------------- Méthodes utilitaires --------------------
     def toggle(self, key):
-        """Inverse un booléen et sauvegarde immédiatement"""
         if key in self.data:
             self.data[key] = not self.data[key]
             self.save()
             return self.data[key]
         else:
-            logger.warning(f"Clé inconnue dans la configuration : {key}")
+            logger.warning(f"Clé inconnue : {key}")
             return None
