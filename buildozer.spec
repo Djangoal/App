@@ -11,7 +11,7 @@ presplash.filename = app/logo1.png
 version = 1.0
 
 # Librairies Python requises
-requirements = kivy==2.2.1, jnius, plyer
+requirements = kivy==2.2.1, jnius, plyer, python3, android
 
 bootstrap = sdl2
 orientation = portrait
