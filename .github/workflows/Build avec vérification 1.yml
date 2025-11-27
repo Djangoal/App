@@ -20,6 +20,13 @@ jobs:
     - name: 🧩 Checkout repo
       uses: actions/checkout@v4
 
+    - name: 🌍 Fix UTF-8 locale
+      run: |
+        sudo locale-gen en_US.UTF-8
+        sudo update-locale LANG=en_US.UTF-8
+        echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
+        echo "LC_ALL=en_US.UTF-8" >> $GITHUB_ENV
+
     - name: 🧹 Clean previous Android SDK / build
       run: |
         echo "Suppression des anciens SDK / dossiers de build pour éviter Build-Tools 36..."
