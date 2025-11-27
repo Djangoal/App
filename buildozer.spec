@@ -37,7 +37,6 @@ android.enable_androidx = False
 android.allow_backup = False
 
 # Dépendances Gradle pour Ads (KivMob compatible)
-android.gradle_dependencies = com.google.android.gms:play-services-ads:20.4.0
 
 # Génération APK
 android.bundle = False
