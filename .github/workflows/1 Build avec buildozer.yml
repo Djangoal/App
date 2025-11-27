@@ -40,13 +40,27 @@ jobs:
         python -m pip install --upgrade pip setuptools cython==0.29.33
         pip install buildozer
 
+    - name: Cache Android SDK
+      uses: actions/cache@v3
+      with:
+        path: $HOME/Android
+        key: android-sdk-${{ runner.os }}-33
+        restore-keys: |
+          android-sdk-${{ runner.os }}-
+
     - name: 📱 Install Android SDK + Build tools
       run: |
         mkdir -p $HOME/Android/cmdline-tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
-        unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
-        yes | $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/Android --licenses
-        $HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager \
+        if [ ! -f "$HOME/Android/cmdline-tools/cmdline-tools/bin/sdkmanager" ]; then
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O commandlinetools.zip
+          unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
+        fi
+
+        export ANDROID_SDK_ROOT=$HOME/Android
+        export PATH=$HOME/Android/cmdline-tools/cmdline-tools/bin:$PATH
+
+        yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+        sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
           "platform-tools" \
           "platforms;android-33" \
           "build-tools;33.0.2"
