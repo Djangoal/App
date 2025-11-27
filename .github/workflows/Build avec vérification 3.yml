@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build avec vérification 3
 
 on:
   workflow_dispatch:
