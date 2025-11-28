@@ -1,5 +1,4 @@
 from util.import_page_principale import *
-from pub.admob import AdMobBanner  # Import de la classe bannière
 from kivy.core.window import Window
 from kivy.graphics import Color, Rectangle
 from kivy.uix.boxlayout import BoxLayout
@@ -9,6 +8,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.app import App
 from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
+from pub.admob import AdMobBanner  # version robuste fournie
 
 class pageprincipalScreen(Screen):
 
@@ -39,7 +39,6 @@ class pageprincipalScreen(Screen):
     # =====================================================
     # 🔹 Sous-méthodes de construction
     # =====================================================
-
     def configurer_bindings(self, app):
         app.bind(show_total_revenus=lambda i, v: update_affichage_revenus(self, i, v))
         app.bind(show_total_charges=lambda i, v: update_affichage_charges(self, i, v))
@@ -166,7 +165,7 @@ class pageprincipalScreen(Screen):
 
     def creer_menu_bouton(self):
         """Ajoute le bouton Menu et réserve la bannière AdMob."""
-        # ⚡ Crée le container de bannière, mais ne charge pas encore
+        # ⚡ Crée le container de bannière
         self.banner = AdMobBanner()
         self.main_layout.add_widget(self.banner)
 
@@ -207,12 +206,9 @@ class pageprincipalScreen(Screen):
         mise_a_jour_economie(self.label_economie)
 
     def on_enter(self):
-        """Charge la bannière AdMob ici, après que l’écran soit visible."""
-        if platform == "android" and hasattr(self.banner, 'load_banner'):
-            try:
-                self.banner.load_banner()
-            except Exception as e:
-                print(f"[Erreur AdMob] {e}")
+        """Charge la bannière AdMob après que l’écran soit affiché."""
+        if hasattr(self.banner, 'load_banner'):
+            self.banner.load_banner()
 
     def close_app(self, instance):
         App.get_running_app().stop()
