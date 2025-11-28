@@ -2,33 +2,27 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="org.example.monapp">
+    package="{{ package.name }}">
 
-    <!-- Permissions -->
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Permissions obligatoires pour Kivy & AdMob -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
-    <!-- (OPTIONNEL) Si ton app lit des médias -->
-    <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/> -->
-    <!-- <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/> -->
-    <!-- <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/> -->
-
-    <!-- IMPORTANT :
-         Ne pas ajouter <uses-sdk>, Buildozer le génère tout seul.
-    -->
-
+    <!-- Ne jamais ajouter <uses-sdk> : géré par p4a -->
+    
     <application
         android:name="org.kivy.android.PythonApplication"
-        android:label="Mon budget perso"
+        android:label="{{ name }}"
         android:icon="@mipmap/icon"
         android:allowBackup="false"
         android:usesCleartextTraffic="true"
         tools:targetApi="33">
 
-        <!-- Activité principale -->
+        <!-- Activité principale Python -->
         <activity
             android:name="org.kivy.android.PythonActivity"
-            android:label="Mon budget perso"
+            android:label="{{ name }}"
             android:screenOrientation="portrait"
             android:exported="true"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|uiMode">
@@ -39,16 +33,15 @@
             </intent-filter>
         </activity>
 
-        <!-- (Optionnel) Service Python -->
+        <!-- Service Python optionnel -->
         <service
             android:name="org.kivy.android.PythonService"
-            android:exported="false"/>
+            android:exported="false" />
 
         <!-- Google Mobile Ads -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
-
+            android:value="ca-app-pub-3940256099942544~3347511713" />
     </application>
 
 </manifest>
