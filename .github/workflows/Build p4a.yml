@@ -1,0 +1,148 @@
+name: Build (p4a + KivMob)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Type de build (debug or release)"
+        required: true
+        default: "debug"
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SDK_DIR: ${{ github.workspace }}/android-sdk
+      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install system deps
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip unzip openjdk-17-jdk wget build-essential libltdl-dev \
+          libncurses-dev libtool libtool-bin automake autoconf pkg-config m4
+
+    - name: Setup virtualenv and install p4a fork + dependencies
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip setuptools wheel
+        # Fork de p4a qui gère mieux les AAR / Google Play Ads (ex : NovemberFall)
+        pip install git+https://github.com/NovemberFall/python-for-android.git
+        pip install cython==0.29.33
+        pip install kivy==2.2.1
+        pip install kivmob
+
+    - name: Install Android SDK & NDK
+      run: |
+        mkdir -p $SDK_DIR
+        cd $SDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d .
+        mv cmdline-tools cmdline-tools-temp || true
+        mkdir -p cmdline-tools/latest
+        mv cmdline-tools-temp/* cmdline-tools/latest || true
+        export ANDROID_SDK_ROOT=$SDK_DIR
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+          "platform-tools" \
+          "platforms;android-35" \
+          "build-tools;35.0.0" \
+          "ndk;25.2.9519653"
+
+    - name: Export Android env
+      run: |
+        echo "ANDROID_SDK_ROOT=$SDK_DIR" >> $GITHUB_ENV
+        echo "ANDROID_NDK_HOME=$NDK_DIR" >> $GITHUB_ENV
+        echo "$SDK_DIR/platform-tools:$SDK_DIR/build-tools/35.0.0:$SDK_DIR/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+    - name: Copy custom AndroidManifest (if exists)
+      run: |
+        if [ -f app/templates/AndroidManifest.tmpl.xml ]; then
+          mkdir -p ~/.local/share/python-for-android/templates/
+          cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
+          echo "Manifest custom copied."
+        else
+          echo "No custom manifest found; continuing."
+        fi
+
+    - name: Build APK with p4a (KivMob in requirements)
+      run: |
+        source .venv/bin/activate
+        echo "Build type: ${{ github.event.inputs.build_type }}"
+        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+          python -m pythonforandroid apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=app/logo1.png \
+            --requirements=python3,kivy,kivmob,plyer \
+            --permission WRITE_EXTERNAL_STORAGE \
+            --permission READ_EXTERNAL_STORAGE \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --arch=arm64-v8a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$NDK_DIR \
+            --android_api=35 \
+            --orientation=portrait \
+            --dist-name=monapp_release \
+            --release
+          # find unsigned release, zipalign, sign if keystore provided
+          APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then echo "No release APK found!"; exit 1; fi
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_release_unsigned.apk"
+          $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$GITHUB_WORKSPACE/mon_budget_release_unsigned.apk" "${GITHUB_WORKSPACE}/mon_budget_release_aligned.apk"
+          # Sign if keystore secret exists (BASE64-encoded)
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/keystore.jks
+            apksigner sign --ks /tmp/keystore.jks --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} --key-pass pass:${{ secrets.KEY_PASSWORD }} --out ${GITHUB_WORKSPACE}/mon_budget_release_signed.apk ${GITHUB_WORKSPACE}/mon_budget_release_aligned.apk
+          fi
+        else
+          python -m pythonforandroid apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=app/logo1.png \
+            --requirements=python3,kivy,kivmob,plyer \
+            --permission WRITE_EXTERNAL_STORAGE \
+            --permission READ_EXTERNAL_STORAGE \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --arch=armeabi-v7a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$NDK_DIR \
+            --android_api=35 \
+            --orientation=portrait \
+            --dist-name=monapp_debug \
+            --debug
+          APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then echo "No debug APK found!"; exit 1; fi
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_debug.apk"
+        fi
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: |
+          mon_budget_${{ github.event.inputs.build_type }}*.apk
+          mon_budget_*signed*.apk
