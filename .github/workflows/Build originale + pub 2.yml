@@ -131,26 +131,25 @@ jobs:
         if [ "${{ github.event.inputs.build_type }}" = "avec_pub_debug" ]; then
           echo "=== DEBUG AVEC PUB ==="
           ./venv/bin/p4a apk \
-            --private "$GITHUB_WORKSPACE/app" \
-            --package=org.example.monapp.pub \
-            --name="Mon budget perso (pub)" \
-            --version=1.0 \
-            --bootstrap=sdl2 \
-            --icon=logo.png \
-            --presplash=app/logo1.png \
-            --requirements=python3,kivy,kivmob,android,pyjnius \
-            --add-gradle-dependencies=com.google.android.gms:play-services-ads:22.1.0 \
-            --enable-androidx \
-            --permission INTERNET \
-            --permission ACCESS_NETWORK_STATE \
-            --permission ACCESS_WIFI_STATE \
-            --orientation=portrait \
-            --arch=armeabi-v7a \
-            --sdk_dir=$SDK_DIR \
-            --ndk_dir=$ANDROID_NDK_HOME \
-            --android_api=35 \
-            --dist-name=monapp_pub_debug \
-            --debug
+           --private "$GITHUB_WORKSPACE/app" \
+           --package=org.example.monapp.pub \
+           --name="Mon budget perso (pub)" \
+           --version=1.0 \
+           --bootstrap=sdl2 \
+           --icon=logo.png \
+           --presplash=app/logo1.png \
+           --requirements=python3,kivy,kivmob,android,pyjnius \
+           --permission INTERNET \
+           --permission ACCESS_NETWORK_STATE \
+           --permission ACCESS_WIFI_STATE \
+           --orientation=portrait \
+           --sdk_dir=$SDK_DIR \
+           --ndk_dir=$ANDROID_NDK_HOME \
+           --android_api=35 \
+           --arch=armeabi-v7a \
+           --dist-name=monapp_pub_debug \
+           --debug \
+           --copy-libs
           APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
           cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_pub_debug.apk"
         fi
