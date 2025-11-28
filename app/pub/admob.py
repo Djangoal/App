@@ -44,8 +44,8 @@ class AdMobBanner(BoxLayout):
         banner_id = "ca-app-pub-3940256099942544/6300978111"
 
         # Crée une bannière ↓ en bas ↓
-        self.ads.new_banner(banner_id, top=False)
-
+        self.ads.new_banner(banner_id, top_pos=False)
+        
         # Charge la bannière
         self.ads.request_banner()
 
