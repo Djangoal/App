@@ -1,15 +1,77 @@
 from util.import_page_principale import *
 from kivy.core.window import Window
-from kivy.graphics import Color, Rectangle
+from kivy.graphics import Color, Line, Rectangle
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
-from kivy.app import App
 from kivy.uix.screenmanager import Screen
+from kivy.app import App
 from kivy.utils import platform
-from pub.admob import AdMobBanner  # version robuste fournie
 
+try:
+    from kivmob import KivMob
+except ImportError:
+    KivMob = None
+
+# -----------------------------
+# AdMobBanner avec encadré noir
+# -----------------------------
+class AdMobBanner(BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.height = int(Window.height * 0.08)
+        self.size_hint_y = None
+        self.orientation = "vertical"
+
+        self.ads = None
+        self.banner_loaded = False
+
+        # Encadrement noir
+        with self.canvas.before:
+            Color(0, 0, 0, 1)
+            self.border = Line(width=2, rectangle=(self.x, self.y, self.width, self.height))
+        self.bind(pos=self.update_border, size=self.update_border)
+
+        # Label de simulation
+        self.simulation_label = Label(
+            text="📢 [Zone pub – simulation]",
+            size_hint_y=None,
+            height=50,
+            color=(0, 0, 0, 1)
+        )
+        self.add_widget(self.simulation_label)
+
+        # Si Android + KivMob, tente de charger la vraie bannière
+        if platform == "android" and KivMob:
+            try:
+                self.load_banner()
+            except Exception as e:
+                self.simulation_label.text = f"[Erreur AdMob] {e}"
+
+    def update_border(self, *args):
+        self.border.rectangle = (self.x, self.y, self.width, self.height)
+
+    def load_banner(self):
+        if self.banner_loaded or platform != "android" or KivMob is None:
+            return
+        self.banner_loaded = True
+
+        self.ads = KivMob("ca-app-pub-3940256099942544~3347511713")
+        banner_id = "ca-app-pub-3940256099942544/6300978111"
+
+        self.ads.new_banner(banner_id, top_pos=False)
+        self.ads.request_banner()
+        self.ads.show_banner()
+
+        # Masque le label de simulation
+        if self.simulation_label.parent:
+            self.remove_widget(self.simulation_label)
+
+
+# -----------------------------
+# Page principale
+# -----------------------------
 class pageprincipalScreen(Screen):
 
     def __init__(self, **kwargs):
@@ -20,11 +82,11 @@ class pageprincipalScreen(Screen):
         self.soldes = []
         self.total = 0
 
-        # ⚙️ Layout principal vertical
+        # Layout principal vertical
         self.main_layout = BoxLayout(orientation='vertical', spacing=10, padding=10)
         self.add_widget(self.main_layout)
 
-        # 🧩 Organisation des éléments
+        # Organisation des éléments
         self.configurer_bindings(app)
         self.creer_header()
         self.creer_formulaire()
@@ -33,17 +95,20 @@ class pageprincipalScreen(Screen):
         self.creer_labels()
         self.creer_menu_bouton()
 
-        # 🔄 Initialisation de l’affichage
+        # Initialisation de l’affichage
         self.initialiser_affichage(app)
 
-    # =====================================================
-    # 🔹 Sous-méthodes de construction
-    # =====================================================
+    # -----------------------------
+    # Bindings
+    # -----------------------------
     def configurer_bindings(self, app):
         app.bind(show_total_revenus=lambda i, v: update_affichage_revenus(self, i, v))
         app.bind(show_total_charges=lambda i, v: update_affichage_charges(self, i, v))
         app.bind(show_total_depenses=lambda i, v: update_affichage_depenses(self, i, v))
 
+    # -----------------------------
+    # Header
+    # -----------------------------
     def creer_header(self):
         layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), padding=5, spacing=5)
         with layout.canvas.before:
@@ -75,6 +140,9 @@ class pageprincipalScreen(Screen):
         layout.add_widget(close_button)
         self.main_layout.add_widget(layout)
 
+    # -----------------------------
+    # Formulaire
+    # -----------------------------
     def creer_formulaire(self):
         input_wrapper = BoxLayout(size_hint=(1, None), height=0.15 * Window.height, padding=2)
         with input_wrapper.canvas.before:
@@ -101,6 +169,9 @@ class pageprincipalScreen(Screen):
 
         self.main_layout.add_widget(input_wrapper)
 
+    # -----------------------------
+    # Checkbox catégories
+    # -----------------------------
     def creer_categorie_checkboxes(self):
         checkbox_wrapper = BoxLayout(size_hint=(1, None), height=0.06 * Window.height, padding=2)
         checkbox_container = BoxLayout(
@@ -121,6 +192,9 @@ class pageprincipalScreen(Screen):
         checkbox_wrapper.add_widget(checkbox_container)
         self.main_layout.add_widget(checkbox_wrapper)
 
+    # -----------------------------
+    # Bouton Valider
+    # -----------------------------
     def creer_bouton_valider(self):
         self.valider_btn = Button(
             text="Valider",
@@ -132,6 +206,9 @@ class pageprincipalScreen(Screen):
         self.valider_btn.bind(on_press=self.ajouter_valeur)
         self.main_layout.add_widget(self.valider_btn)
 
+    # -----------------------------
+    # Labels financiers
+    # -----------------------------
     def creer_labels(self):
         scroll = ScrollView(size_hint=(1, 0.5))
         labels_container = BoxLayout(orientation='vertical', size_hint_y=None, spacing=10, padding=10)
@@ -146,15 +223,15 @@ class pageprincipalScreen(Screen):
         ]
 
         for text, attr_name in labels_data:
-            label = Label(text=text, font_size=28, size_hint_y=None, height=40, halign='center', valign='middle', color=(0, 0, 0, 1))
+            label = Label(text=text, font_size=28, size_hint_y=None, height=40, halign='center', valign='middle', color=(0,0,0,1))
             label.bind(size=label.setter('text_size'))
             setattr(self, attr_name, label)
             labels_container.add_widget(label)
 
         labels_row = BoxLayout(orientation='horizontal', size_hint_y=None, height=60, spacing=20)
-        self.solde_label = Label(text="Solde actuel : 0.00 €", font_size=30, halign='left', valign='middle', color=(1, 0, 0, 1))
+        self.solde_label = Label(text="Solde actuel : 0.00 €", font_size=30, halign='left', valign='middle', color=(1,0,0,1))
         self.solde_label.bind(size=self.solde_label.setter('text_size'))
-        self.fin_label = Label(text="Fin de mois : 0.00 €", font_size=30, halign='right', valign='middle', color=(1, 0, 0, 1))
+        self.fin_label = Label(text="Fin de mois : 0.00 €", font_size=30, halign='right', valign='middle', color=(1,0,0,1))
         self.fin_label.bind(size=self.fin_label.setter('text_size'))
 
         labels_row.add_widget(self.solde_label)
@@ -163,9 +240,11 @@ class pageprincipalScreen(Screen):
         scroll.add_widget(labels_container)
         self.main_layout.add_widget(scroll)
 
+    # -----------------------------
+    # Menu + bannière
+    # -----------------------------
     def creer_menu_bouton(self):
-        """Ajoute le bouton Menu et réserve la bannière AdMob."""
-        # ⚡ Crée le container de bannière
+        # Ajout de la bannière AdMob
         self.banner = AdMobBanner()
         self.main_layout.add_widget(self.banner)
 
@@ -174,14 +253,14 @@ class pageprincipalScreen(Screen):
             text="Menu",
             size_hint=(0.5, 0.1),
             height=40,
-            pos_hint={'center_x': 0.5}
+            pos_hint={'center_x':0.5}
         )
         menu_button.bind(on_press=lambda instance: ouvrir_menu(self))
         self.main_layout.add_widget(menu_button)
 
-    # =====================================================
-    # 🔹 Initialisation et logique
-    # =====================================================
+    # -----------------------------
+    # Initialisation
+    # -----------------------------
     def initialiser_affichage(self, app):
         charger_donnees(self)
         maj_total_charges_restantes(self)
@@ -204,11 +283,6 @@ class pageprincipalScreen(Screen):
         maj_total_charges_restantes(self)
         mettre_a_jour_labels(self)
         mise_a_jour_economie(self.label_economie)
-
-    def on_enter(self):
-        """Charge la bannière AdMob après que l’écran soit affiché."""
-        if hasattr(self.banner, 'load_banner'):
-            self.banner.load_banner()
 
     def close_app(self, instance):
         App.get_running_app().stop()
