@@ -201,4 +201,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ${{ github.workspace }}/mon_budget_perso_${{ github.event.inputs.build_type }}.apk
+        path: |
+          ${{ github.workspace }}/mon_budget_perso_debug.apk
+          ${{ github.workspace }}/mon_budget_perso_release_unsigned.apk
+          ${{ github.workspace }}/mon_budget_perso_pub_debug.apk
+          ${{ github.workspace }}/mon_budget_perso_pub_release_unsigned.apk
