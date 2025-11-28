@@ -1,7 +1,7 @@
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.utils import platform
-from kivy.graphics import Color, Rectangle
+from kivy.graphics import Color, Line
 
 try:
     from kivmob import KivMob
@@ -12,27 +12,30 @@ class AdMobBanner(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         from kivy.core.window import Window
-        self.height = int(Window.height * 0.08)  # hauteur responsive
+        self.height = int(Window.height * 0.08)
         self.size_hint_y = None
         self.orientation = "vertical"
-        self.ads = None
-        self.banner_loaded = False
 
-        # Canvas pour la bordure noire
+        # Encadrement visible
         with self.canvas.before:
             Color(0, 0, 0, 1)  # noir
-            self.border_rect = Rectangle(size=self.size, pos=self.pos)
-        self.bind(size=lambda w, s: setattr(self.border_rect, 'size', s),
-                  pos=lambda w, p: setattr(self.border_rect, 'pos', p))
+            self.border = Line(width=2, rectangle=(self.x, self.y, self.width, self.height))
+        self.bind(pos=self.update_border, size=self.update_border)
 
-        # Fallback pour PC ou KivMob manquant
+        # Fallback PC
         if platform != "android" or KivMob is None:
             self.add_widget(Label(
                 text="📢 [Zone pub – simulation]",
                 size_hint_y=None,
                 height=50,
-                color=(1, 1, 1, 1)
+                color=(0,0,0,1)
             ))
+
+        self.ads = None
+        self.banner_loaded = False
+
+    def update_border(self, *args):
+        self.border.rectangle = (self.x, self.y, self.width, self.height)
 
     def load_banner(self):
         if self.banner_loaded or platform != "android" or KivMob is None:
@@ -50,5 +53,5 @@ class AdMobBanner(BoxLayout):
                 text=f"[Erreur AdMob] {e}",
                 size_hint_y=None,
                 height=50,
-                color=(1, 1, 1, 1)
+                color=(0,0,0,1)
             ))
