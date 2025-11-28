@@ -36,7 +36,8 @@ jobs:
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip cython
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
+        # Installer la dernière version de p4a pour support AdMob / kivmob
+        ./venv/bin/pip install --upgrade git+https://github.com/kivy/python-for-android.git
 
     - name: Download Android SDK & NDK
       run: |
@@ -67,12 +68,12 @@ jobs:
 
         echo "=== TYPE DE BUILD : ${{ github.event.inputs.build_type }} ==="
 
-        echo "=== Copie du manifest personnalisé ==="
+        # Copier le manifest personnalisé
         mkdir -p ~/.local/share/python-for-android/templates/
         cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
 
         ################################
-        # BUILD SANS PUBLICITÉ - DEBUG
+        # BUILD SANS PUB - DEBUG
         ################################
         if [ "${{ github.event.inputs.build_type }}" = "sans_pub_debug" ]; then
           echo "=== DEBUG SANS PUB ==="
@@ -84,7 +85,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
-            --requirements=python3,kivy,android \
+            --requirements=python3,kivy,android,pyjnius \
             --permission WRITE_EXTERNAL_STORAGE \
             --permission READ_EXTERNAL_STORAGE \
             --permission INTERNET \
@@ -103,7 +104,7 @@ jobs:
         fi
 
         ################################
-        # BUILD SANS PUBLICITÉ - RELEASE
+        # BUILD SANS PUB - RELEASE
         ################################
         if [ "${{ github.event.inputs.build_type }}" = "sans_pub_release" ]; then
           echo "=== RELEASE SANS PUB ==="
@@ -115,7 +116,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
-            --requirements=python3,kivy,android \
+            --requirements=python3,kivy,android,pyjnius \
             --permission WRITE_EXTERNAL_STORAGE \
             --permission READ_EXTERNAL_STORAGE \
             --permission INTERNET \
@@ -131,12 +132,11 @@ jobs:
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
           cp "$APK_PATH" "$FINAL_APK"
-
           $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
         fi
 
         ################################
-        # BUILD AVEC PUBLICITÉ - DEBUG
+        # BUILD AVEC PUB - DEBUG
         ################################
         if [ "${{ github.event.inputs.build_type }}" = "avec_pub_debug" ]; then
           echo "=== DEBUG AVEC PUB ==="
@@ -148,7 +148,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
-            --requirements=python3,kivy,kivmob,android,pyjnius,play-services-ads \
+            --requirements=python3,kivy,kivmob,android,pyjnius \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --permission ACCESS_WIFI_STATE \
@@ -166,7 +166,7 @@ jobs:
         fi
 
         ################################
-        # BUILD AVEC PUBLICITÉ - RELEASE
+        # BUILD AVEC PUB - RELEASE
         ################################
         if [ "${{ github.event.inputs.build_type }}" = "avec_pub_release" ]; then
           echo "=== RELEASE AVEC PUB ==="
@@ -178,7 +178,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
-            --requirements=python3,kivy,kivmob,android,pyjnius,play-services-ads \
+            --requirements=python3,kivy,kivmob,android,pyjnius \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --permission ACCESS_WIFI_STATE \
@@ -193,7 +193,6 @@ jobs:
           APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
           FINAL_APK="$GITHUB_WORKSPACE/mon_budget_perso_pub_release_unsigned.apk"
           cp "$APK_PATH" "$FINAL_APK"
-
           $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$FINAL_APK" "${FINAL_APK%.apk}-aligned.apk"
         fi
 
