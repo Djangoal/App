@@ -7,6 +7,8 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
 from kivy.app import App
+from kivy.uix.screenmanager import Screen
+from kivy.utils import platform
 
 class pageprincipalScreen(Screen):
 
@@ -163,9 +165,8 @@ class pageprincipalScreen(Screen):
         self.main_layout.add_widget(scroll)
 
     def creer_menu_bouton(self):
-        """Ajoute la bannière AdMob puis le bouton Menu."""
-        # ⚡ Bannière responsive
-        # juste avant le bouton Menu
+        """Ajoute le bouton Menu et réserve la bannière AdMob."""
+        # ⚡ Crée le container de bannière, mais ne charge pas encore
         self.banner = AdMobBanner()
         self.main_layout.add_widget(self.banner)
 
@@ -195,15 +196,23 @@ class pageprincipalScreen(Screen):
 
     def ajouter_valeur(self, instance):
         ajouter_valeur_ecran(self)
-    
+
     def on_pre_enter(self):
         appliquer_config(self)
         _, charges_a_payer, total_a_payer = lire_et_calculer_charges_a_payer()
         self.total_charges_restantes_label.text = f"Total des charges restant à payer : {total_a_payer:.2f} €"
-        charger_donnees(self)        
+        charger_donnees(self)
         maj_total_charges_restantes(self)
         mettre_a_jour_labels(self)
         mise_a_jour_economie(self.label_economie)
-        
+
+    def on_enter(self):
+        """Charge la bannière AdMob ici, après que l’écran soit visible."""
+        if platform == "android" and hasattr(self.banner, 'load_banner'):
+            try:
+                self.banner.load_banner()
+            except Exception as e:
+                print(f"[Erreur AdMob] {e}")
+
     def close_app(self, instance):
         App.get_running_app().stop()
