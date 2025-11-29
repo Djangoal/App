@@ -149,7 +149,9 @@ jobs:
            --arch=armeabi-v7a \
            --dist-name=monapp_pub_debug \
            --debug \
-           --copy-libs
+           --copy-libs \
+           --manifest-placeholders {"admob_app_id": "ca-app-pub-3940256099942544~3347511713"}
+
           APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
           cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_pub_debug.apk"
         fi
