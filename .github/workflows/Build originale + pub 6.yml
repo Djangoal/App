@@ -130,8 +130,8 @@ jobs:
 
           # Installer kivmob 2.0
           ./venv/bin/pip install --upgrade kivmob==2.0
-          ./venv/bin/python -c "import kivmob; print('KivMob version:', kivmob.__version__)"
-
+          ./venv/bin/python -c "import kivmob; print('KivMob import OK')"
+          
           # Nettoyer builds précédentes
           ./venv/bin/p4a clean_builds || true
           rm -rf ~/.local/share/python-for-android/dists/*
