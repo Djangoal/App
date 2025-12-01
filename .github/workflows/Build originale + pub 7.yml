@@ -82,7 +82,32 @@ jobs:
         echo "# Google Ads recipe" > "$RECIPE_DIR/__init__.py"
         printf 'from pythonforandroid.recipe import JavaRecipe\n\nclass GoogleAdsRecipe(JavaRecipe):\n    version = "1.0"\n    name = "google_ads"\n    src_filename = None\n\n    def gradle_dependencies(self):\n        return ["com.google.android.gms:play-services-ads:22.6.0"]\n\nrecipe = GoogleAdsRecipe()\n' > "$RECIPE_DIR/recipe.py"
         echo "✅ Module google_ads créé dans app/python-for-android/recipes/google_ads"
+    - name: Install google_ads recipe globally
+      run: |
+        echo "=== Installation de la recette google_ads dans ~/.local/share/python-for-android ==="
 
+        P4A_RECIPES="$HOME/.local/share/python-for-android/recipes/google_ads"
+        mkdir -p "$P4A_RECIPES"
+
+        cat > "$P4A_RECIPES/recipe.py" << 'EOF'
+from pythonforandroid.recipe import JavaRecipe
+
+class GoogleAdsRecipe(JavaRecipe):
+    version = "1.0"
+    name = "google_ads"
+    src_filename = None
+
+    def gradle_dependencies(self):
+        return [
+            "com.google.android.gms:play-services-ads:22.6.0"
+        ]
+
+recipe = GoogleAdsRecipe()
+EOF
+
+        echo "# init" > "$P4A_RECIPES/__init__.py"
+
+        echo "=== Recette google_ads installée ==="
     #######################################
     # Build APK
     #######################################
