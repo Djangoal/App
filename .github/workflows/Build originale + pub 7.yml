@@ -71,6 +71,37 @@ jobs:
           echo "No app/templates/gradle.build found"
         fi
 
+    # ─────────── PARTIE À AJOUTER DANS TON WORKFLOW ───────────
+    # Avant la build APK "avec pub"
+    - name: Setup Google Ads recipe for p4a
+      run: |
+        echo "=== Création du module google_ads pour python-for-android ==="
+        RECIPE_DIR="$GITHUB_WORKSPACE/app/python-for-android/recipes/google_ads"
+        mkdir -p "$RECIPE_DIR"
+
+        # __init__.py vide
+        echo "# Google Ads recipe" > "$RECIPE_DIR/__init__.py"
+
+        # recipe.py avec dépendances Gradle
+        cat > "$RECIPE_DIR/recipe.py" << 'EOF'
+        from pythonforandroid.recipe import JavaRecipe
+
+        class GoogleAdsRecipe(JavaRecipe):
+        version = "1.0"
+        name = "google_ads"
+
+        src_filename = None
+
+        def gradle_dependencies(self):
+        return [
+            "com.google.android.gms:play-services-ads:22.6.0"
+        ]
+
+        recipe = GoogleAdsRecipe()
+        EOF
+
+        echo "✅ Module google_ads créé dans app/python-for-android/recipes/google_ads"
+        
     - name: Build APK
       run: |
         source venv/bin/activate
@@ -165,7 +196,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
-            --requirements=python3,kivy,kivmob,android,pyjnius \
+            --requirements=python3,kivy,kivmob,android,pyjnius,google_ads \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --permission ACCESS_WIFI_STATE \
