@@ -55,38 +55,21 @@ jobs:
 
     - name: Cleanup previous builds
       run: |
+        echo "Cleaning old builds..."
         rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
         rm -rf ~/.local/share/python-for-android/dists/*
 
-    - name: Prepare Gradle Template (Google Ads)
+    - name: Show templates (sanity)
       run: |
-        mkdir -p ~/.local/share/python-for-android/templates/
-        cat > ~/.local/share/python-for-android/templates/gradle.build << 'EOF'
-        apply plugin: 'com.android.application'
-
-        android {
-        compileSdkVersion 35
-        buildToolsVersion "35.0.0"
-
-        defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 35
-        }
-
-        buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-        }
-        }
-
-        dependencies {
-        implementation fileTree(dir: 'libs', include: ['*.jar'])
-        implementation 'com.google.android.gms:play-services-ads:22.6.0'
-        }
-        EOF
+        echo "=== app/templates contents ==="
+        ls -la app/templates || true
+        echo "=== gradle.build preview (if exists) ==="
+        if [ -f app/templates/gradle.build ]; then
+          sed -n '1,200p' app/templates/gradle.build
+        else
+          echo "No app/templates/gradle.build found"
+        fi
 
     - name: Build APK
       run: |
@@ -94,14 +77,9 @@ jobs:
         cd "$GITHUB_WORKSPACE"
         echo "=== TYPE DE BUILD : ${{ github.event.inputs.build_type }} ==="
 
-        # Installer kivmob si nécessaire
-        if [[ "${{ github.event.inputs.build_type }}" == "avec_pub_debug" || "${{ github.event.inputs.build_type }}" == "avec_pub_release" ]]; then
-          ./venv/bin/pip install kivmob==2.0
-        fi
-
-        ####################################################
+        #######################################
         # SANS PUB - DEBUG
-        ####################################################
+        #######################################
         if [ "${{ github.event.inputs.build_type }}" = "sans_pub_debug" ]; then
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
@@ -121,12 +99,13 @@ jobs:
             --android_api=35 \
             --dist-name=monapp_debug \
             --debug
-          cp $(find . -name "*debug*.apk" | head -n 1) mon_budget_perso_debug.apk
+          APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
         fi
 
-        ####################################################
+        #######################################
         # SANS PUB - RELEASE
-        ####################################################
+        #######################################
         if [ "${{ github.event.inputs.build_type }}" = "sans_pub_release" ]; then
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
@@ -146,15 +125,38 @@ jobs:
             --android_api=35 \
             --dist-name=monapp_release \
             --release
-
-          cp $(find . -name "*release-unsigned*.apk" | head -n 1) mon_budget_perso_release_unsigned.apk
-          $SDK_DIR/build-tools/35.0.0/zipalign -v 4 mon_budget_perso_release_unsigned.apk mon_budget_perso_release_unsigned-aligned.apk
+          APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+          $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk" "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned-aligned.apk"
         fi
 
-        ####################################################
-        # AVEC PUB - DEBUG
-        ####################################################
-        if [ "${{ github.event.inputs.build_type }}" = "avec_pub_debug" ]; then
+        #######################################
+        # AVEC PUB
+        #######################################
+        if [ "${{ github.event.inputs.build_type }}" = "avec_pub_debug" ] || [ "${{ github.event.inputs.build_type }}" = "avec_pub_release" ]; then
+          echo "=== BUILD AVEC PUB ==="
+
+          # Installer kivmob 2.0 (ne pas tenter de lire __version__)
+          ./venv/bin/pip install --upgrade kivmob==2.0
+          ./venv/bin/python -c "import kivmob; print('KivMob import OK')"
+
+          # Nettoyer builds précédentes
+          ./venv/bin/p4a clean_builds || true
+          rm -rf ~/.local/share/python-for-android/dists/*
+
+          if [ "${{ github.event.inputs.build_type }}" = "avec_pub_debug" ]; then
+            ARCH=armeabi-v7a
+            DEBUG_FLAG="--debug"
+            DIST_NAME="monapp_pub_debug"
+            APK_OUTPUT="mon_budget_perso_pub_debug.apk"
+          else
+            ARCH=arm64-v8a
+            DEBUG_FLAG="--release"
+            DIST_NAME="monapp_pub_release"
+            APK_OUTPUT="mon_budget_perso_pub_release_unsigned.apk"
+          fi
+
+          # Important: p4a uses app/templates/gradle.build automatically if present
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp.pub \
@@ -168,73 +170,84 @@ jobs:
             --permission ACCESS_NETWORK_STATE \
             --permission ACCESS_WIFI_STATE \
             --orientation=portrait \
-            --arch=armeabi-v7a \
+            --arch=$ARCH \
             --sdk_dir=$SDK_DIR \
             --ndk_dir=$ANDROID_NDK_HOME \
             --android_api=35 \
-            --dist-name=monapp_pub_debug \
-            --debug \
-            --gradle-template=$HOME/.local/share/python-for-android/templates/gradle.build
+            --dist-name=$DIST_NAME \
+            $DEBUG_FLAG \
+            --copy-libs
 
-          cp $(find . -name "*debug*.apk" | head -n 1) mon_budget_perso_pub_debug.apk
+          APK_PATH=$(find . -type f -name "*.apk" | head -n 1)
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/$APK_OUTPUT"
+
+          if [ "${{ github.event.inputs.build_type }}" = "avec_pub_release" ]; then
+            $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$GITHUB_WORKSPACE/$APK_OUTPUT" "$GITHUB_WORKSPACE/mon_budget_perso_pub_release_aligned.apk"
+          fi
+
+          echo "=== Build avec pub terminé : $APK_OUTPUT ==="
         fi
 
-        ####################################################
-        # AVEC PUB - RELEASE
-        ####################################################
-        if [ "${{ github.event.inputs.build_type }}" = "avec_pub_release" ]; then
-          ./venv/bin/p4a apk \
-            --private "$GITHUB_WORKSPACE/app" \
-            --package=org.example.monapp.pub \
-            --name="Mon budget perso (pub)" \
-            --version=1.0 \
-            --bootstrap=sdl2 \
-            --icon=logo.png \
-            --presplash=app/logo1.png \
-            --requirements=python3,kivy,kivmob,android,pyjnius \
-            --permission INTERNET \
-            --permission ACCESS_NETWORK_STATE \
-            --permission ACCESS_WIFI_STATE \
-            --orientation=portrait \
-            --arch=arm64-v8a \
-            --sdk_dir=$SDK_DIR \
-            --ndk_dir=$ANDROID_NDK_HOME \
-            --android_api=35 \
-            --dist-name=monapp_pub_release \
-            --release \
-            --gradle-template=$HOME/.local/share/python-for-android/templates/gradle.build
-
-          cp $(find . -name "*release-unsigned*.apk" | head -n 1) mon_budget_perso_pub_release_unsigned.apk
-        fi
-
-    ###############################################
-    # Vérification du contenu APK + AdMob
-    ###############################################
     - name: Verify APK content
       run: |
-        APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
         echo "=== Vérification du contenu APK ==="
+        APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
         echo "APK détecté : $APK_FILE"
-
         echo "=== Classes Google Ads ==="
         unzip -l "$APK_FILE" | grep -E "gms|ads" || echo "⚠️ Aucune classe Google Ads trouvée"
-
-        echo "=== Vérification Manifest ==="
+        echo "=== Vérification Manifest : APPLICATION_ID ==="
         aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -i "APPLICATION_ID" || echo "⚠️ App ID AdMob manquant"
-
+        echo "=== Vérification Permissions Réseau ==="
+        aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -E "INTERNET|ACCESS_NETWORK_STATE" || echo "⚠️ Permissions manquantes"
         echo "=== Vérification SDK Google Ads présent ==="
         if unzip -l "$APK_FILE" | grep -q "com/google/android/gms/ads"; then
-          echo "✔️ Google Ads détecté"
+          echo "✔️ Google Ads détecté dans l’APK"
         else
-          echo "❌ Google Ads ABSENT"
+          echo "❌ Google Ads ABSENT — le bandeau pub NE PEUT PAS fonctionner"
           exit 1
         fi
+        echo "=== Vérification terminée ==="
 
-    ###############################################
-    # Export APK + rapport
-    ###############################################
+    - name: Generate AdMob Diagnostics Report
+      run: |
+        echo "=== Génération du rapport HTML AdMob ==="
+        APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
+        REPORT="$GITHUB_WORKSPACE/report_admob.html"
+        echo "<html><head><meta charset='UTF-8'><title>AdMob Diagnostics Report</title></head><body>" > "$REPORT"
+        echo "<h1>📊 Rapport de diagnostic AdMob</h1>" >> "$REPORT"
+        echo "<p><strong>APK analysé :</strong> $APK_FILE</p>" >> "$REPORT"
+        echo "<hr>" >> "$REPORT"
+        echo "<h2>🧩 AndroidManifest.xml</h2><pre>" >> "$REPORT"
+        aapt dump xmltree "$APK_FILE" AndroidManifest.xml >> "$REPORT" 2>&1
+        echo "</pre><hr>" >> "$REPORT"
+        echo "<h2>🔐 Permissions détectées</h2><pre>" >> "$REPORT"
+        aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -E "uses-permission" >> "$REPORT"
+        echo "</pre><hr>" >> "$REPORT"
+        echo "<h2>📌 App ID AdMob</h2><pre>" >> "$REPORT"
+        aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -i "APPLICATION_ID" >> "$REPORT"
+        echo "</pre><hr>" >> "$REPORT"
+        echo "<h2>📚 Classes Google Ads dans l'APK</h2><pre>" >> "$REPORT"
+        unzip -l "$APK_FILE" | grep -i "com/google/android/gms/ads" >> "$REPORT" || echo "Aucune classe Ads" >> "$REPORT"
+        echo "</pre><hr>" >> "$REPORT"
+        echo "<h2>📦 Contenu complet de l'APK</h2><pre>" >> "$REPORT"
+        unzip -l "$APK_FILE" >> "$REPORT"
+        echo "</pre><hr>" >> "$REPORT"
+        echo "<p>⏳ Analyse terminée automatiquement via GitHub Actions.</p>" >> "$REPORT"
+        echo "</body></html>" >> "$REPORT"
+        echo "Rapport généré : $REPORT"
+
+    - name: Upload AdMob Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: rapport-admob
+        path: ${{ github.workspace }}/report_admob.html
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: "*.apk"
+        path: |
+          ${{ github.workspace }}/mon_budget_perso_debug.apk
+          ${{ github.workspace }}/mon_budget_perso_release_unsigned*.apk
+          ${{ github.workspace }}/mon_budget_perso_pub_debug.apk
+          ${{ github.workspace }}/mon_budget_perso_pub_release_unsigned*.apk
