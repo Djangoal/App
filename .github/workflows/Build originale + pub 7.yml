@@ -200,7 +200,7 @@ jobs:
       run: |
        echo "=== Vérification du contenu APK ==="
        APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
-    echo "APK détecté : $APK_FILE"
+       echo "APK détecté : $APK_FILE"
 
        echo "=== Classes Google Ads ==="
        unzip -l "$APK_FILE" | grep -E "gms|ads" || echo "⚠️ Aucune classe Google Ads trouvée"
@@ -216,11 +216,11 @@ jobs:
 
        echo "=== SDK Google Ads présent ==="
        if unzip -l "$APK_FILE" | grep -q "com/google/android/gms/ads"; then
-      echo "✔️ Google Ads détecté"
+       echo "✔️ Google Ads détecté"
        else
-      echo "❌ ABSENT — les pubs ne marcheront pas"
-      exit 1
-      fi
+       echo "❌ ABSENT — les pubs ne marcheront pas"
+       exit 1
+       fi
 
     #######################################
     # RAPPORT HTML
