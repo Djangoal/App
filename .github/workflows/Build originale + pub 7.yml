@@ -204,7 +204,7 @@ jobs:
 
         echo "=== Classes Google Ads ==="
         unzip -l "$APK_FILE" | grep -E "gms|ads" || echo "⚠️ Aucune classe Google Ads trouvée"
-
+        unzip -p monapp_pub_debug-debug-1.0.apk AndroidManifest.xml | grep APPLICATION_ID
         echo "=== Permissions Réseau ==="
         aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -E "INTERNET|ACCESS_NETWORK_STATE" || echo "⚠️ Permissions manquantes"
 
