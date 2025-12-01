@@ -70,7 +70,32 @@ jobs:
         else
           echo "No app/templates/gradle.build found"
         fi
+        
+    - name: Lister les fichiers nécessaires au build
+      run: |
+        echo "=== Liste des fichiers essentiels pour le build ==="
+        
+        # Dossier principal de l'app
+        APP_DIR="$GITHUB_WORKSPACE/app"
+        
+        # Fichiers essentiels
+        FILES=(
+          "$APP_DIR/main.py"
+          "$APP_DIR/python-for-android/recipes/google_ads/recipe.py"
+          "$APP_DIR/python-for-android/recipes/google_ads/__init__.py"
+          "$APP_DIR/logo.png"
+          "$APP_DIR/logo1.png"
+          "$APP_DIR/gradle.build"
+        )
 
+        for f in "${FILES[@]}"; do
+          if [ -f "$f" ]; then
+            echo "✅ $f"
+            echo "Lien GitHub Actions : $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/${f#$GITHUB_WORKSPACE/}"
+          else
+            echo "⚠️ Manquant : $f"
+          fi
+        done
     #######################################
     # BUILD APK
     #######################################
