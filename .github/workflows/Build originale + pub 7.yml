@@ -72,16 +72,37 @@ jobs:
         fi
 
     #######################################
-    # Setup Google Ads recipe
+    # GENERATION AUTOMATIQUE RECIPE GOOGLE ADS
     #######################################
     - name: Setup Google Ads recipe for p4a
       run: |
         echo "=== Création du module google_ads pour python-for-android ==="
+
         RECIPE_DIR="$GITHUB_WORKSPACE/app/python-for-android/recipes/google_ads"
         mkdir -p "$RECIPE_DIR"
-        echo "# Google Ads recipe" > "$RECIPE_DIR/__init__.py"
-        printf 'from pythonforandroid.recipe import JavaRecipe\n\nclass GoogleAdsRecipe(JavaRecipe):\n    version = "1.0"\n    name = "google_ads"\n    src_filename = None\n\n    def gradle_dependencies(self):\n        return ["com.google.android.gms:play-services-ads:22.6.0"]\n\nrecipe = GoogleAdsRecipe()\n' > "$RECIPE_DIR/recipe.py"
+
+        cat > "$RECIPE_DIR/__init__.py" << 'EOF'
+# Google Ads recipe
+EOF
+
+        cat > "$RECIPE_DIR/recipe.py" << 'EOF'
+from pythonforandroid.recipe import JavaRecipe
+
+class GoogleAdsRecipe(JavaRecipe):
+    version = "1.0"
+    name = "google_ads"
+    src_filename = None
+
+    def gradle_dependencies(self):
+        return [
+            "com.google.android.gms:play-services-ads:22.6.0"
+        ]
+
+recipe = GoogleAdsRecipe()
+EOF
+
         echo "✅ Module google_ads créé dans app/python-for-android/recipes/google_ads"
+
     - name: Install google_ads recipe globally
       run: |
         echo "=== Installation de la recette google_ads dans ~/.local/share/python-for-android ==="
@@ -106,10 +127,10 @@ recipe = GoogleAdsRecipe()
 EOF
 
         echo "# init" > "$P4A_RECIPES/__init__.py"
-
         echo "=== Recette google_ads installée ==="
+
     #######################################
-    # Build APK
+    # BUILD APK
     #######################################
     - name: Build APK
       run: |
@@ -118,7 +139,7 @@ EOF
         echo "=== TYPE DE BUILD : ${{ github.event.inputs.build_type }} ==="
 
         #######################################
-        # SANS PUB - DEBUG
+        # SANS PUB DEBUG
         #######################################
         if [ "${{ github.event.inputs.build_type }}" = "sans_pub_debug" ]; then
           ./venv/bin/p4a apk \
@@ -144,7 +165,7 @@ EOF
         fi
 
         #######################################
-        # SANS PUB - RELEASE
+        # SANS PUB RELEASE
         #######################################
         if [ "${{ github.event.inputs.build_type }}" = "sans_pub_release" ]; then
           ./venv/bin/p4a apk \
@@ -205,57 +226,44 @@ EOF
         fi
 
     #######################################
-    # Vérification APK + AdMob
+    # VERIFICATION APK
     #######################################
     - name: Verify APK content
       run: |
         echo "=== Vérification du contenu APK ==="
         APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
         echo "APK détecté : $APK_FILE"
+
         echo "=== Classes Google Ads ==="
         unzip -l "$APK_FILE" | grep -E "gms|ads" || echo "⚠️ Aucune classe Google Ads trouvée"
-        echo "=== Vérification Manifest : APPLICATION_ID ==="
-        aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -i "APPLICATION_ID" || echo "⚠️ App ID AdMob manquant"
-        echo "=== Vérification Permissions Réseau ==="
+
+        echo "=== Permissions Réseau ==="
         aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -E "INTERNET|ACCESS_NETWORK_STATE" || echo "⚠️ Permissions manquantes"
-        echo "=== Vérification SDK Google Ads présent ==="
+
+        echo "=== SDK Google Ads présent ==="
         if unzip -l "$APK_FILE" | grep -q "com/google/android/gms/ads"; then
-          echo "✔️ Google Ads détecté dans l’APK"
+          echo "✔️ Google Ads détecté"
         else
-          echo "❌ Google Ads ABSENT — le bandeau pub NE PEUT PAS fonctionner"
+          echo "❌ ABSENT — les pubs ne marcheront pas"
           exit 1
         fi
-        echo "=== Vérification terminée ==="
 
     #######################################
-    # Rapport HTML AdMob
+    # RAPPORT HTML
     #######################################
     - name: Generate AdMob Diagnostics Report
       run: |
         APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
         REPORT="$GITHUB_WORKSPACE/report_admob.html"
-        echo "<html><head><meta charset='UTF-8'><title>AdMob Diagnostics Report</title></head><body>" > "$REPORT"
-        echo "<h1>📊 Rapport de diagnostic AdMob</h1>" >> "$REPORT"
-        echo "<p><strong>APK analysé :</strong> $APK_FILE</p>" >> "$REPORT"
-        echo "<hr>" >> "$REPORT"
-        echo "<h2>🧩 AndroidManifest.xml</h2><pre>" >> "$REPORT"
-        aapt dump xmltree "$APK_FILE" AndroidManifest.xml >> "$REPORT" 2>&1
-        echo "</pre><hr>" >> "$REPORT"
-        echo "<h2>🔐 Permissions détectées</h2><pre>" >> "$REPORT"
-        aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -E "uses-permission" >> "$REPORT"
-        echo "</pre><hr>" >> "$REPORT"
-        echo "<h2>📌 App ID AdMob</h2><pre>" >> "$REPORT"
-        aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -i "APPLICATION_ID" >> "$REPORT"
-        echo "</pre><hr>" >> "$REPORT"
-        echo "<h2>📚 Classes Google Ads dans l'APK</h2><pre>" >> "$REPORT"
-        unzip -l "$APK_FILE" | grep -i "com/google/android/gms/ads" >> "$REPORT" || echo "Aucune classe Ads" >> "$REPORT"
-        echo "</pre><hr>" >> "$REPORT"
-        echo "<h2>📦 Contenu complet de l'APK</h2><pre>" >> "$REPORT"
-        unzip -l "$APK_FILE" >> "$REPORT"
-        echo "</pre><hr>" >> "$REPORT"
-        echo "<p>⏳ Analyse terminée automatiquement via GitHub Actions.</p>" >> "$REPORT"
+
+        echo "<html><body>" > "$REPORT"
+        echo "<h1>Rapport AdMob</h1>" >> "$REPORT"
+
+        echo "<h2>Manifest</h2><pre>" >> "$REPORT"
+        aapt dump xmltree "$APK_FILE" AndroidManifest.xml >> "$REPORT"
+        echo "</pre>" >> "$REPORT"
+
         echo "</body></html>" >> "$REPORT"
-        echo "Rapport généré : $REPORT"
 
     - name: Upload AdMob Report
       uses: actions/upload-artifact@v4
