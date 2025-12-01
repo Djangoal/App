@@ -74,10 +74,10 @@ jobs:
     - name: Lister les fichiers nécessaires au build
       run: |
         echo "=== Liste des fichiers essentiels pour le build ==="
-        
+    
         # Dossier principal de l'app
         APP_DIR="$GITHUB_WORKSPACE/app"
-        
+    
         # Fichiers essentiels
         FILES=(
           "$APP_DIR/main.py"
@@ -86,6 +86,7 @@ jobs:
           "$APP_DIR/logo.png"
           "$APP_DIR/logo1.png"
           "$APP_DIR/gradle.build"
+          "$APP_DIR/AndroidManifest.xml"   # <-- ajouté
         )
 
         for f in "${FILES[@]}"; do
