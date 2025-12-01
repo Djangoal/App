@@ -198,26 +198,29 @@ jobs:
     #######################################
     - name: Verify APK content
       run: |
-        echo "=== Vérification du contenu APK ==="
-        APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
-        echo "APK détecté : $APK_FILE"
+       echo "=== Vérification du contenu APK ==="
+       APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
+    echo "APK détecté : $APK_FILE"
 
-        echo "=== Classes Google Ads ==="
-        unzip -l "$APK_FILE" | grep -E "gms|ads" || echo "⚠️ Aucune classe Google Ads trouvée"
+       echo "=== Classes Google Ads ==="
+       unzip -l "$APK_FILE" | grep -E "gms|ads" || echo "⚠️ Aucune classe Google Ads trouvée"
 
-        echo "=== Package dans AndroidManifest.xml ==="
-        unzip -p "$APK_FILE" AndroidManifest.xml | grep "package="
+       echo "=== Vérification précise du dossier com/google/android/gms ==="
+       unzip -l "$APK_FILE" | grep "com/google/android/gms" || echo "⚠️ Namespace GMS absent"
 
-        echo "=== Permissions Réseau ==="
-        aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -E "INTERNET|ACCESS_NETWORK_STATE" || echo "⚠️ Permissions manquantes"
+       echo "=== Package dans AndroidManifest.xml ==="
+       unzip -p "$APK_FILE" AndroidManifest.xml | grep "package="
 
-        echo "=== SDK Google Ads présent ==="
-        if unzip -l "$APK_FILE" | grep -q "com/google/android/gms/ads"; then
-        echo "✔️ Google Ads détecté"
-        else
-        echo "❌ ABSENT — les pubs ne marcheront pas"
-        exit 1
-        fi
+       echo "=== Permissions Réseau ==="
+       aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -E "INTERNET|ACCESS_NETWORK_STATE" || echo "⚠️ Permissions manquantes"
+
+       echo "=== SDK Google Ads présent ==="
+       if unzip -l "$APK_FILE" | grep -q "com/google/android/gms/ads"; then
+      echo "✔️ Google Ads détecté"
+       else
+      echo "❌ ABSENT — les pubs ne marcheront pas"
+      exit 1
+      fi
 
     #######################################
     # RAPPORT HTML
