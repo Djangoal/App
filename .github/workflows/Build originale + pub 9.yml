@@ -71,7 +71,24 @@ jobs:
         for f in "${FILES[@]}"; do
           if [ -f "$f" ]; then echo "OK : $f"; else echo "MANQUANT : $f"; fi
         done
+        
+    - name: Debug recipe google_ads
+      run: |
+       echo "=== Chemin réel de la recipe ==="
+       find . -type f -name "recipe.py" | grep google_ads || echo "⚠️ Aucune recipe google_ads trouvée dans le workspace"
 
+       echo "=== Contenu de la recipe utilisée par p4a ==="
+       RECIPE_PATH=$(find . -type f -path "*python-for-android/recipes/google_ads/recipe.py" | head -n 1)
+       if [ -f "$RECIPE_PATH" ]; then
+        echo "Fichier trouvé : $RECIPE_PATH"
+        echo "--- CONTENU DU FICHIER ---"
+        cat "$RECIPE_PATH"
+       else
+        echo "⚠️ Aucune recipe google_ads locale trouvée"
+       fi
+
+       echo "=== Recipe installée dans ~/.local/share/python-for-android/recipes ==="
+       find ~/.local/share/python-for-android/recipes -type f -name "recipe.py" | grep google_ads || echo "⚠️ Aucune recipe google_ads installée globalement"
     ####################################
     # BUILD APK
     ####################################
