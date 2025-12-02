@@ -1,0 +1,264 @@
+name: Build originale + pub 7
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Type de build"
+        required: true
+        default: "sans_pub_debug"
+        type: choice
+        options:
+          - sans_pub_debug
+          - sans_pub_release
+          - avec_pub_debug
+          - avec_pub_release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      SDK_DIR: ${{ github.workspace }}/android-sdk
+      NDK_DIR: ${{ github.workspace }}/android-sdk/ndk
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 aapt
+
+    - name: Setup Python & python-for-android
+      run: |
+        python3 -m venv venv
+        ./venv/bin/pip install --upgrade pip cython
+        ./venv/bin/pip install --upgrade git+https://github.com/kivy/python-for-android.git
+
+    - name: Download Android SDK & NDK
+      run: |
+        mkdir -p $SDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d $SDK_DIR
+        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
+        mkdir -p $SDK_DIR/cmdline-tools/latest
+        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+          "platform-tools" \
+          "platforms;android-35" \
+          "build-tools;35.0.0" \
+          "ndk;25.2.9519653"
+
+    - name: Cleanup previous builds
+      run: |
+        echo "Cleaning old builds..."
+        rm -rf .buildozer dist build bin
+        ./venv/bin/p4a clean_builds || true
+        rm -rf ~/.local/share/python-for-android/dists/*
+
+    - name: Show templates (sanity)
+      run: |
+        echo "=== app/templates contents ==="
+        ls -la app/templates || true
+        echo "=== gradle.build preview (if exists) ==="
+        if [ -f app/templates/gradle.build ]; then
+          sed -n '1,200p' app/templates/gradle.build
+        else
+          echo "No app/templates/gradle.build found"
+        fi
+
+        - name: Créer la recipe google_ads localement
+  run: |
+    RECIPE_DIR="$GITHUB_WORKSPACE/app/python-for-android/recipes/google_ads"
+    mkdir -p "$RECIPE_DIR"
+
+    cat > "$RECIPE_DIR/recipe.py" << 'EOF'
+    from pythonforandroid.recipe import JavaRecipe
+
+class GoogleAdsRecipe(JavaRecipe):
+    version = "1.0"
+    name = "google_ads"
+    src_filename = None
+
+    def gradle_dependencies(self):
+        return ["com.google.android.gms:play-services-ads:22.6.0"]
+
+recipe = GoogleAdsRecipe()
+EOF
+
+    echo "# init" > "$RECIPE_DIR/__init__.py"
+    echo "✅ Google Ads recipe créée localement"
+    - name: Lister les fichiers nécessaires au build
+      run: |
+        echo "=== Liste des fichiers essentiels pour le build ==="
+        APP_DIR="$GITHUB_WORKSPACE/app"
+        FILES=(
+          "$APP_DIR/main.py"
+          "$APP_DIR/python-for-android/recipes/google_ads/recipe.py"
+          "$APP_DIR/python-for-android/recipes/google_ads/__init__.py"
+          "$APP_DIR/logo.png"
+          "$APP_DIR/logo1.png"
+          "$APP_DIR/gradle.build"
+          "$APP_DIR/AndroidManifest.xml"
+        )
+        for f in "${FILES[@]}"; do
+          if [ -f "$f" ]; then
+            echo "✅ $f"
+            echo "Lien GitHub Actions : $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/${f#$GITHUB_WORKSPACE/}"
+          else
+            echo "⚠️ Manquant : $f"
+          fi
+        done
+
+    #######################################
+    # BUILD APK
+    #######################################
+    - name: Build APK
+      run: |
+        source venv/bin/activate
+        cd "$GITHUB_WORKSPACE"
+        echo "=== TYPE DE BUILD : ${{ github.event.inputs.build_type }} ==="
+
+        if [ "${{ github.event.inputs.build_type }}" = "sans_pub_debug" ]; then
+          ./venv/bin/p4a apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=app/logo1.png \
+            --requirements=python3,kivy,android,pyjnius \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --orientation=portrait \
+            --arch=armeabi-v7a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=35 \
+            --dist-name=monapp_debug \
+            --debug
+          APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+        fi
+
+        if [ "${{ github.event.inputs.build_type }}" = "sans_pub_release" ]; then
+          ./venv/bin/p4a apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=app/logo1.png \
+            --requirements=python3,kivy,android,pyjnius \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --orientation=portrait \
+            --arch=arm64-v8a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=35 \
+            --dist-name=monapp_release \
+            --release
+          APK_PATH=$(find . -type f -name "*release-unsigned*.apk" | head -n 1)
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk"
+          $SDK_DIR/build-tools/35.0.0/zipalign -v 4 "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned.apk" "$GITHUB_WORKSPACE/mon_budget_perso_release_unsigned-aligned.apk"
+        fi
+
+        if [ "${{ github.event.inputs.build_type }}" = "avec_pub_debug" ] || [ "${{ github.event.inputs.build_type }}" = "avec_pub_release" ]; then
+          echo "=== BUILD AVEC PUB ==="
+          ./venv/bin/pip install --upgrade kivmob==2.0
+          ./venv/bin/p4a clean_builds || true
+
+          ./venv/bin/p4a apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp.pub \
+            --name="Mon budget perso (pub)" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=app/logo1.png \
+            --requirements=python3,kivy,kivmob,android,pyjnius,google_ads \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --permission ACCESS_WIFI_STATE \
+            --orientation=portrait \
+            --arch=armeabi-v7a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=35 \
+            --dist-name=monapp_pub_debug \
+            --debug \
+            --copy-libs
+
+          APK_PATH=$(find . -type f -name "*debug*.apk" | head -n 1)
+          cp "$APK_PATH" "$GITHUB_WORKSPACE/mon_budget_perso_pub_debug.apk"
+          echo "=== Build avec pub terminé : $APK_PATH ==="
+        fi
+
+    #######################################
+    # VERIFICATION APK
+    #######################################
+    - name: Verify APK content
+      run: |
+        echo "=== Vérification du contenu APK ==="
+        APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
+        echo "APK détecté : $APK_FILE"
+
+        echo "=== Classes Google Ads ==="
+        unzip -l "$APK_FILE" | grep -E "gms|ads" || echo "⚠️ Aucune classe Google Ads trouvée"
+
+        echo "=== Vérification précise du dossier com/google/android/gms ==="
+        unzip -l "$APK_FILE" | grep "com/google/android/gms" || echo "⚠️ Namespace GMS absent"
+
+        echo "=== Package dans AndroidManifest.xml ==="
+        unzip -p "$APK_FILE" AndroidManifest.xml | grep "package="
+
+        echo "=== Permissions Réseau ==="
+        aapt dump xmltree "$APK_FILE" AndroidManifest.xml | grep -E "INTERNET|ACCESS_NETWORK_STATE" || echo "⚠️ Permissions manquantes"
+
+        echo "=== SDK Google Ads présent ==="
+        if unzip -l "$APK_FILE" | grep -q "com/google/android/gms/ads"; then
+          echo "✔️ Google Ads détecté"
+        else
+          echo "❌ ABSENT — les pubs ne marcheront pas"
+          exit 1
+        fi
+
+    #######################################
+    # RAPPORT HTML
+    #######################################
+    - name: Generate AdMob Diagnostics Report
+      run: |
+        APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
+        REPORT="$GITHUB_WORKSPACE/report_admob.html"
+
+        echo "<html><body>" > "$REPORT"
+        echo "<h1>Rapport AdMob</h1>" >> "$REPORT"
+
+        echo "<h2>Manifest</h2><pre>" >> "$REPORT"
+        aapt dump xmltree "$APK_FILE" AndroidManifest.xml >> "$REPORT"
+        echo "</pre>" >> "$REPORT"
+
+        echo "</body></html>" >> "$REPORT"
+
+    - name: Upload AdMob Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: rapport-admob
+        path: ${{ github.workspace }}/report_admob.html
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: |
+          ${{ github.workspace }}/mon_budget_perso_debug.apk
+          ${{ github.workspace }}/mon_budget_perso_release_unsigned*.apk
+          ${{ github.workspace }}/mon_budget_perso_pub_debug.apk
+          ${{ github.workspace }}/mon_budget_perso_pub_release_unsigned*.apk
