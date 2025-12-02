@@ -71,7 +71,14 @@ jobs:
         for f in "${FILES[@]}"; do
           if [ -f "$f" ]; then echo "OK : $f"; else echo "MANQUANT : $f"; fi
         done
-        
+
+    - name: Fix recipe directory name
+      run: |
+       if [ -d "app/python-for-android" ]; then
+       mv app/python-for-android app/pythonforandroid
+       echo "Renamed python-for-android → pythonforandroid"
+       fi
+    
     - name: Debug recipe google_ads
       run: |
        echo "=== Chemin réel de la recipe ==="
@@ -160,7 +167,7 @@ jobs:
             --icon=logo.png \
             --presplash=logo1.png \
             --requirements=python3,kivy,kivmob,android,pyjnius,google_ads \
-            --local-recipes=./app/python-for-android/recipes \
+            --local-recipes=./app/pythonforandroid/recipes \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --permission ACCESS_WIFI_STATE \
