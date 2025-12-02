@@ -60,23 +60,55 @@ jobs:
         source venv/bin/activate
         ./venv/bin/p4a clean_builds || true
 
-    - name: Verify essential files
+    - name: Lister toutes les recipes (locales + p4a)
       run: |
-        APP_DIR="$GITHUB_WORKSPACE/app"
-        FILES=(
-          "$APP_DIR/main.py"
-          "$APP_DIR/logo.png"
-          "$APP_DIR/logo1.png"
-          "$APP_DIR/python-for-android/recipes/google_ads/recipe.py"
-          "$APP_DIR/python-for-android/recipes/google_ads/__init__.py"
-        )
-        for f in "${FILES[@]}"; do
-          if [ -f "$f" ]; then
-            echo "✅ $f"
-          else
-            echo "⚠️ Manquant : $f"
-          fi
-        done
+        echo "====== RECIPES LOCALES DANS LE REPO ======"
+        LOCAL_DIR="app/pythonforandroid/recipes"
+
+        if [ -d "$LOCAL_DIR" ]; then
+          find "$LOCAL_DIR" -mindepth 1 -maxdepth 1 -type d | while read recipe; do
+            RNAME=$(basename "$recipe")
+            echo "📦 Recipe locale : $RNAME"
+            echo " - Chemin : $recipe"
+
+            # lien GitHub direct
+            rel="${recipe#$GITHUB_WORKSPACE/}"
+            echo " - Lien GitHub : $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/${GITHUB_REF_NAME:-main}/$rel"
+
+            # Afficher le fichier recipe.py s’il existe
+            if [ -f "$recipe/recipe.py" ]; then
+              echo " - Contient : recipe.py"
+            else
+              echo " - ⚠️ Pas de recipe.py"
+            fi
+          done
+        else
+          echo "⚠️ Aucun dossier local de recipes trouvé"
+        fi
+
+         echo ""
+        echo "====== RECIPES UTILISÉES PAR python-for-android ======"
+        P4A_RECIPES_DIR="venv/lib/python*/site-packages/pythonforandroid/recipes"
+
+        # Trouver réellement le chemin installé
+        P4A_DIR=$(find venv/lib -type d -path "*/python*/site-packages/pythonforandroid/recipes" | head -n 1)
+
+        if [ -n "$P4A_DIR" ]; then
+          echo "Répertoire p4a détecté : $P4A_DIR"
+          find "$P4A_DIR" -mindepth 1 -maxdepth 1 -type d | while read recipe; do
+            echo "📦 Recipe P4A : $(basename "$recipe")"
+            if [ -f "$recipe/recipe.py" ]; then
+              echo " - Contient : recipe.py"
+            else
+              echo " - ⚠️ Pas de recipe.py"
+            fi
+          done
+        else
+          echo "⚠️ Aucune installation de recipes python-for-android trouvée"
+        fi
+
+        echo ""
+        echo "====== FIN DU SCAN ======"
 
     - name: Fix recipe directory name
       run: |
