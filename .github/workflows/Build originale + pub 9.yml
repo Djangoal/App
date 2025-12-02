@@ -1,4 +1,4 @@
-name: Build originale + pub 8
+name: Build originale + pub 9
 
 on:
   workflow_dispatch:
