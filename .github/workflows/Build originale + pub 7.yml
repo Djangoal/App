@@ -180,9 +180,8 @@ jobs:
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
-            --requirements=python3,kivy,kivmob,android,pyjnius,google_ads \
-            --python-version=3.11 \
-            --p4a-local-recipes=$GITHUB_WORKSPACE/app/python-for-android/recipes \
+            --requirements=python3==3.11,kivy,kivmob,android,pyjnius,google_ads \
+            
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --permission ACCESS_WIFI_STATE \
