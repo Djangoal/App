@@ -78,19 +78,19 @@ jobs:
 
         cat > "$P4A_RECIPES/recipe.py" << 'EOF'from pythonforandroid.recipe import JavaRecipe
 
-    class GoogleAdsRecipe(JavaRecipe):
-        version = "1.0"
-        name = "google_ads"
-        src_filename = None
+        class GoogleAdsRecipe(JavaRecipe):
+            version = "1.0"
+            name = "google_ads"
+            src_filename = None
 
         def gradle_dependencies(self):
             return ["com.google.android.gms:play-services-ads:22.6.0"]
 
-recipe = GoogleAdsRecipe()
-EOF
+        recipe = GoogleAdsRecipe()
+        EOF
 
-    echo "# init" > "$P4A_RECIPES/__init__.py"
-    echo "✅ Google Ads recipe installée globalement"
+        echo "# init" > "$P4A_RECIPES/__init__.py"
+        echo "✅ Google Ads recipe installée globalement"
 
 
     - name: Lister les fichiers nécessaires au build
