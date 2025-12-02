@@ -129,7 +129,15 @@ jobs:
         else
           echo "⚠️ Aucune recipe google_ads locale trouvée"
         fi
-
+    - name: Supprimer le faux module google_ads dans p4a
+      run: |
+        BAD=$(find venv/lib -type d -path "*/site-packages/pythonforandroid/recipes/google_ads")
+        if [ -n "$BAD" ]; then
+          echo "⚠️ Suppression du faux module interne : $BAD"
+          rm -rf "$BAD"
+        else
+          echo "✔️ Aucun faux module interne trouvé"
+        fi
     ####################################
     # BUILD APK
     ####################################
