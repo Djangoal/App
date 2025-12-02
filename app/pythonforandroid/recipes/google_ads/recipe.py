@@ -1,11 +1,20 @@
-from pythonforandroid.recipe import JavaRecipe
+from pythonforandroid.recipe import Recipe
+from pythonforandroid.logger import info
 
-class GoogleAdsRecipe(JavaRecipe):
+class GoogleAdsRecipe(Recipe):
     version = "1.0"
-    name = "google_ads"
-    src_filename = None
+    url = None
+    depends = []      # aucune dépendance
+    python_depends = [] 
 
-    def gradle_dependencies(self):
-        return ["com.google.android.gms:play-services-ads:22.6.0"]
+    def prebuild_arch(self, arch):
+        info("Google Ads: prebuild_arch called")
 
+    def build_arch(self, arch):
+        info("Google Ads: build_arch called")
+
+    def get_include_dirs(self, arch):
+        return []
+
+# ⚠️ IMPORTANT : c’est cette ligne que p4a cherche
 recipe = GoogleAdsRecipe()
