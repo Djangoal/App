@@ -163,7 +163,7 @@ jobs:
             --icon=logo.png \
             --presplash=app/logo1.png \
             --requirements=python3,kivy,kivmob,android,pyjnius,google_ads \
-            --p4a-local-recipes=./app/python-for-android/recipes \
+            --p4a-local-recipes=./app/python-for-android/recipe \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --permission ACCESS_WIFI_STATE \
