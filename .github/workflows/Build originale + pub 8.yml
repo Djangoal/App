@@ -72,12 +72,12 @@ jobs:
         fi
 
         - name: Créer la recipe google_ads localement
-  run: |
-    RECIPE_DIR="$GITHUB_WORKSPACE/app/python-for-android/recipes/google_ads"
-    mkdir -p "$RECIPE_DIR"
+          run: |
+            RECIPE_DIR="$GITHUB_WORKSPACE/app/python-for-android/recipes/google_ads"
+            mkdir -p "$RECIPE_DIR"
 
-    cat > "$RECIPE_DIR/recipe.py" << 'EOF'
-    from pythonforandroid.recipe import JavaRecipe
+           cat > "$RECIPE_DIR/recipe.py" << 'EOF'
+            from pythonforandroid.recipe import JavaRecipe
 
 class GoogleAdsRecipe(JavaRecipe):
     version = "1.0"
