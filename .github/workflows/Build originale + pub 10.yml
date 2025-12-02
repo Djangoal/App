@@ -207,7 +207,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=logo1.png \
-            --requirements=python3,kivy,kivmob,android,pyjnius,google_ads \
+            --requirements=python3,kivy,kivmob,android,pyjnius,googleads \
             --local-recipes=./app/pythonforandroid/recipes \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
