@@ -1,4 +1,4 @@
-name: Build originale + pub 7
+name: Build originale + pub 8
 
 on:
   workflow_dispatch:
@@ -71,13 +71,12 @@ jobs:
           echo "No app/templates/gradle.build found"
         fi
 
-        - name: Créer la recipe google_ads localement
-          run: |
-            RECIPE_DIR="$GITHUB_WORKSPACE/app/python-for-android/recipes/google_ads"
-            mkdir -p "$RECIPE_DIR"
+    - name: Installer la recipe google_ads globalement
+      run: |
+        P4A_RECIPES="$HOME/.local/share/python-for-android/recipes/google_ads"
+        mkdir -p "$P4A_RECIPES"
 
-           cat > "$RECIPE_DIR/recipe.py" << 'EOF'
-            from pythonforandroid.recipe import JavaRecipe
+        cat > "$P4A_RECIPES/recipe.py" << 'EOF'from pythonforandroid.recipe import JavaRecipe
 
 class GoogleAdsRecipe(JavaRecipe):
     version = "1.0"
@@ -90,8 +89,10 @@ class GoogleAdsRecipe(JavaRecipe):
 recipe = GoogleAdsRecipe()
 EOF
 
-    echo "# init" > "$RECIPE_DIR/__init__.py"
-    echo "✅ Google Ads recipe créée localement"
+    echo "# init" > "$P4A_RECIPES/__init__.py"
+    echo "✅ Google Ads recipe installée globalement"
+
+
     - name: Lister les fichiers nécessaires au build
       run: |
         echo "=== Liste des fichiers essentiels pour le build ==="
