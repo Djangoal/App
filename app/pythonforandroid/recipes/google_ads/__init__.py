@@ -1,1 +1,1 @@
-# google_ads recipe
+__all__ = ['recipe']
