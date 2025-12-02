@@ -1,7 +1,8 @@
 from pythonforandroid.recipe import Recipe
 from pythonforandroid.logger import info
 
-class GoogleAdsRecipe(Recipe):
+class GoogleAdsRecipe(JavaRecipe):
+    name = "googleads"
     """
     Recipe d’intégration du SDK Google Mobile Ads
     pour une application Kivy compilée avec p4a.
