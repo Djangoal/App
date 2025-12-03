@@ -1,1 +1,1 @@
-from .recipe import GoogleAdsRecipe
+from .recipe import recipe
