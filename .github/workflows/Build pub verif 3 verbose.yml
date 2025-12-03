@@ -82,8 +82,8 @@ jobs:
           --ndk-dir $ANDROID_NDK_HOME \
           --debug \
           -v \
-          --extra-manifest=app/AndroidManifest.xml
-
+          --extra-manifest-xml=app/AndroidManifest.xml
+          
     - name: Analyze APK during build
       run: |
         APK_FILE=$(find . -type f -name "*debug*.apk" | head -n 1)
