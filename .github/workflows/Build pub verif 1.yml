@@ -188,28 +188,6 @@ jobs:
     ####################################
     - name: Verify APK content
       run: |
-        APK=$(find . -name "*.apk" | head -n 1)
-        echo "APK détecté : $APK"
-        if unzip -l "$APK" | grep -q "com/google/android/gms/ads"; then
-          echo "✔️ Google Ads OK"
-        else
-          echo "⚠️ Google Ads NON détecté"
-        fi
-
-    ####################################
-    # UPLOAD APK
-    ####################################
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: mon-budget-${{ github.event.inputs.build_type }}
-        path: "*.apk"
-
-    ####################################
-    # VERIFY APK
-    ####################################
-    - name: Verify APK content
-      run: |
         echo "=== Vérification du contenu APK ==="
 
         APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
@@ -287,3 +265,11 @@ jobs:
 
         echo "Rapport généré : $REPORT"
 
+    ####################################
+    # UPLOAD APK
+    ####################################
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: "*.apk"
