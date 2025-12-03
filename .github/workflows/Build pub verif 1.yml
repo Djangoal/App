@@ -1,4 +1,4 @@
-name: Build originale + pub 10
+name: Build pub verif 1
 
 on:
   workflow_dispatch:
