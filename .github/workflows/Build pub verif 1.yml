@@ -1,4 +1,209 @@
+name: Build originale + pub 10
 
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Type de build"
+        required: true
+        default: "sans_pub_debug"
+        type: choice
+        options:
+          - sans_pub_debug
+          - sans_pub_release
+          - avec_pub_debug
+          - avec_pub_release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      SDK_DIR: ${{ github.workspace }}/android-sdk
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libltdl-dev zip unzip openjdk-17-jdk python3-pip libncurses-dev libtool libtool-bin automake autoconf pkg-config m4 aapt
+
+    - name: Setup Python & python-for-android
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip cython
+        # Installe la version develop compatible Google Ads et Python 3.12
+        pip install --upgrade git+https://github.com/kivy/python-for-android.git@develop
+
+    - name: Download Android SDK & NDK
+      run: |
+        mkdir -p $SDK_DIR
+        curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d $SDK_DIR
+        mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-temp
+        mkdir -p $SDK_DIR/cmdline-tools/latest
+        mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
+        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+          "platform-tools" \
+          "platforms;android-35" \
+          "build-tools;35.0.0" \
+          "ndk;25.2.9519653"
+
+    - name: Cleanup previous builds
+      run: |
+        rm -rf .buildozer dist build bin
+        source venv/bin/activate
+        ./venv/bin/p4a clean_builds || true
+
+    - name: Lister toutes les recipes (locales + p4a)
+      run: |
+        echo "====== RECIPES LOCALES DANS LE REPO ======"
+        LOCAL_DIR="app/pythonforandroid/recipes"
+
+        if [ -d "$LOCAL_DIR" ]; then
+          find "$LOCAL_DIR" -mindepth 1 -maxdepth 1 -type d | while read recipe; do
+            RNAME=$(basename "$recipe")
+            echo "📦 Recipe locale : $RNAME"
+            echo " - Chemin : $recipe"
+
+            # lien GitHub direct
+            rel="${recipe#$GITHUB_WORKSPACE/}"
+            echo " - Lien GitHub : $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/${GITHUB_REF_NAME:-main}/$rel"
+
+            # Afficher le fichier recipe.py s’il existe
+            if [ -f "$recipe/recipe.py" ]; then
+              echo " - Contient : recipe.py"
+            else
+              echo " - ⚠️ Pas de recipe.py"
+            fi
+          done
+        else
+          echo "⚠️ Aucun dossier local de recipes trouvé"
+        fi
+
+         echo ""
+        echo "====== RECIPES UTILISÉES PAR python-for-android ======"
+        P4A_RECIPES_DIR="venv/lib/python*/site-packages/pythonforandroid/recipes"
+
+        # Trouver réellement le chemin installé
+        P4A_DIR=$(find venv/lib -type d -path "*/python*/site-packages/pythonforandroid/recipes" | head -n 1)
+
+        if [ -n "$P4A_DIR" ]; then
+          echo "Répertoire p4a détecté : $P4A_DIR"
+          find "$P4A_DIR" -mindepth 1 -maxdepth 1 -type d | while read recipe; do
+            echo "📦 Recipe P4A : $(basename "$recipe")"
+            if [ -f "$recipe/recipe.py" ]; then
+              echo " - Contient : recipe.py"
+            else
+              echo " - ⚠️ Pas de recipe.py"
+            fi
+          done
+        else
+          echo "⚠️ Aucune installation de recipes python-for-android trouvée"
+        fi
+
+        echo ""
+        echo "====== FIN DU SCAN ======"
+
+    - name: Fix recipe directory name
+      run: |
+        if [ -d "app/python-for-android" ]; then
+          mv app/python-for-android app/pythonforandroid
+          echo "✅ Renamed python-for-android → pythonforandroid"
+        fi
+
+    - name: Debug recipe google_ads
+      run: |
+        echo "=== Chemin réel de la recipe ==="
+        find . -type f -name "recipe.py" | grep google_ads || echo "⚠️ Aucune recipe google_ads trouvée"
+        echo "=== Contenu de la recipe google_ads ==="
+        RECIPE_PATH=$(find . -type f -path "*pythonforandroid/recipes/google_ads/recipe.py" | head -n 1)
+        if [ -f "$RECIPE_PATH" ]; then
+          echo "Fichier trouvé : $RECIPE_PATH"
+          cat "$RECIPE_PATH"
+        else
+          echo "⚠️ Aucune recipe google_ads locale trouvée"
+        fi
+    - name: Supprimer le faux module google_ads dans p4a
+        fi
+
+        # SANS PUB RELEASE
+        if [ "$BUILD" = "sans_pub_release" ]; then
+          ./venv/bin/p4a apk \
+            --private app \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=logo1.png \
+            --requirements=python3,kivy,android,pyjnius \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --orientation=portrait \
+            --arch=arm64-v8a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=35 \
+            --dist-name=monapp_release \
+            --release
+          APK=$(find . -name "*release-unsigned*.apk" | head -n 1)
+          cp "$APK" mon_budget_perso_release_unsigned.apk
+          $SDK_DIR/build-tools/35.0.0/zipalign -f 4 mon_budget_perso_release_unsigned.apk mon_budget_perso_release_unsigned_aligned.apk
+        fi
+
+        # AVEC PUB DEBUG ou RELEASE
+        if [[ "$BUILD" == "avec_pub_debug" || "$BUILD" == "avec_pub_release" ]]; then
+          pip install kivmob==2.0
+          ./venv/bin/p4a apk \
+            --private app \
+            --package=org.example.monapp.pub \
+            --name="Mon budget perso (pub)" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=logo1.png \
+            --requirements=python3,kivy,kivmob,android,pyjnius,googleads \
+            --local-recipes=./app/pythonforandroid/recipes/googleads \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --permission ACCESS_WIFI_STATE \
+            --orientation=portrait \
+            --arch=armeabi-v7a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=35 \
+            --dist-name=monapp_pub \
+            --debug
+          cp $(find . -name "*debug*.apk" | head -n 1) mon_budget_perso_pub_debug.apk
+        fi
+
+    ####################################
+    # VERIFY APK
+    ####################################
+    - name: Verify APK content
+      run: |
+        APK=$(find . -name "*.apk" | head -n 1)
+        echo "APK détecté : $APK"
+        if unzip -l "$APK" | grep -q "com/google/android/gms/ads"; then
+          echo "✔️ Google Ads OK"
+        else
+          echo "⚠️ Google Ads NON détecté"
+        fi
+
+    ####################################
+    # UPLOAD APK
+    ####################################
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: "*.apk"
 
     ####################################
     # VERIFY APK
