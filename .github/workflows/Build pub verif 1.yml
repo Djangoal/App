@@ -129,7 +129,47 @@ jobs:
         else
           echo "⚠️ Aucune recipe google_ads locale trouvée"
         fi
+        
     - name: Supprimer le faux module google_ads dans p4a
+      run: |
+        BAD=$(find venv/lib -type d -path "*/site-packages/pythonforandroid/recipes/google_ads")
+        if [ -n "$BAD" ]; then
+          echo "⚠️ Suppression du faux module interne : $BAD"
+          rm -rf "$BAD"
+        else
+          echo "✔️ Aucun faux module interne trouvé"
+        fi
+    ####################################
+    # BUILD APK
+    ####################################
+    - name: Build APK
+      run: |
+        source venv/bin/activate
+        cd "$GITHUB_WORKSPACE"
+        BUILD="${{ github.event.inputs.build_type }}"
+        echo "=== BUILD TYPE : $BUILD ==="
+
+        # SANS PUB DEBUG
+        if [ "$BUILD" = "sans_pub_debug" ]; then
+          ./venv/bin/p4a apk \
+            --private app \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon=logo.png \
+            --presplash=logo1.png \
+            --requirements=python3,kivy,android,pyjnius \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --orientation=portrait \
+            --arch=armeabi-v7a \
+            --sdk_dir=$SDK_DIR \
+            --ndk_dir=$ANDROID_NDK_HOME \
+            --android_api=35 \
+            --dist-name=monapp_debug \
+            --debug
+          cp $(find . -name "*debug*.apk" | head -n 1) mon_budget_perso_debug.apk
         fi
 
         # SANS PUB RELEASE
