@@ -84,8 +84,11 @@ jobs:
           --ndk-dir $ANDROID_NDK_HOME \
           --debug
 
-        cp $GITHUB_WORKSPACE/*.apk $GITHUB_WORKSPACE/
+        APK_PATH=$(find . -maxdepth 3 -type f -name "*debug*.apk" | head -n 1)
+        echo "APK généré : $APK_PATH"
 
+        cp "$APK_PATH" "$GITHUB_WORKSPACE/output.apk"
+        
     - name: Verify AdMob Integration
       run: |
         APK_FILE=$(find "$GITHUB_WORKSPACE" -type f -name "*.apk" | head -n 1)
