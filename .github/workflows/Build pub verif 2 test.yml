@@ -1,4 +1,4 @@
-name: Build pub verif 2 test
+name: Build pub verif 1
 
 on:
   workflow_dispatch:
@@ -36,7 +36,6 @@ jobs:
         python3 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip cython
-        # Installe la version develop compatible Google Ads et Python 3.12
         pip install --upgrade git+https://github.com/kivy/python-for-android.git@develop
 
     - name: Download Android SDK & NDK
@@ -50,8 +49,8 @@ jobs:
         yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses
         $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" \
-          "platforms;android-35" \
-          "build-tools;35.0.0" \
+          "platforms;android-33" \
+          "build-tools;33.0.2" \
           "ndk;25.2.9519653"
 
     - name: Cleanup previous builds
@@ -82,7 +81,6 @@ jobs:
           --arch=armeabi-v7a \
           --p4a-dir app/pythonforandroid \
           --local-recipes app/pythonforandroid/recipes \
-          --manifest app/AndroidManifest.xml \
           --sdk-dir $SDK_DIR \
           --ndk-dir $ANDROID_NDK_HOME \
           --debug \
