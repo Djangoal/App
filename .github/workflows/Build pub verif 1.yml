@@ -224,6 +224,15 @@ jobs:
         fi
 
     ####################################
+    # UPLOAD APK
+    ####################################
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: "*.apk"
+        
+    ####################################
     # VERIFY APK
     ####################################
     - name: Verify APK content
@@ -305,11 +314,4 @@ jobs:
 
         echo "Rapport généré : $REPORT"
 
-    ####################################
-    # UPLOAD APK
-    ####################################
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: mon-budget-${{ github.event.inputs.build_type }}
-        path: "*.apk"
+    
