@@ -79,12 +79,12 @@ jobs:
           --bootstrap=sdl2 \
           --requirements=python3,kivy,google_ads \
           --arch=armeabi-v7a \
-          --p4a-dir app/pythonforandroid \
+          --local-p4a app/pythonforandroid \
           --local-recipes app/pythonforandroid/recipes \
           --sdk-dir $SDK_DIR \
           --ndk-dir $ANDROID_NDK_HOME \
           --debug \
-          --output "$APK_FILE"
+          --package monapp_pub
 
         cp "$APK_FILE" $GITHUB_WORKSPACE/
 
