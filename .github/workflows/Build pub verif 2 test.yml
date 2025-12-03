@@ -1,4 +1,4 @@
-name: Build pub verif 1
+name: Build pub verif 2 test
 
 on:
   workflow_dispatch:
