@@ -210,6 +210,8 @@ jobs:
             --presplash=logo1.png \
             --requirements=python3,kivy,kivmob,android,pyjnius,googleads \
             --local-recipes=./app/pythonforandroid/recipes/googleads \
+            --p4a-dir ./app/pythonforandroid \
+            --manifest ./app/AndroidManifest.xml \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --permission ACCESS_WIFI_STATE \
