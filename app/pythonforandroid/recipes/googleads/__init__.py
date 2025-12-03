@@ -1,1 +1,1 @@
-__all__ = ['recipe']
+from .recipe import GoogleAdsRecipe
