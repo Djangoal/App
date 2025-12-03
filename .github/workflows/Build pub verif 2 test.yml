@@ -59,6 +59,13 @@ jobs:
         source venv/bin/activate
         ./venv/bin/p4a clean_builds || true
 
+    - name: Inject Google Ads recipe into python-for-android
+      run: |
+        RECIPE_DIR=$(find venv/lib -type d -path "*/site-packages/pythonforandroid/recipes" | head -n 1)
+        mkdir -p "$RECIPE_DIR/google_ads"
+        cp app/pythonforandroid/recipes/google_ads/recipe.py "$RECIPE_DIR/google_ads/recipe.py"
+        echo "📌 Recipe Google Ads copiée dans : $RECIPE_DIR/google_ads"
+    
     - name: Fix recipe directory name
       run: |
         if [ -d "app/python-for-android" ]; then
