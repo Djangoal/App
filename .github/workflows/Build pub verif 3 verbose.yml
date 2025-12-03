@@ -82,7 +82,7 @@ jobs:
           --ndk-dir $ANDROID_NDK_HOME \
           --debug \
           -v \
-          --manifest=app/AndroidManifest.xml
+          --extra-manifest=app/AndroidManifest.xml
 
     - name: Analyze APK during build
       run: |
