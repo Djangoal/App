@@ -79,7 +79,6 @@ jobs:
           --bootstrap=sdl2 \
           --requirements=python3,kivy,googleads \
           --arch=armeabi-v7a \
-          --recipes googleads \
           --local-recipes=./app/pythonforandroid/recipes/googleads \
           --sdk-dir $SDK_DIR \
           --ndk-dir $ANDROID_NDK_HOME \
