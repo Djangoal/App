@@ -1,7 +1,7 @@
-from pythonforandroid.recipe import JavaRecipe
+from pythonforandroid.recipe import GradleRecipe
 from pythonforandroid.logger import info
 
-class GoogleAdsRecipe(JavaRecipe):
+class GoogleAdsRecipe(GradleRecipe):
     name = "googleads"
     version = "22.6.0"
     url = None
@@ -13,13 +13,11 @@ class GoogleAdsRecipe(JavaRecipe):
         return env
 
     def gradle_dependencies(self):
-        # Ajout du SDK Google Mobile Ads
         return [
             "com.google.android.gms:play-services-ads:22.6.0"
         ]
 
     def get_android_permissions(self):
-        # Permissions nécessaires au chargement des annonces
         return [
             "android.permission.INTERNET",
             "android.permission.ACCESS_NETWORK_STATE"
@@ -31,8 +29,7 @@ class GoogleAdsRecipe(JavaRecipe):
 
     def build_arch(self, arch):
         info("GoogleAdsRecipe: build_arch()")
-        # Pas de compilation native, juste une dépendance Gradle
+        # Pas de compilation native
         pass
 
-# ⚠️ OBLIGATOIRE — p4a charge cette variable globale
 recipe = GoogleAdsRecipe()
