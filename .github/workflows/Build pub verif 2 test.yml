@@ -59,19 +59,12 @@ jobs:
         source venv/bin/activate
         ./venv/bin/p4a clean_builds || true
 
-    - name: Inject Google Ads recipe into python-for-android
+    - name: Inject Google Ads recipe
       run: |
         RECIPE_DIR=$(find venv/lib -type d -path "*/site-packages/pythonforandroid/recipes" | head -n 1)
-        mkdir -p "$RECIPE_DIR/google_ads"
-        cp app/pythonforandroid/recipes/google_ads/recipe.py "$RECIPE_DIR/google_ads/recipe.py"
-        echo "📌 Recipe Google Ads copiée dans : $RECIPE_DIR/google_ads"
-    
-    - name: Fix recipe directory name
-      run: |
-        if [ -d "app/python-for-android" ]; then
-          mv app/python-for-android app/pythonforandroid
-          echo "✅ Renamed python-for-android → pythonforandroid"
-        fi
+        mkdir -p "$RECIPE_DIR/googleads"
+        cp app/pythonforandroid/recipes/googleads/recipe.py "$RECIPE_DIR/googleads/recipe.py"
+        echo "📌 Recipe Google Ads copiée dans : $RECIPE_DIR/googleads"
 
     - name: Build APK with AdMob
       run: |
@@ -84,16 +77,14 @@ jobs:
           --name="MonBudget" \
           --version=1.0 \
           --bootstrap=sdl2 \
-          --requirements=python3,kivy,google_ads \
+          --requirements=python3,kivy,googleads \
           --arch=armeabi-v7a \
-          --local-p4a app/pythonforandroid \
           --local-recipes app/pythonforandroid/recipes \
           --sdk-dir $SDK_DIR \
           --ndk-dir $ANDROID_NDK_HOME \
-          --debug \
-          --package monapp_pub
+          --debug
 
-        cp "$APK_FILE" $GITHUB_WORKSPACE/
+        cp $GITHUB_WORKSPACE/*.apk $GITHUB_WORKSPACE/
 
     - name: Verify AdMob Integration
       run: |
