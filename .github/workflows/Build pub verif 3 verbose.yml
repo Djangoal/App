@@ -69,6 +69,10 @@ jobs:
     - name: Build APK with AdMob (verbose)
       run: |
         source venv/bin/activate
+
+        # Active le mode DEBUG de python-for-android
+        export P4A_LOG_LEVEL=DEBUG
+
         p4a apk \
           --private app \
           --package=org.monbudget.app \
@@ -80,10 +84,9 @@ jobs:
           --local-recipes=./app/pythonforandroid/recipes \
           --sdk-dir $SDK_DIR \
           --ndk-dir $ANDROID_NDK_HOME \
-          --debug \
-          -v \
-          --extra-manifest-xml=app/AndroidManifest.xml
-          
+          --extra-manifest-xml app/AndroidManifest.xml \
+          --debug
+      
     - name: Analyze APK during build
       run: |
         APK_FILE=$(find . -type f -name "*debug*.apk" | head -n 1)
