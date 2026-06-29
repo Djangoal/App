@@ -34,8 +34,8 @@ jobs:
       run: |
         python3 -m venv venv
         ./venv/bin/pip install --upgrade pip cython
-        ./venv/bin/pip install git+https://github.com/kivy/python-for-android.git
-
+        ./venv/bin/pip install "python-for-android==2024.01.21"
+        
     - name: Download Android SDK & NDK
       run: |
         mkdir -p $SDK_DIR
@@ -69,6 +69,8 @@ jobs:
 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           echo "=== Compilation RELEASE (sans pub) ==="
+          echo "=== Vérification du NDK ==="
+            find "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt" -maxdepth 3 -type d
           ./venv/bin/p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
