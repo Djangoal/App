@@ -66,9 +66,6 @@ jobs:
 
         echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
 
-        echo "=== Copie du manifest personnalisé ==="
-        mkdir -p ~/.local/share/python-for-android/templates/
-        cp app/templates/AndroidManifest.tmpl.xml ~/.local/share/python-for-android/templates/AndroidManifest.tmpl.xml
 
         if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
           echo "=== Compilation RELEASE (sans pub) ==="
