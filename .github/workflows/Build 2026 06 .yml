@@ -1,4 +1,4 @@
-name: Build APK Kivy stable
+name: Build 2026.06
 
 on:
   workflow_dispatch:
