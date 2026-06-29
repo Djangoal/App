@@ -1,4 +1,4 @@
-name: Build 2026.06
+name: Build APK Kivy stable
 
 on:
   workflow_dispatch:
@@ -76,46 +76,67 @@ jobs:
         ./venv/bin/p4a clean_builds || true
 
     - name: Build APK
+      shell: bash
       run: |
-        source venv/bin/activate
-        cd "$GITHUB_WORKSPACE"
+       set -e
 
-        # 🔥 FIX JNI / compilation Cython
-        export CFLAGS="-Wno-error=incompatible-function-pointer-types"
+       source venv/bin/activate
+       cd "$GITHUB_WORKSPACE"
 
-        echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
+       echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
 
-        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-          echo "=== RELEASE BUILD ==="
+       export CFLAGS="-Wno-error=incompatible-function-pointer-types"
 
-          ./venv/bin/p4a apk \
-            --private "$GITHUB_WORKSPACE/app" \
-            --package=org.example.monapp \
-            --name="Mon budget perso" \
-            --version=1.0 \
-            --bootstrap=sdl2 \
-            --icon=logo.png \
-            --presplash=app/logo1.png \
-            --requirements=python3,kivy \
-            --permission INTERNET \
-            --permission ACCESS_NETWORK_STATE \
-            --arch=arm64-v8a \
-            --sdk_dir=$SDK_DIR \
-            --ndk_dir=$ANDROID_NDK_HOME \
-            --android_api=35 \
-            --orientation=portrait \
-            --dist-name=monapp_release \
-            --release
+       if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
 
-        else
-          echo "=== DEBUG BUILD ==="
+       echo "=== RELEASE BUILD ==="
 
-          ./venv/bin/p4a apk \
-            --private "$GITHUB_WORKSPACE/app" \
-            --package=org.example.monapp \
-            --name="Mon budget perso" \
-            --version=1.0 \
-            --bootstrap=sdl2 \
-            --icon=logo.png \
-            --presplash=app/logo1.png \
-            --requirements=python3,k
+       ./venv/bin/p4a apk \
+        --private "$GITHUB_WORKSPACE/app" \
+        --package=org.example.monapp \
+        --name="Mon budget perso" \
+        --version=1.0 \
+        --bootstrap=sdl2 \
+        --icon=logo.png \
+        --presplash=app/logo1.png \
+        --requirements=python3,kivy \
+        --permission INTERNET \
+        --permission ACCESS_NETWORK_STATE \
+        --arch=arm64-v8a \
+        --sdk_dir="$SDK_DIR" \
+        --ndk_dir="$ANDROID_NDK_HOME" \
+        --android_api=35 \
+        --orientation=portrait \
+        --dist-name=monapp_release \
+        --release
+
+       else
+
+        echo "=== DEBUG BUILD ==="
+
+        ./venv/bin/p4a apk \
+        --private "$GITHUB_WORKSPACE/app" \
+        --package=org.example.monapp \
+        --name="Mon budget perso" \
+        --version=1.0 \
+        --bootstrap=sdl2 \
+        --icon=logo.png \
+        --presplash=app/logo1.png \
+        --requirements=python3,kivy \
+        --permission INTERNET \
+        --permission ACCESS_NETWORK_STATE \
+        --arch=arm64-v8a \
+        --sdk_dir="$SDK_DIR" \
+        --ndk_dir="$ANDROID_NDK_HOME" \
+        --android_api=35 \
+        --orientation=portrait \
+        --dist-name=monapp_debug \
+        --debug
+
+       fi
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: ./*.apk
