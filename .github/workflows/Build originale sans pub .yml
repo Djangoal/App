@@ -32,7 +32,10 @@ jobs:
 
     - name: Setup Python & python-for-android
       run: |
-        python3 -m venv venv
+        sudo apt-get update
+        sudo apt-get install -y python3.10 python3.10-venv python3-pip
+
+        python3.10 -m venv venv
         ./venv/bin/pip install --upgrade pip cython
         ./venv/bin/pip install "python-for-android==2024.01.21"
         
