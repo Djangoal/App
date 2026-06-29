@@ -24,7 +24,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # ✅ Python stable
+    # ✅ Python stable (OBLIGATOIRE pour Kivy)
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -39,19 +39,22 @@ jobs:
           libncurses-dev libtool libtool-bin \
           automake autoconf pkg-config m4
 
-    # ✅ Python env + FIX pyjnius
-    - name: Setup venv + dependencies
+    # ✅ ENV PYTHON (VERSION STABLE RÉELLE)
+    - name: Setup venv + python-for-android
       run: |
         python -m venv venv
         ./venv/bin/pip install --upgrade pip setuptools wheel cython
 
-        # 🔥 FIX IMPORTANT (pyjnius + p4a compatible)
-        ./venv/bin/pip install "python-for-android==2024.01.19"
-        ./venv/bin/pip install "pyjnius>=1.6.1"
+        # 🔥 VERSION STABLE RÉELLE (PAS 2024 BUGGY)
+        ./venv/bin/pip install "python-for-android==2023.9.16"
+
+        # 🔥 FIX JNI (évite erreur long + compilation cassée)
+        ./venv/bin/pip install "pyjnius==1.6.1"
 
     - name: Download Android SDK & NDK
       run: |
         mkdir -p $SDK_DIR
+
         curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
         unzip -q cmdline-tools.zip -d $SDK_DIR
 
@@ -67,7 +70,7 @@ jobs:
           "build-tools;35.0.0" \
           "ndk;25.2.9519653"
 
-    - name: Cleanup builds
+    - name: Clean builds
       run: |
         rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
@@ -77,7 +80,7 @@ jobs:
         source venv/bin/activate
         cd "$GITHUB_WORKSPACE"
 
-        # 🔥 évite crash compilation JNI
+        # 🔥 FIX JNI / compilation Cython
         export CFLAGS="-Wno-error=incompatible-function-pointer-types"
 
         echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
@@ -115,20 +118,4 @@ jobs:
             --bootstrap=sdl2 \
             --icon=logo.png \
             --presplash=app/logo1.png \
-            --requirements=python3,kivy \
-            --permission INTERNET \
-            --permission ACCESS_NETWORK_STATE \
-            --arch=arm64-v8a \
-            --sdk_dir=$SDK_DIR \
-            --ndk_dir=$ANDROID_NDK_HOME \
-            --android_api=35 \
-            --orientation=portrait \
-            --dist-name=monapp_debug \
-            --debug
-        fi
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: mon-budget-${{ github.event.inputs.build_type }}
-        path: ./*.apk
+            --requirements=python3,k
