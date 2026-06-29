@@ -24,7 +24,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # ✅ Python propre (IMPORTANT)
+    # ✅ Python stable
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -39,13 +39,15 @@ jobs:
           libncurses-dev libtool libtool-bin \
           automake autoconf pkg-config m4
 
-    - name: Setup venv + python-for-android
+    # ✅ Python env + FIX pyjnius
+    - name: Setup venv + dependencies
       run: |
         python -m venv venv
         ./venv/bin/pip install --upgrade pip setuptools wheel cython
 
-        # ✅ version stable (évite libthorvg + jnius bugs)
-        ./venv/bin/pip install "python-for-android==2024.01.21"
+        # 🔥 FIX IMPORTANT (pyjnius + p4a compatible)
+        ./venv/bin/pip install "python-for-android==2024.01.19"
+        ./venv/bin/pip install "pyjnius>=1.6.1"
 
     - name: Download Android SDK & NDK
       run: |
@@ -65,7 +67,7 @@ jobs:
           "build-tools;35.0.0" \
           "ndk;25.2.9519653"
 
-    - name: Cleanup previous builds
+    - name: Cleanup builds
       run: |
         rm -rf .buildozer dist build bin
         ./venv/bin/p4a clean_builds || true
@@ -74,6 +76,9 @@ jobs:
       run: |
         source venv/bin/activate
         cd "$GITHUB_WORKSPACE"
+
+        # 🔥 évite crash compilation JNI
+        export CFLAGS="-Wno-error=incompatible-function-pointer-types"
 
         echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
 
