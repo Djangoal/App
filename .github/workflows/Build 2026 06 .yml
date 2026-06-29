@@ -83,15 +83,23 @@ jobs:
        source venv/bin/activate
        cd "$GITHUB_WORKSPACE"
 
-       echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
+       export ANDROID_SDK_ROOT=$SDK_DIR
+       export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
+       export PATH=$SDK_DIR/cmdline-tools/latest/bin:$PATH
+       export PATH=$SDK_DIR/platform-tools:$PATH
+
+       export CC=clang
+       export CXX=clang++
 
        export CFLAGS="-Wno-error=incompatible-function-pointer-types"
+
+       echo "=== Build type: ${{ github.event.inputs.build_type }} ==="
 
        if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
 
        echo "=== RELEASE BUILD ==="
 
-       ./venv/bin/p4a apk \
+        ./venv/bin/p4a apk \
         --private "$GITHUB_WORKSPACE/app" \
         --package=org.example.monapp \
         --name="Mon budget perso" \
