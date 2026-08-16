@@ -298,7 +298,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon="$GITHUB_WORKSPACE/logo.png" \
             --presplash="$GITHUB_WORKSPACE/logo1.png" \
-            --requirements=python3,kivy \
+            --requirements=python3==3.11.13,hostpython3==3.11.13,kivy \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --orientation=portrait \
@@ -308,7 +308,6 @@ jobs:
             --android_api=35 \
             --dist-name=monapp_debug \
             --debug
-
         elif [ "$BUILD" = "release" ]; then
 
           echo "========================================"
@@ -323,7 +322,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon="$GITHUB_WORKSPACE/logo.png" \
             --presplash="$GITHUB_WORKSPACE/logo1.png" \
-            --requirements=python3,kivy \
+            --requirements=python3==3.11.13,hostpython3==3.11.13,kivy \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --orientation=portrait \
