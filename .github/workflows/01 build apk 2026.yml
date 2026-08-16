@@ -26,13 +26,13 @@ jobs:
     # CHECKOUT
     # ============================================================
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     # ============================================================
     # PYTHON 3.11
     # ============================================================
     - name: Setup Python 3.11
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: "3.11"
 
@@ -40,7 +40,7 @@ jobs:
     # JAVA 17
     # ============================================================
     - name: Setup Java 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: temurin
         java-version: "17"
@@ -79,17 +79,12 @@ jobs:
 
         echo "JAVA_HOME=$JAVA_HOME"
 
-        echo "========================================"
-        echo "JAVAC"
-        echo "========================================"
-
         javac -version
 
     # ============================================================
     # PYTHON-FOR-ANDROID
-    # VERSION FIXEE
     # ============================================================
-    - name: Setup virtualenv and python-for-android
+    - name: Setup python-for-android
       run: |
         python -m venv venv
 
@@ -97,17 +92,9 @@ jobs:
 
         python -m pip install --upgrade pip setuptools wheel
 
-        echo "========================================"
-        echo "INSTALL CYTHON"
-        echo "========================================"
-
         pip install "Cython==0.29.36"
 
-        echo "========================================"
-        echo "INSTALL PYTHON-FOR-ANDROID"
-        echo "========================================"
-
-        pip install "python-for-android==2024.1.21"
+        pip install "python-for-android==2023.9.16"
 
         echo "========================================"
         echo "VERSIONS"
@@ -154,7 +141,7 @@ jobs:
           --licenses || true
 
         echo "========================================"
-        echo "INSTALLATION ANDROID"
+        echo "INSTALLATION SDK / NDK"
         echo "========================================"
 
         sdkmanager \
@@ -177,15 +164,17 @@ jobs:
         echo "$SDK_DIR/platform-tools" >> "$GITHUB_PATH"
 
         echo "========================================"
-        echo "ANDROID SDK"
+        echo "SDK"
         echo "$SDK_DIR"
         echo "========================================"
 
-        echo "ANDROID_NDK_HOME"
+        echo "========================================"
+        echo "NDK"
         echo "$ANDROID_NDK_HOME"
+        echo "========================================"
 
     # ============================================================
-    # NETTOYAGE
+    # NETTOYAGE COMPLET
     # ============================================================
     - name: Clean previous builds
       run: |
@@ -193,6 +182,8 @@ jobs:
         rm -rf build
         rm -rf dist
         rm -rf bin
+
+        rm -rf ~/.local/share/python-for-android
 
         source venv/bin/activate
 
@@ -218,7 +209,7 @@ jobs:
         cython --version
 
         echo "========================================"
-        echo "PYTHON-FOR-ANDROID"
+        echo "P4A"
         echo "========================================"
 
         p4a --version
@@ -230,24 +221,12 @@ jobs:
         java -version
 
         echo "========================================"
-        echo "ANDROID SDK"
+        echo "NDK LLVM"
         echo "========================================"
 
-        ls "$SDK_DIR"
+        test -d "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
 
-        echo "========================================"
-        echo "ANDROID NDK"
-        echo "========================================"
-
-        ls "$ANDROID_NDK_HOME"
-
-        echo "========================================"
-        echo "LLVM"
-        echo "========================================"
-
-        ls \
-          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin" \
-          | head
+        echo "LLVM OK"
 
     # ============================================================
     # BUILD APK
@@ -259,7 +238,7 @@ jobs:
         BUILD="${{ github.event.inputs.build_type }}"
 
         echo "========================================"
-        echo "TYPE DE BUILD : $BUILD"
+        echo "BUILD TYPE : $BUILD"
         echo "========================================"
 
         if [ "$BUILD" = "debug" ]; then
@@ -276,7 +255,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon="$GITHUB_WORKSPACE/logo.png" \
             --presplash="$GITHUB_WORKSPACE/logo1.png" \
-            --requirements=python3,kivy,android,pyjnius \
+            --requirements=python3,kivy \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --orientation=portrait \
@@ -301,7 +280,7 @@ jobs:
             --bootstrap=sdl2 \
             --icon="$GITHUB_WORKSPACE/logo.png" \
             --presplash="$GITHUB_WORKSPACE/logo1.png" \
-            --requirements=python3,kivy,android,pyjnius \
+            --requirements=python3,kivy \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --orientation=portrait \
@@ -314,7 +293,7 @@ jobs:
 
         else
 
-          echo "❌ Type de build inconnu : $BUILD"
+          echo "❌ Type de build inconnu"
           exit 1
 
         fi
@@ -350,7 +329,7 @@ jobs:
         ls -lh "$APK"
 
     # ============================================================
-    # RENOMMAGE APK
+    # RENOMMAGE
     # ============================================================
     - name: Rename APK
       run: |
@@ -359,17 +338,11 @@ jobs:
         BUILD="${{ github.event.inputs.build_type }}"
 
         if [ "$BUILD" = "debug" ]; then
-
           cp "$APK" mon_budget_perso_debug.apk
-
           echo "✅ APK DEBUG créé"
-
         else
-
           cp "$APK" mon_budget_perso_release.apk
-
           echo "✅ APK RELEASE créé"
-
         fi
 
         echo "========================================"
@@ -379,7 +352,7 @@ jobs:
         ls -lh *.apk
 
     # ============================================================
-    # UPLOAD APK
+    # UPLOAD
     # ============================================================
     - name: Upload APK
       uses: actions/upload-artifact@v4
