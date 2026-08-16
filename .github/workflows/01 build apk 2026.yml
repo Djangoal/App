@@ -19,6 +19,7 @@ jobs:
     env:
       SDK_DIR: ${{ github.workspace }}/android-sdk
       ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
+      ANDROID_API: "35"
 
     steps:
 
@@ -64,24 +65,11 @@ jobs:
           autoconf \
           pkg-config \
           m4 \
-          curl
+          curl \
+          git
 
     # ============================================================
-    # VERIFICATION JAVA
-    # ============================================================
-    - name: Verify Java
-      run: |
-        echo "========================================"
-        echo "JAVA"
-        echo "========================================"
-
-        java -version
-        javac -version
-
-        echo "JAVA_HOME=$JAVA_HOME"
-
-    # ============================================================
-    # PYTHON-FOR-ANDROID
+    # PYTHON VENV + P4A
     # ============================================================
     - name: Setup python-for-android
       run: |
@@ -89,30 +77,16 @@ jobs:
 
         source venv/bin/activate
 
-        echo "========================================"
-        echo "MISE A JOUR PIP"
-        echo "========================================"
+        python -m pip install --upgrade pip setuptools wheel
 
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools wheel
+        # Version de Cython compatible avec p4a 2024
+        pip install "Cython==0.29.36"
 
-        echo "========================================"
-        echo "INSTALL CYTHON"
-        echo "========================================"
+        # Outils de build
+        pip install "build<1.3" "virtualenv<21"
 
-        pip install "Cython>=3.0,<3.1"
-
-        echo "========================================"
-        echo "INSTALL BUILD / VIRTUALENV"
-        echo "========================================"
-
-        pip install build virtualenv
-
-        echo "========================================"
-        echo "INSTALL PYTHON-FOR-ANDROID"
-        echo "========================================"
-
-        pip install "python-for-android==2026.05.09"
+        # Python-for-Android
+        pip install "python-for-android==2024.01.21"
 
         echo "========================================"
         echo "VERSIONS"
@@ -121,7 +95,6 @@ jobs:
         python --version
         pip --version
         cython --version
-        python -m build --version
         p4a --version
 
     # ============================================================
@@ -153,7 +126,7 @@ jobs:
         sdkmanager --version
 
         echo "========================================"
-        echo "ANDROID LICENSES"
+        echo "LICENSES"
         echo "========================================"
 
         yes | sdkmanager \
@@ -161,7 +134,7 @@ jobs:
           --licenses || true
 
         echo "========================================"
-        echo "INSTALLATION SDK / NDK"
+        echo "INSTALL SDK / NDK"
         echo "========================================"
 
         sdkmanager \
@@ -183,41 +156,31 @@ jobs:
         echo "$SDK_DIR/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
         echo "$SDK_DIR/platform-tools" >> "$GITHUB_PATH"
 
-        echo "========================================"
-        echo "SDK"
-        echo "$SDK_DIR"
-        echo "========================================"
-
-        echo "========================================"
-        echo "NDK"
-        echo "$ANDROID_NDK_HOME"
-        echo "========================================"
+        echo "SDK  = $SDK_DIR"
+        echo "NDK  = $ANDROID_NDK_HOME"
+        echo "JAVA = $JAVA_HOME"
 
     # ============================================================
     # NETTOYAGE COMPLET
     # ============================================================
     - name: Clean previous builds
       run: |
-        echo "========================================"
-        echo "NETTOYAGE"
-        echo "========================================"
+        rm -rf ~/.local/share/python-for-android
+        rm -rf ~/.cache/pip
 
         rm -rf .buildozer
         rm -rf build
         rm -rf dist
         rm -rf bin
 
-        rm -rf ~/.local/share/python-for-android
-        rm -rf ~/.cache/pip
-
         source venv/bin/activate
 
         p4a clean_builds || true
 
     # ============================================================
-    # VERIFICATION ENVIRONNEMENT
+    # VERIFICATION
     # ============================================================
-    - name: Verify build environment
+    - name: Verify environment
       run: |
         source venv/bin/activate
 
@@ -229,18 +192,18 @@ jobs:
         which python
 
         echo "========================================"
-        echo "CYTHON"
-        echo "========================================"
-
-        cython --version
-        which cython
-
-        echo "========================================"
         echo "P4A"
         echo "========================================"
 
         p4a --version
         which p4a
+
+        echo "========================================"
+        echo "CYTHON"
+        echo "========================================"
+
+        cython --version
+        which cython
 
         echo "========================================"
         echo "JAVA"
@@ -249,22 +212,11 @@ jobs:
         java -version
 
         echo "========================================"
-        echo "ANDROID SDK"
-        echo "========================================"
-
-        test -d "$ANDROID_SDK_ROOT"
-        echo "SDK OK"
-
-        echo "========================================"
-        echo "ANDROID NDK"
+        echo "NDK"
         echo "========================================"
 
         test -d "$ANDROID_NDK_HOME"
         echo "NDK OK"
-
-        echo "========================================"
-        echo "LLVM"
-        echo "========================================"
 
         test -d \
           "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
@@ -281,14 +233,12 @@ jobs:
         BUILD="${{ github.event.inputs.build_type }}"
 
         echo "========================================"
-        echo "BUILD TYPE : $BUILD"
+        echo "BUILD : $BUILD"
         echo "========================================"
 
         if [ "$BUILD" = "debug" ]; then
 
-          echo "========================================"
-          echo "BUILD DEBUG"
-          echo "========================================"
+          echo "===== DEBUG ====="
 
           p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
@@ -298,21 +248,20 @@ jobs:
             --bootstrap=sdl2 \
             --icon="$GITHUB_WORKSPACE/logo.png" \
             --presplash="$GITHUB_WORKSPACE/logo1.png" \
-            --requirements=python3==3.11.13,hostpython3==3.11.13,kivy \
+            --requirements=python3,kivy \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --orientation=portrait \
             --arch=arm64-v8a \
             --sdk_dir="$SDK_DIR" \
             --ndk_dir="$ANDROID_NDK_HOME" \
-            --android_api=35 \
+            --android_api="$ANDROID_API" \
             --dist-name=monapp_debug \
             --debug
+
         elif [ "$BUILD" = "release" ]; then
 
-          echo "========================================"
-          echo "BUILD RELEASE"
-          echo "========================================"
+          echo "===== RELEASE ====="
 
           p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
@@ -322,20 +271,20 @@ jobs:
             --bootstrap=sdl2 \
             --icon="$GITHUB_WORKSPACE/logo.png" \
             --presplash="$GITHUB_WORKSPACE/logo1.png" \
-            --requirements=python3==3.11.13,hostpython3==3.11.13,kivy \
+            --requirements=python3,kivy \
             --permission INTERNET \
             --permission ACCESS_NETWORK_STATE \
             --orientation=portrait \
             --arch=arm64-v8a \
             --sdk_dir="$SDK_DIR" \
             --ndk_dir="$ANDROID_NDK_HOME" \
-            --android_api=35 \
+            --android_api="$ANDROID_API" \
             --dist-name=monapp_release \
             --release
 
         else
 
-          echo "❌ Type de build inconnu : $BUILD"
+          echo "❌ Type de build invalide"
           exit 1
 
         fi
@@ -354,7 +303,7 @@ jobs:
     # ============================================================
     # VERIFICATION APK
     # ============================================================
-    - name: Verify APK exists
+    - name: Verify APK
       run: |
         APK=$(find . -type f -name "*.apk" | head -n 1)
 
@@ -363,49 +312,37 @@ jobs:
           exit 1
         fi
 
-        echo "========================================"
-        echo "APK TROUVE"
-        echo "========================================"
-
-        echo "$APK"
+        echo "APK trouvé : $APK"
         ls -lh "$APK"
 
     # ============================================================
-    # RENOMMAGE APK
+    # RENOMMAGE
     # ============================================================
     - name: Rename APK
       run: |
         APK=$(find . -type f -name "*.apk" | head -n 1)
 
         if [ -z "$APK" ]; then
-          echo "❌ Aucun APK à renommer"
+          echo "❌ Aucun APK"
           exit 1
         fi
 
         BUILD="${{ github.event.inputs.build_type }}"
 
         if [ "$BUILD" = "debug" ]; then
-
           cp "$APK" mon_budget_perso_debug.apk
-
-          echo "========================================"
-          echo "APK DEBUG"
-          echo "========================================"
-
         else
-
           cp "$APK" mon_budget_perso_release.apk
-
-          echo "========================================"
-          echo "APK RELEASE"
-          echo "========================================"
-
         fi
+
+        echo "========================================"
+        echo "APK FINAL"
+        echo "========================================"
 
         ls -lh *.apk
 
     # ============================================================
-    # UPLOAD APK
+    # UPLOAD
     # ============================================================
     - name: Upload APK
       uses: actions/upload-artifact@v4
