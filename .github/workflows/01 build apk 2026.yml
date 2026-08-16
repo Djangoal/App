@@ -86,7 +86,8 @@ jobs:
         javac -version
 
     # ============================================================
-    # INSTALLATION PYTHON-FOR-ANDROID
+    # PYTHON-FOR-ANDROID
+    # VERSION FIXEE
     # ============================================================
     - name: Setup virtualenv and python-for-android
       run: |
@@ -96,20 +97,24 @@ jobs:
 
         python -m pip install --upgrade pip setuptools wheel
 
-        pip install "cython<3"
+        echo "========================================"
+        echo "INSTALL CYTHON"
+        echo "========================================"
 
-        pip install python-for-android
+        pip install "Cython==0.29.36"
 
         echo "========================================"
-        echo "PYTHON"
+        echo "INSTALL PYTHON-FOR-ANDROID"
+        echo "========================================"
+
+        pip install "python-for-android==2024.1.21"
+
+        echo "========================================"
+        echo "VERSIONS"
         echo "========================================"
 
         python --version
-
-        echo "========================================"
-        echo "P4A"
-        echo "========================================"
-
+        cython --version
         p4a --version
 
     # ============================================================
@@ -160,7 +165,7 @@ jobs:
           "ndk;25.2.9519653"
 
     # ============================================================
-    # VARIABLES ANDROID
+    # CONFIGURATION ANDROID
     # ============================================================
     - name: Configure Android environment
       run: |
@@ -173,14 +178,10 @@ jobs:
 
         echo "========================================"
         echo "ANDROID SDK"
-        echo "========================================"
-
         echo "$SDK_DIR"
-
-        echo "========================================"
-        echo "ANDROID NDK"
         echo "========================================"
 
+        echo "ANDROID_NDK_HOME"
         echo "$ANDROID_NDK_HOME"
 
     # ============================================================
@@ -211,16 +212,22 @@ jobs:
         python --version
 
         echo "========================================"
+        echo "CYTHON"
+        echo "========================================"
+
+        cython --version
+
+        echo "========================================"
+        echo "PYTHON-FOR-ANDROID"
+        echo "========================================"
+
+        p4a --version
+
+        echo "========================================"
         echo "JAVA"
         echo "========================================"
 
         java -version
-
-        echo "========================================"
-        echo "P4A"
-        echo "========================================"
-
-        p4a --version
 
         echo "========================================"
         echo "ANDROID SDK"
@@ -238,7 +245,9 @@ jobs:
         echo "LLVM"
         echo "========================================"
 
-        ls "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin" | head
+        ls \
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin" \
+          | head
 
     # ============================================================
     # BUILD APK
@@ -322,9 +331,9 @@ jobs:
         find . -type f -name "*.apk" -print
 
     # ============================================================
-    # RENOMMAGE APK
+    # VERIFICATION APK
     # ============================================================
-    - name: Rename APK
+    - name: Verify APK exists
       run: |
         APK=$(find . -type f -name "*.apk" | head -n 1)
 
@@ -332,6 +341,20 @@ jobs:
           echo "❌ Aucun APK trouvé"
           exit 1
         fi
+
+        echo "========================================"
+        echo "APK TROUVE"
+        echo "========================================"
+
+        echo "$APK"
+        ls -lh "$APK"
+
+    # ============================================================
+    # RENOMMAGE APK
+    # ============================================================
+    - name: Rename APK
+      run: |
+        APK=$(find . -type f -name "*.apk" | head -n 1)
 
         BUILD="${{ github.event.inputs.build_type }}"
 
