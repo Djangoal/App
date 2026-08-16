@@ -69,9 +69,9 @@ jobs:
           git
 
     # ============================================================
-    # PYTHON VENV + P4A
+    # ENVIRONNEMENT PYTHON
     # ============================================================
-    - name: Setup python-for-android
+    - name: Setup Python virtual environment
       run: |
         python -m venv venv
 
@@ -79,22 +79,52 @@ jobs:
 
         python -m pip install --upgrade pip setuptools wheel
 
-        # Version de Cython compatible avec p4a 2024
+        # ========================================================
+        # IMPORTANT :
+        # p4a 2024.01.21 nécessite sh < 2
+        # ========================================================
+        pip install "sh>=1.10,<2.0"
+
+        # Cython compatible avec p4a 2024
         pip install "Cython==0.29.36"
 
-        # Outils de build
-        pip install "build<1.3" "virtualenv<21"
+        # Outils nécessaires à p4a
+        pip install \
+          appdirs \
+          colorama \
+          jinja2 \
+          build \
+          toml \
+          packaging
 
-        # Python-for-Android
-        pip install "python-for-android==2024.01.21"
+        # ========================================================
+        # PYTHON-FOR-ANDROID
+        # ========================================================
+        pip install --no-cache-dir \
+          "python-for-android==2024.01.21"
 
         echo "========================================"
-        echo "VERSIONS"
+        echo "PYTHON"
         echo "========================================"
 
         python --version
-        pip --version
+
+        echo "========================================"
+        echo "CYTHON"
+        echo "========================================"
+
         cython --version
+
+        echo "========================================"
+        echo "SH"
+        echo "========================================"
+
+        python -c "import sh; print(sh.__version__)"
+
+        echo "========================================"
+        echo "P4A"
+        echo "========================================"
+
         p4a --version
 
     # ============================================================
@@ -110,12 +140,13 @@ jobs:
 
         unzip -q cmdline-tools.zip -d "$SDK_DIR"
 
-        mv "$SDK_DIR/cmdline-tools" "$SDK_DIR/cmdline-tools-temp"
+        mv "$SDK_DIR/cmdline-tools" \
+           "$SDK_DIR/cmdline-tools-temp"
 
         mkdir -p "$SDK_DIR/cmdline-tools/latest"
 
         mv "$SDK_DIR/cmdline-tools-temp"/* \
-          "$SDK_DIR/cmdline-tools/latest/"
+           "$SDK_DIR/cmdline-tools/latest/"
 
         export PATH="$SDK_DIR/cmdline-tools/latest/bin:$PATH"
 
@@ -134,7 +165,7 @@ jobs:
           --licenses || true
 
         echo "========================================"
-        echo "INSTALL SDK / NDK"
+        echo "INSTALLATION SDK"
         echo "========================================"
 
         sdkmanager \
@@ -145,7 +176,7 @@ jobs:
           "ndk;25.2.9519653"
 
     # ============================================================
-    # CONFIGURATION ANDROID
+    # VARIABLES ANDROID
     # ============================================================
     - name: Configure Android environment
       run: |
@@ -156,29 +187,39 @@ jobs:
         echo "$SDK_DIR/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
         echo "$SDK_DIR/platform-tools" >> "$GITHUB_PATH"
 
-        echo "SDK  = $SDK_DIR"
-        echo "NDK  = $ANDROID_NDK_HOME"
-        echo "JAVA = $JAVA_HOME"
+        echo "========================================"
+        echo "ANDROID CONFIGURATION"
+        echo "========================================"
+
+        echo "SDK : $SDK_DIR"
+        echo "NDK : $ANDROID_NDK_HOME"
+        echo "API : $ANDROID_API"
+        echo "JAVA: $JAVA_HOME"
 
     # ============================================================
     # NETTOYAGE COMPLET
     # ============================================================
-    - name: Clean previous builds
+    - name: Clean previous p4a builds
       run: |
-        rm -rf ~/.local/share/python-for-android
-        rm -rf ~/.cache/pip
+        echo "========================================"
+        echo "NETTOYAGE"
+        echo "========================================"
 
-        rm -rf .buildozer
-        rm -rf build
-        rm -rf dist
-        rm -rf bin
+        rm -rf "$HOME/.local/share/python-for-android"
+        rm -rf "$HOME/.cache/python-for-android"
+        rm -rf "$HOME/.cache/pip"
+
+        rm -rf "$GITHUB_WORKSPACE/.buildozer"
+        rm -rf "$GITHUB_WORKSPACE/build"
+        rm -rf "$GITHUB_WORKSPACE/dist"
+        rm -rf "$GITHUB_WORKSPACE/bin"
 
         source venv/bin/activate
 
         p4a clean_builds || true
 
     # ============================================================
-    # VERIFICATION
+    # VERIFICATION ENVIRONNEMENT
     # ============================================================
     - name: Verify environment
       run: |
@@ -203,7 +244,12 @@ jobs:
         echo "========================================"
 
         cython --version
-        which cython
+
+        echo "========================================"
+        echo "SH"
+        echo "========================================"
+
+        python -c "import sh; print('sh =', sh.__version__)"
 
         echo "========================================"
         echo "JAVA"
@@ -212,16 +258,45 @@ jobs:
         java -version
 
         echo "========================================"
+        echo "SDK"
+        echo "========================================"
+
+        test -d "$SDK_DIR"
+        echo "SDK OK"
+
+        test -d "$SDK_DIR/platforms/android-35"
+        echo "Android API 35 OK"
+
+        echo "========================================"
         echo "NDK"
         echo "========================================"
 
         test -d "$ANDROID_NDK_HOME"
         echo "NDK OK"
 
+        echo "========================================"
+        echo "LLVM"
+        echo "========================================"
+
         test -d \
           "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
 
         echo "LLVM OK"
+
+    # ============================================================
+    # VERIFICATION ARCHITECTURE
+    # ============================================================
+    - name: Verify p4a architecture configuration
+      run: |
+        source venv/bin/activate
+
+        echo "========================================"
+        echo "ARCHITECTURES P4A"
+        echo "========================================"
+
+        p4a apk --help | grep -A2 -B2 -- "--arch" || true
+
+        echo "Architecture utilisée : arm64-v8a"
 
     # ============================================================
     # BUILD APK
@@ -233,15 +308,17 @@ jobs:
         BUILD="${{ github.event.inputs.build_type }}"
 
         echo "========================================"
-        echo "BUILD : $BUILD"
+        echo "BUILD TYPE : $BUILD"
         echo "========================================"
 
         if [ "$BUILD" = "debug" ]; then
 
-          echo "===== DEBUG ====="
+          echo "========================================"
+          echo "BUILD DEBUG"
+          echo "========================================"
 
           p4a apk \
-            --private "$GITHUB_WORKSPACE/app" \
+            --private="$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
             --name="Mon budget perso" \
             --version=1.0 \
@@ -249,8 +326,8 @@ jobs:
             --icon="$GITHUB_WORKSPACE/logo.png" \
             --presplash="$GITHUB_WORKSPACE/logo1.png" \
             --requirements=python3,kivy \
-            --permission INTERNET \
-            --permission ACCESS_NETWORK_STATE \
+            --permission=INTERNET \
+            --permission=ACCESS_NETWORK_STATE \
             --orientation=portrait \
             --arch=arm64-v8a \
             --sdk_dir="$SDK_DIR" \
@@ -261,10 +338,12 @@ jobs:
 
         elif [ "$BUILD" = "release" ]; then
 
-          echo "===== RELEASE ====="
+          echo "========================================"
+          echo "BUILD RELEASE"
+          echo "========================================"
 
           p4a apk \
-            --private "$GITHUB_WORKSPACE/app" \
+            --private="$GITHUB_WORKSPACE/app" \
             --package=org.example.monapp \
             --name="Mon budget perso" \
             --version=1.0 \
@@ -272,8 +351,8 @@ jobs:
             --icon="$GITHUB_WORKSPACE/logo.png" \
             --presplash="$GITHUB_WORKSPACE/logo1.png" \
             --requirements=python3,kivy \
-            --permission INTERNET \
-            --permission ACCESS_NETWORK_STATE \
+            --permission=INTERNET \
+            --permission=ACCESS_NETWORK_STATE \
             --orientation=portrait \
             --arch=arm64-v8a \
             --sdk_dir="$SDK_DIR" \
@@ -284,7 +363,7 @@ jobs:
 
         else
 
-          echo "❌ Type de build invalide"
+          echo "❌ Type de build inconnu : $BUILD"
           exit 1
 
         fi
@@ -298,21 +377,30 @@ jobs:
         echo "APK GENERES"
         echo "========================================"
 
-        find . -type f -name "*.apk" -print
+        find "$GITHUB_WORKSPACE" \
+          -type f \
+          -name "*.apk" \
+          -print
 
     # ============================================================
     # VERIFICATION APK
     # ============================================================
-    - name: Verify APK
+    - name: Verify APK exists
       run: |
-        APK=$(find . -type f -name "*.apk" | head -n 1)
+        APK=$(find "$GITHUB_WORKSPACE" \
+          -type f \
+          -name "*.apk" | head -n 1)
 
         if [ -z "$APK" ]; then
           echo "❌ Aucun APK trouvé"
           exit 1
         fi
 
-        echo "APK trouvé : $APK"
+        echo "========================================"
+        echo "APK TROUVE"
+        echo "========================================"
+
+        echo "$APK"
         ls -lh "$APK"
 
     # ============================================================
@@ -320,26 +408,33 @@ jobs:
     # ============================================================
     - name: Rename APK
       run: |
-        APK=$(find . -type f -name "*.apk" | head -n 1)
-
-        if [ -z "$APK" ]; then
-          echo "❌ Aucun APK"
-          exit 1
-        fi
+        APK=$(find "$GITHUB_WORKSPACE" \
+          -type f \
+          -name "*.apk" | head -n 1)
 
         BUILD="${{ github.event.inputs.build_type }}"
 
         if [ "$BUILD" = "debug" ]; then
-          cp "$APK" mon_budget_perso_debug.apk
+
+          cp "$APK" \
+            "$GITHUB_WORKSPACE/mon_budget_perso_debug.apk"
+
+          echo "✅ APK DEBUG créé"
+
         else
-          cp "$APK" mon_budget_perso_release.apk
+
+          cp "$APK" \
+            "$GITHUB_WORKSPACE/mon_budget_perso_release.apk"
+
+          echo "✅ APK RELEASE créé"
+
         fi
 
         echo "========================================"
         echo "APK FINAL"
         echo "========================================"
 
-        ls -lh *.apk
+        ls -lh "$GITHUB_WORKSPACE"/*.apk
 
     # ============================================================
     # UPLOAD
