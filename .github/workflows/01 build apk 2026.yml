@@ -37,6 +37,15 @@ jobs:
         python-version: "3.11"
 
     # ============================================================
+    # JAVA 17
+    # ============================================================
+    - name: Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "17"
+
+    # ============================================================
     # DEPENDANCES SYSTEME
     # ============================================================
     - name: Install system dependencies
@@ -48,7 +57,6 @@ jobs:
           libltdl-dev \
           zip \
           unzip \
-          openjdk-17-jdk \
           libncurses-dev \
           libtool \
           libtool-bin \
@@ -57,6 +65,25 @@ jobs:
           pkg-config \
           m4 \
           curl
+
+    # ============================================================
+    # VERIFICATION JAVA
+    # ============================================================
+    - name: Verify Java
+      run: |
+        echo "========================================"
+        echo "JAVA"
+        echo "========================================"
+
+        java -version
+
+        echo "JAVA_HOME=$JAVA_HOME"
+
+        echo "========================================"
+        echo "JAVAC"
+        echo "========================================"
+
+        javac -version
 
     # ============================================================
     # INSTALLATION PYTHON-FOR-ANDROID
@@ -72,6 +99,16 @@ jobs:
         pip install "cython<3"
 
         pip install python-for-android
+
+        echo "========================================"
+        echo "PYTHON"
+        echo "========================================"
+
+        python --version
+
+        echo "========================================"
+        echo "P4A"
+        echo "========================================"
 
         p4a --version
 
@@ -97,9 +134,26 @@ jobs:
 
         export PATH="$SDK_DIR/cmdline-tools/latest/bin:$PATH"
 
-        yes | sdkmanager --sdk_root="$SDK_DIR" --licenses || true
+        echo "========================================"
+        echo "SDKMANAGER"
+        echo "========================================"
 
-        sdkmanager --sdk_root="$SDK_DIR" \
+        sdkmanager --version
+
+        echo "========================================"
+        echo "ANDROID LICENSES"
+        echo "========================================"
+
+        yes | sdkmanager \
+          --sdk_root="$SDK_DIR" \
+          --licenses || true
+
+        echo "========================================"
+        echo "INSTALLATION ANDROID"
+        echo "========================================"
+
+        sdkmanager \
+          --sdk_root="$SDK_DIR" \
           "platform-tools" \
           "platforms;android-35" \
           "build-tools;35.0.0" \
@@ -117,8 +171,17 @@ jobs:
         echo "$SDK_DIR/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
         echo "$SDK_DIR/platform-tools" >> "$GITHUB_PATH"
 
-        echo "SDK : $SDK_DIR"
-        echo "NDK : $ANDROID_NDK_HOME"
+        echo "========================================"
+        echo "ANDROID SDK"
+        echo "========================================"
+
+        echo "$SDK_DIR"
+
+        echo "========================================"
+        echo "ANDROID NDK"
+        echo "========================================"
+
+        echo "$ANDROID_NDK_HOME"
 
     # ============================================================
     # NETTOYAGE
@@ -135,25 +198,46 @@ jobs:
         p4a clean_builds || true
 
     # ============================================================
-    # VERIFICATION
+    # VERIFICATION ENVIRONNEMENT
     # ============================================================
-    - name: Verify environment
+    - name: Verify build environment
       run: |
         source venv/bin/activate
 
-        echo "===== Python ====="
+        echo "========================================"
+        echo "PYTHON"
+        echo "========================================"
+
         python --version
 
-        echo "===== P4A ====="
+        echo "========================================"
+        echo "JAVA"
+        echo "========================================"
+
+        java -version
+
+        echo "========================================"
+        echo "P4A"
+        echo "========================================"
+
         p4a --version
 
-        echo "===== SDK ====="
+        echo "========================================"
+        echo "ANDROID SDK"
+        echo "========================================"
+
         ls "$SDK_DIR"
 
-        echo "===== NDK ====="
+        echo "========================================"
+        echo "ANDROID NDK"
+        echo "========================================"
+
         ls "$ANDROID_NDK_HOME"
 
-        echo "===== LLVM ====="
+        echo "========================================"
+        echo "LLVM"
+        echo "========================================"
+
         ls "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin" | head
 
     # ============================================================
@@ -165,39 +249,80 @@ jobs:
 
         BUILD="${{ github.event.inputs.build_type }}"
 
-        echo "========================================="
-        echo "BUILD TYPE : $BUILD"
-        echo "========================================="
+        echo "========================================"
+        echo "TYPE DE BUILD : $BUILD"
+        echo "========================================"
 
-        p4a apk \
-          --private "$GITHUB_WORKSPACE/app" \
-          --package=org.example.monapp \
-          --name="Mon budget perso" \
-          --version=1.0 \
-          --bootstrap=sdl2 \
-          --icon="$GITHUB_WORKSPACE/logo.png" \
-          --presplash="$GITHUB_WORKSPACE/logo1.png" \
-          --requirements=python3,kivy,android,pyjnius \
-          --permission INTERNET \
-          --permission ACCESS_NETWORK_STATE \
-          --orientation=portrait \
-          --arch=arm64-v8a \
-          --sdk_dir="$SDK_DIR" \
-          --ndk_dir="$ANDROID_NDK_HOME" \
-          --android_api=35 \
-          --dist-name=monapp \
-          $([ "$BUILD" = "release" ] && echo "--release" || echo "--debug")
+        if [ "$BUILD" = "debug" ]; then
+
+          echo "========================================"
+          echo "BUILD DEBUG"
+          echo "========================================"
+
+          p4a apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon="$GITHUB_WORKSPACE/logo.png" \
+            --presplash="$GITHUB_WORKSPACE/logo1.png" \
+            --requirements=python3,kivy,android,pyjnius \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --orientation=portrait \
+            --arch=arm64-v8a \
+            --sdk_dir="$SDK_DIR" \
+            --ndk_dir="$ANDROID_NDK_HOME" \
+            --android_api=35 \
+            --dist-name=monapp_debug \
+            --debug
+
+        elif [ "$BUILD" = "release" ]; then
+
+          echo "========================================"
+          echo "BUILD RELEASE"
+          echo "========================================"
+
+          p4a apk \
+            --private "$GITHUB_WORKSPACE/app" \
+            --package=org.example.monapp \
+            --name="Mon budget perso" \
+            --version=1.0 \
+            --bootstrap=sdl2 \
+            --icon="$GITHUB_WORKSPACE/logo.png" \
+            --presplash="$GITHUB_WORKSPACE/logo1.png" \
+            --requirements=python3,kivy,android,pyjnius \
+            --permission INTERNET \
+            --permission ACCESS_NETWORK_STATE \
+            --orientation=portrait \
+            --arch=arm64-v8a \
+            --sdk_dir="$SDK_DIR" \
+            --ndk_dir="$ANDROID_NDK_HOME" \
+            --android_api=35 \
+            --dist-name=monapp_release \
+            --release
+
+        else
+
+          echo "❌ Type de build inconnu : $BUILD"
+          exit 1
+
+        fi
 
     # ============================================================
-    # RECUPERATION APK
+    # RECHERCHE APK
     # ============================================================
     - name: Find APK
       run: |
-        echo "===== APK générés ====="
+        echo "========================================"
+        echo "APK GENERES"
+        echo "========================================"
+
         find . -type f -name "*.apk" -print
 
     # ============================================================
-    # RENOMMAGE
+    # RENOMMAGE APK
     # ============================================================
     - name: Rename APK
       run: |
@@ -211,17 +336,27 @@ jobs:
         BUILD="${{ github.event.inputs.build_type }}"
 
         if [ "$BUILD" = "debug" ]; then
+
           cp "$APK" mon_budget_perso_debug.apk
+
+          echo "✅ APK DEBUG créé"
+
         else
+
           cp "$APK" mon_budget_perso_release.apk
+
+          echo "✅ APK RELEASE créé"
+
         fi
 
-        echo "APK final créé :"
+        echo "========================================"
+        echo "APK FINAL"
+        echo "========================================"
+
         ls -lh *.apk
 
-    
     # ============================================================
-    # UPLOAD ARTIFACT
+    # UPLOAD APK
     # ============================================================
     - name: Upload APK
       uses: actions/upload-artifact@v4
