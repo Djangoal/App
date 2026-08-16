@@ -293,6 +293,7 @@ jobs:
           --permission=ACCESS_NETWORK_STATE \
           --orientation=portrait \
           --arch=arm64-v8a \
+          --arch=armeabi-v7a \
           --sdk_dir="$SDK_DIR" \
           --ndk_dir="$ANDROID_NDK_HOME" \
           --android_api="$ANDROID_API" \
@@ -316,6 +317,33 @@ jobs:
     # ============================================================
     # VERIFICATION
     # ============================================================
+    - name: Verify APK architectures
+      run: |
+        APK=$(find . -type f -name "*.apk" | head -n 1)
+
+        if [ -z "$APK" ]; then
+          echo "❌ Aucun APK trouvé"
+          exit 1
+        fi
+
+        echo "APK : $APK"
+
+        echo "===== LIBS NATIVES ====="
+        unzip -l "$APK" | grep -E "lib/(arm64-v8a|armeabi-v7a)/" || true
+
+        echo "===== ARCHITECTURES ====="
+
+        if unzip -l "$APK" | grep -q "lib/arm64-v8a/"; then
+          echo "✅ ARM64 détecté"
+        else
+          echo "❌ ARM64 absent"
+        fi
+
+        if unzip -l "$APK" | grep -q "lib/armeabi-v7a/"; then
+          echo "✅ ARM32 détecté"
+        else
+          echo "❌ ARM32 absent"
+        fi
     - name: Verify APK
       run: |
         APK=$(find . -type f -name "*.apk" | head -n 1)
