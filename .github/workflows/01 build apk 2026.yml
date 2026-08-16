@@ -71,10 +71,11 @@ jobs:
     # ============================================================
     - name: Verify Java
       run: |
-        echo "===== JAVA ====="
-        java -version
+        echo "========================================"
+        echo "JAVA"
+        echo "========================================"
 
-        echo "===== JAVAC ====="
+        java -version
         javac -version
 
         echo "JAVA_HOME=$JAVA_HOME"
@@ -88,15 +89,39 @@ jobs:
 
         source venv/bin/activate
 
-        python -m pip install --upgrade pip setuptools wheel
+        echo "========================================"
+        echo "MISE A JOUR PIP"
+        echo "========================================"
 
-        echo "===== INSTALL P4A ====="
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools wheel
 
-        pip install "python-for-android==2026.5.9"
+        echo "========================================"
+        echo "INSTALL CYTHON"
+        echo "========================================"
 
-        echo "===== VERSION ====="
+        pip install "Cython>=3.0,<3.1"
+
+        echo "========================================"
+        echo "INSTALL BUILD / VIRTUALENV"
+        echo "========================================"
+
+        pip install build virtualenv
+
+        echo "========================================"
+        echo "INSTALL PYTHON-FOR-ANDROID"
+        echo "========================================"
+
+        pip install "python-for-android==2026.05.09"
+
+        echo "========================================"
+        echo "VERSIONS"
+        echo "========================================"
 
         python --version
+        pip --version
+        cython --version
+        python -m build --version
         p4a --version
 
     # ============================================================
@@ -121,17 +146,23 @@ jobs:
 
         export PATH="$SDK_DIR/cmdline-tools/latest/bin:$PATH"
 
-        echo "===== SDKMANAGER ====="
+        echo "========================================"
+        echo "SDKMANAGER"
+        echo "========================================"
 
         sdkmanager --version
 
-        echo "===== LICENSES ====="
+        echo "========================================"
+        echo "ANDROID LICENSES"
+        echo "========================================"
 
         yes | sdkmanager \
           --sdk_root="$SDK_DIR" \
           --licenses || true
 
-        echo "===== SDK / NDK ====="
+        echo "========================================"
+        echo "INSTALLATION SDK / NDK"
+        echo "========================================"
 
         sdkmanager \
           --sdk_root="$SDK_DIR" \
@@ -152,20 +183,32 @@ jobs:
         echo "$SDK_DIR/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
         echo "$SDK_DIR/platform-tools" >> "$GITHUB_PATH"
 
-        echo "SDK = $SDK_DIR"
-        echo "NDK = $ANDROID_NDK_HOME"
+        echo "========================================"
+        echo "SDK"
+        echo "$SDK_DIR"
+        echo "========================================"
+
+        echo "========================================"
+        echo "NDK"
+        echo "$ANDROID_NDK_HOME"
+        echo "========================================"
 
     # ============================================================
     # NETTOYAGE COMPLET
     # ============================================================
     - name: Clean previous builds
       run: |
+        echo "========================================"
+        echo "NETTOYAGE"
+        echo "========================================"
+
         rm -rf .buildozer
         rm -rf build
         rm -rf dist
         rm -rf bin
 
         rm -rf ~/.local/share/python-for-android
+        rm -rf ~/.cache/pip
 
         source venv/bin/activate
 
@@ -183,12 +226,21 @@ jobs:
         echo "========================================"
 
         python --version
+        which python
+
+        echo "========================================"
+        echo "CYTHON"
+        echo "========================================"
+
+        cython --version
+        which cython
 
         echo "========================================"
         echo "P4A"
         echo "========================================"
 
         p4a --version
+        which p4a
 
         echo "========================================"
         echo "JAVA"
@@ -197,11 +249,17 @@ jobs:
         java -version
 
         echo "========================================"
-        echo "NDK"
+        echo "ANDROID SDK"
+        echo "========================================"
+
+        test -d "$ANDROID_SDK_ROOT"
+        echo "SDK OK"
+
+        echo "========================================"
+        echo "ANDROID NDK"
         echo "========================================"
 
         test -d "$ANDROID_NDK_HOME"
-
         echo "NDK OK"
 
         echo "========================================"
@@ -228,7 +286,9 @@ jobs:
 
         if [ "$BUILD" = "debug" ]; then
 
-          echo "===== BUILD DEBUG ====="
+          echo "========================================"
+          echo "BUILD DEBUG"
+          echo "========================================"
 
           p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
@@ -251,7 +311,9 @@ jobs:
 
         elif [ "$BUILD" = "release" ]; then
 
-          echo "===== BUILD RELEASE ====="
+          echo "========================================"
+          echo "BUILD RELEASE"
+          echo "========================================"
 
           p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
@@ -284,7 +346,9 @@ jobs:
     # ============================================================
     - name: Find APK
       run: |
-        echo "===== APK GENERES ====="
+        echo "========================================"
+        echo "APK GENERES"
+        echo "========================================"
 
         find . -type f -name "*.apk" -print
 
@@ -300,32 +364,49 @@ jobs:
           exit 1
         fi
 
-        echo "===== APK TROUVE ====="
+        echo "========================================"
+        echo "APK TROUVE"
+        echo "========================================"
 
         echo "$APK"
         ls -lh "$APK"
 
     # ============================================================
-    # RENOMMAGE
+    # RENOMMAGE APK
     # ============================================================
     - name: Rename APK
       run: |
         APK=$(find . -type f -name "*.apk" | head -n 1)
 
+        if [ -z "$APK" ]; then
+          echo "❌ Aucun APK à renommer"
+          exit 1
+        fi
+
         BUILD="${{ github.event.inputs.build_type }}"
 
         if [ "$BUILD" = "debug" ]; then
+
           cp "$APK" mon_budget_perso_debug.apk
-          echo "✅ APK DEBUG créé"
+
+          echo "========================================"
+          echo "APK DEBUG"
+          echo "========================================"
+
         else
+
           cp "$APK" mon_budget_perso_release.apk
-          echo "✅ APK RELEASE créé"
+
+          echo "========================================"
+          echo "APK RELEASE"
+          echo "========================================"
+
         fi
 
         ls -lh *.apk
 
     # ============================================================
-    # UPLOAD
+    # UPLOAD APK
     # ============================================================
     - name: Upload APK
       uses: actions/upload-artifact@v4
