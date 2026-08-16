@@ -71,15 +71,13 @@ jobs:
     # ============================================================
     - name: Verify Java
       run: |
-        echo "========================================"
-        echo "JAVA"
-        echo "========================================"
-
+        echo "===== JAVA ====="
         java -version
 
-        echo "JAVA_HOME=$JAVA_HOME"
-
+        echo "===== JAVAC ====="
         javac -version
+
+        echo "JAVA_HOME=$JAVA_HOME"
 
     # ============================================================
     # PYTHON-FOR-ANDROID
@@ -92,16 +90,13 @@ jobs:
 
         python -m pip install --upgrade pip setuptools wheel
 
-        pip install "Cython==0.29.36"
+        echo "===== INSTALL P4A ====="
 
-        pip install "python-for-android==2023.9.16"
+        pip install "python-for-android==2026.5.9"
 
-        echo "========================================"
-        echo "VERSIONS"
-        echo "========================================"
+        echo "===== VERSION ====="
 
         python --version
-        cython --version
         p4a --version
 
     # ============================================================
@@ -126,23 +121,17 @@ jobs:
 
         export PATH="$SDK_DIR/cmdline-tools/latest/bin:$PATH"
 
-        echo "========================================"
-        echo "SDKMANAGER"
-        echo "========================================"
+        echo "===== SDKMANAGER ====="
 
         sdkmanager --version
 
-        echo "========================================"
-        echo "ANDROID LICENSES"
-        echo "========================================"
+        echo "===== LICENSES ====="
 
         yes | sdkmanager \
           --sdk_root="$SDK_DIR" \
           --licenses || true
 
-        echo "========================================"
-        echo "INSTALLATION SDK / NDK"
-        echo "========================================"
+        echo "===== SDK / NDK ====="
 
         sdkmanager \
           --sdk_root="$SDK_DIR" \
@@ -163,15 +152,8 @@ jobs:
         echo "$SDK_DIR/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
         echo "$SDK_DIR/platform-tools" >> "$GITHUB_PATH"
 
-        echo "========================================"
-        echo "SDK"
-        echo "$SDK_DIR"
-        echo "========================================"
-
-        echo "========================================"
-        echo "NDK"
-        echo "$ANDROID_NDK_HOME"
-        echo "========================================"
+        echo "SDK = $SDK_DIR"
+        echo "NDK = $ANDROID_NDK_HOME"
 
     # ============================================================
     # NETTOYAGE COMPLET
@@ -203,12 +185,6 @@ jobs:
         python --version
 
         echo "========================================"
-        echo "CYTHON"
-        echo "========================================"
-
-        cython --version
-
-        echo "========================================"
         echo "P4A"
         echo "========================================"
 
@@ -221,10 +197,19 @@ jobs:
         java -version
 
         echo "========================================"
-        echo "NDK LLVM"
+        echo "NDK"
         echo "========================================"
 
-        test -d "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
+        test -d "$ANDROID_NDK_HOME"
+
+        echo "NDK OK"
+
+        echo "========================================"
+        echo "LLVM"
+        echo "========================================"
+
+        test -d \
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
 
         echo "LLVM OK"
 
@@ -243,9 +228,7 @@ jobs:
 
         if [ "$BUILD" = "debug" ]; then
 
-          echo "========================================"
-          echo "BUILD DEBUG"
-          echo "========================================"
+          echo "===== BUILD DEBUG ====="
 
           p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
@@ -268,9 +251,7 @@ jobs:
 
         elif [ "$BUILD" = "release" ]; then
 
-          echo "========================================"
-          echo "BUILD RELEASE"
-          echo "========================================"
+          echo "===== BUILD RELEASE ====="
 
           p4a apk \
             --private "$GITHUB_WORKSPACE/app" \
@@ -293,7 +274,7 @@ jobs:
 
         else
 
-          echo "❌ Type de build inconnu"
+          echo "❌ Type de build inconnu : $BUILD"
           exit 1
 
         fi
@@ -303,9 +284,7 @@ jobs:
     # ============================================================
     - name: Find APK
       run: |
-        echo "========================================"
-        echo "APK GENERES"
-        echo "========================================"
+        echo "===== APK GENERES ====="
 
         find . -type f -name "*.apk" -print
 
@@ -321,9 +300,7 @@ jobs:
           exit 1
         fi
 
-        echo "========================================"
-        echo "APK TROUVE"
-        echo "========================================"
+        echo "===== APK TROUVE ====="
 
         echo "$APK"
         ls -lh "$APK"
@@ -344,10 +321,6 @@ jobs:
           cp "$APK" mon_budget_perso_release.apk
           echo "✅ APK RELEASE créé"
         fi
-
-        echo "========================================"
-        echo "APK FINAL"
-        echo "========================================"
 
         ls -lh *.apk
 
