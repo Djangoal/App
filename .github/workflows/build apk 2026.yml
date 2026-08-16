@@ -1,0 +1,231 @@
+name: Build APK 2026
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Type de build"
+        required: true
+        default: "debug"
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    env:
+      SDK_DIR: ${{ github.workspace }}/android-sdk
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/25.2.9519653
+
+    steps:
+
+    # ============================================================
+    # CHECKOUT
+    # ============================================================
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # ============================================================
+    # PYTHON 3.11
+    # ============================================================
+    - name: Setup Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    # ============================================================
+    # DEPENDANCES SYSTEME
+    # ============================================================
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+
+        sudo apt-get install -y \
+          build-essential \
+          libltdl-dev \
+          zip \
+          unzip \
+          openjdk-17-jdk \
+          libncurses-dev \
+          libtool \
+          libtool-bin \
+          automake \
+          autoconf \
+          pkg-config \
+          m4 \
+          curl
+
+    # ============================================================
+    # INSTALLATION PYTHON-FOR-ANDROID
+    # ============================================================
+    - name: Setup virtualenv and python-for-android
+      run: |
+        python -m venv venv
+
+        source venv/bin/activate
+
+        python -m pip install --upgrade pip setuptools wheel
+
+        pip install "cython<3"
+
+        pip install python-for-android
+
+        p4a --version
+
+    # ============================================================
+    # ANDROID SDK + NDK
+    # ============================================================
+    - name: Download Android SDK and NDK
+      run: |
+        mkdir -p "$SDK_DIR"
+
+        curl -L \
+          https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
+          -o cmdline-tools.zip
+
+        unzip -q cmdline-tools.zip -d "$SDK_DIR"
+
+        mv "$SDK_DIR/cmdline-tools" "$SDK_DIR/cmdline-tools-temp"
+
+        mkdir -p "$SDK_DIR/cmdline-tools/latest"
+
+        mv "$SDK_DIR/cmdline-tools-temp"/* \
+          "$SDK_DIR/cmdline-tools/latest/"
+
+        export PATH="$SDK_DIR/cmdline-tools/latest/bin:$PATH"
+
+        yes | sdkmanager --sdk_root="$SDK_DIR" --licenses || true
+
+        sdkmanager --sdk_root="$SDK_DIR" \
+          "platform-tools" \
+          "platforms;android-35" \
+          "build-tools;35.0.0" \
+          "ndk;25.2.9519653"
+
+    # ============================================================
+    # VARIABLES ANDROID
+    # ============================================================
+    - name: Configure Android environment
+      run: |
+        echo "ANDROID_SDK_ROOT=$SDK_DIR" >> "$GITHUB_ENV"
+        echo "ANDROID_HOME=$SDK_DIR" >> "$GITHUB_ENV"
+        echo "ANDROID_NDK_ROOT=$ANDROID_NDK_HOME" >> "$GITHUB_ENV"
+
+        echo "$SDK_DIR/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+        echo "$SDK_DIR/platform-tools" >> "$GITHUB_PATH"
+
+        echo "SDK : $SDK_DIR"
+        echo "NDK : $ANDROID_NDK_HOME"
+
+    # ============================================================
+    # NETTOYAGE
+    # ============================================================
+    - name: Clean previous builds
+      run: |
+        rm -rf .buildozer
+        rm -rf build
+        rm -rf dist
+        rm -rf bin
+
+        source venv/bin/activate
+
+        p4a clean_builds || true
+
+    # ============================================================
+    # VERIFICATION
+    # ============================================================
+    - name: Verify environment
+      run: |
+        source venv/bin/activate
+
+        echo "===== Python ====="
+        python --version
+
+        echo "===== P4A ====="
+        p4a --version
+
+        echo "===== SDK ====="
+        ls "$SDK_DIR"
+
+        echo "===== NDK ====="
+        ls "$ANDROID_NDK_HOME"
+
+        echo "===== LLVM ====="
+        ls "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin" | head
+
+    # ============================================================
+    # BUILD APK
+    # ============================================================
+    - name: Build APK
+      run: |
+        source venv/bin/activate
+
+        BUILD="${{ github.event.inputs.build_type }}"
+
+        echo "========================================="
+        echo "BUILD TYPE : $BUILD"
+        echo "========================================="
+
+        p4a apk \
+          --private "$GITHUB_WORKSPACE/app" \
+          --package=org.example.monapp \
+          --name="Mon budget perso" \
+          --version=1.0 \
+          --bootstrap=sdl2 \
+          --icon="$GITHUB_WORKSPACE/logo.png" \
+          --presplash="$GITHUB_WORKSPACE/logo1.png" \
+          --requirements=python3,kivy,android,pyjnius \
+          --permission INTERNET \
+          --permission ACCESS_NETWORK_STATE \
+          --orientation=portrait \
+          --arch=arm64-v8a \
+          --sdk_dir="$SDK_DIR" \
+          --ndk_dir="$ANDROID_NDK_HOME" \
+          --android_api=35 \
+          --dist-name=monapp \
+          $([ "$BUILD" = "release" ] && echo "--release" || echo "--debug")
+
+    # ============================================================
+    # RECUPERATION APK
+    # ============================================================
+    - name: Find APK
+      run: |
+        echo "===== APK générés ====="
+        find . -type f -name "*.apk" -print
+
+    # ============================================================
+    # RENOMMAGE
+    # ============================================================
+    - name: Rename APK
+      run: |
+        APK=$(find . -type f -name "*.apk" | head -n 1)
+
+        if [ -z "$APK" ]; then
+          echo "❌ Aucun APK trouvé"
+          exit 1
+        fi
+
+        BUILD="${{ github.event.inputs.build_type }}"
+
+        if [ "$BUILD" = "debug" ]; then
+          cp "$APK" mon_budget_perso_debug.apk
+        else
+          cp "$APK" mon_budget_perso_release.apk
+        fi
+
+        echo "APK final créé :"
+        ls -lh *.apk
+
+    
+    # ============================================================
+    # UPLOAD ARTIFACT
+    # ============================================================
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: mon-budget-${{ github.event.inputs.build_type }}
+        path: "*.apk"
+        if-no-files-found: error
