@@ -246,7 +246,7 @@ class pageprincipalScreen(Screen):
     def creer_menu_bouton(self):
         # Ajout de la bannière AdMob
         self.banner = AdMobBanner()
-        self.main_layout.add_widget(self.banner)
+        #self.main_layout.add_widget(self.banner)
 
         # Bouton Menu
         menu_button = Button(
