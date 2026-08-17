@@ -388,5 +388,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: mon-budget-${{ github.event.inputs.build_type }}
-        path: "*.apk"
+        path: mon_budget_perso_${{ github.event.inputs.build_type }}.apk
         if-no-files-found: error
